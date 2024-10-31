@@ -1,51 +1,29 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"os"
 
 	"github.com/openstatusHQ/cli/internal/monitors"
+	"github.com/openstatusHQ/cli/internal/run"
 	"github.com/openstatusHQ/cli/internal/whoami"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func main() {
-	app := &cli.App{
+	app := &cli.Command{
 		Name:    "OpenStatus",
 		Usage:   "This is OpenStatus Command Line Interface",
 		Version: "v0.0.1",
 		Commands: []*cli.Command{
-			{
-				Name:    "run",
-				Aliases: []string{"r"},
-				Usage:   "Run your synthetics tests defined in your configuration file",
-				Action: func(cCtx *cli.Context) error {
-					fmt.Println("Test ran 🔥")
-					return nil
-				},
-			},
 			monitors.MonitorsCmd(),
+			run.RunCmd(),
 			whoami.WhoamiCmd(),
-		},
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:        "config",
-				Usage:       "The configuration file",
-				DefaultText: "config.openstatus.yaml",
-				Value:       "config.openstatus.yaml",
-			},
-			&cli.StringFlag{
-				Name:     "access-token",
-				Usage:    "OpenStatus API Access Token",
-				Aliases:  []string{"t"},
-				EnvVars:  []string{"OPENSTATUS_API_TOKEN"},
-				Required: true,
-			},
 		},
 	}
 
-	if err := app.Run(os.Args); err != nil {
+	if err := app.Run(context.Background(), os.Args); err != nil {
 		log.Fatal(err)
 	}
 }

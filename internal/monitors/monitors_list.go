@@ -1,24 +1,31 @@
 package monitors
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 
-	"github.com/urfave/cli/v2"
+	"github.com/fatih/color"
+	"github.com/rodaine/table"
+	"github.com/urfave/cli/v3"
 )
 
 var allMonitor bool
 
-func listMonitors(httpClient *http.Client, apiKey string) {
+func listMonitors(httpClient *http.Client, apiKey string) error {
 	url := "https://api.openstatus.dev/v1/monitor"
 
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Add("x-openstatus-key", apiKey)
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return
+		return err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("Failed to list monitors")
 	}
 
 	defer res.Body.Close()
@@ -26,15 +33,23 @@ func listMonitors(httpClient *http.Client, apiKey string) {
 	var monitors []Monitor
 	err = json.Unmarshal(body, &monitors)
 	if err != nil {
-		return
+		return err
 	}
 
-	fmt.Println("Monitors")
+	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+	columnFmt := color.New(color.FgYellow).SprintfFunc()
+
+	tbl := table.New("ID", "Name", "Url")
+	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+
 	for _, monitor := range monitors {
 		if monitor.Active || allMonitor {
-			fmt.Printf("%d %s %s \n", monitor.ID, monitor.Name, monitor.URL)
+			tbl.AddRow(monitor.ID, monitor.Name, monitor.URL)
 		}
 	}
+	tbl.Print()
+
+	return nil
 }
 
 func GetMonitorsListCmd() *cli.Command {
@@ -47,10 +62,17 @@ func GetMonitorsListCmd() *cli.Command {
 				Usage:       "List all monitors including inactive ones",
 				Destination: &allMonitor,
 			},
+			&cli.StringFlag{
+				Name:     "access-token",
+				Usage:    "OpenStatus API Access Token",
+				Aliases:  []string{"t"},
+				Sources:  cli.EnvVars("OPENSTATUS_API_TOKEN"),
+				Required: true,
+			},
 		},
-		Action: func(cCtx *cli.Context) error {
+		Action: func(ctx context.Context, cmd *cli.Command) error {
 			fmt.Println("List of all monitors")
-			listMonitors(http.DefaultClient, cCtx.String("access-token"))
+			listMonitors(http.DefaultClient, cmd.String("access-token"))
 			return nil
 		},
 	}

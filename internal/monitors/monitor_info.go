@@ -1,12 +1,13 @@
 package monitors
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func getMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) error {
@@ -24,6 +25,9 @@ func getMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 	res, err := httpClient.Do(req)
 	if err != nil {
 		return err
+	}
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("Failed to get monitor information")
 	}
 	defer res.Body.Close()
 	body, _ := io.ReadAll(res.Body)
@@ -43,12 +47,20 @@ func GetMonitorInfoCmd() *cli.Command {
 	monitorInfoCmd := cli.Command{
 		Name:  "info",
 		Usage: "Get monitor information",
-		Action: func(cCtx *cli.Context) error {
+		Action: func(ctx context.Context, cmd *cli.Command) error {
 			fmt.Println("Monitor information")
-			monitorId := cCtx.Args().Get(cCtx.Args().Len() - 1)
-			getMonitorInfo(http.DefaultClient, cCtx.String("access-token"), monitorId)
-			return nil
+			monitorId := cmd.Args().Get(0)
+			err := getMonitorInfo(http.DefaultClient, cmd.String("access-token"), monitorId)
+			return err
 		},
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "access-token",
+				Usage:    "OpenStatus API Access Token",
+				Aliases:  []string{"t"},
+				Sources:  cli.EnvVars("OPENSTATUS_API_TOKEN"),
+				Required: true,
+			}},
 	}
 	return &monitorInfoCmd
 }

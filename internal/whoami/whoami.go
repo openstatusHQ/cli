@@ -1,12 +1,13 @@
 package whoami
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 type Whoami struct {
@@ -44,12 +45,19 @@ func WhoamiCmd() *cli.Command {
 		Name:    "whoami",
 		Aliases: []string{"w"},
 		Usage:   "Get your current workspace information",
-		Action: func(cCtx *cli.Context) error {
+		Action: func(ctx context.Context, cmd *cli.Command) error {
 			fmt.Println("Your current workspace information")
-
-			getWhoamiCmd(http.DefaultClient, cCtx.String("access-token"))
+			getWhoamiCmd(http.DefaultClient, cmd.String("access-token"))
 			return nil
 		},
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "access-token",
+				Usage:    "OpenStatus API Access Token",
+				Aliases:  []string{"t"},
+				Sources:  cli.EnvVars("OPENSTATUS_API_TOKEN"),
+				Required: true,
+			}},
 	}
 	return &whoamiCmd
 }

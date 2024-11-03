@@ -62,7 +62,8 @@ brews:
     homepage: https://www.openstatus.dev
     skip_upload: auto
     description: "OpenStatus CLI"
-
+    test: |
+      system "#{bin}/openstatus --help"
     repository:
       # Repository owner.
       #
@@ -74,8 +75,7 @@ brews:
       # Templates: allowed.
       name: homebrew-tap
 
-      # Optionally a branch can be provided.
-      #
-      # Default: default repository branch.
-      # Templates: allowed.
+
       branch: main
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+

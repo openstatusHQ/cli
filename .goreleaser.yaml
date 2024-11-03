@@ -12,17 +12,20 @@ before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod tidy
-    # you may remove this if you don't need go generate
-    - go generate ./...
+
 
 builds:
+
   - env:
       - CGO_ENABLED=0
+    id: openstatus
+    main: ./cmd/openstatus
     goos:
       - linux
       - windows
       - darwin
-  - main: ./cmd/openstatus
+    binary: openstatus
+
 
 archives:
   - format: tar.gz
@@ -39,9 +42,40 @@ archives:
       - goos: windows
         format: zip
 
+    # replacements:
+    #   darwin: Darwin
+    #   linux: Linux
+    #   windows: Windows
+    #   386: i386
+    #   amd64: x86_64
 changelog:
   sort: asc
   filters:
     exclude:
       - "^docs:"
       - "^test:"
+
+brews:
+  -
+    name: openstatus
+    directory: Formula
+    homepage: https://www.openstatus.dev
+    skip_upload: auto
+    description: "OpenStatus CLI"
+
+    repository:
+      # Repository owner.
+      #
+      # Templates: allowed.
+      owner: openstatusHQ
+
+      # Repository name.
+      #
+      # Templates: allowed.
+      name: homebrew-tap
+
+      # Optionally a branch can be provided.
+      #
+      # Default: default repository branch.
+      # Templates: allowed.
+      branch: main

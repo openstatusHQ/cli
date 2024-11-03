@@ -2,10 +2,76 @@ package run
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"sync"
 
+	"github.com/fatih/color"
+	"github.com/openstatusHQ/cli/internal/config"
+	"github.com/openstatusHQ/cli/internal/monitors"
+	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
 )
+
+func monitorTrigger(httpClient *http.Client, apiKey string, monitorId string) error {
+
+	if monitorId == "" {
+		return fmt.Errorf("Monitor ID is required")
+	}
+
+	url := fmt.Sprintf("https://api.openstatus.dev/v1/monitor/%s/run", monitorId)
+
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("x-openstatus-key", apiKey)
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("Failed to trigger monitor test")
+	}
+
+	defer res.Body.Close()
+	body, _ := io.ReadAll(res.Body)
+
+	var result []monitors.RunResult
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Results for monitor:", monitorId)
+	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+	columnFmt := color.New(color.FgYellow).SprintfFunc()
+
+	tbl := table.New("Region", "Latency (ms)", "Status")
+	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+
+	var inError bool
+	for _, r := range result {
+		if r.Error != "" {
+			inError = true
+			tbl.AddRow(r.Region, r.Latency, color.RedString("❌"))
+		} else {
+			tbl.AddRow(r.Region, r.Latency, color.GreenString("✔"))
+		}
+
+	}
+	tbl.Print()
+
+	if inError {
+		fmt.Println(color.RedString("Some regions failed"))
+		return fmt.Errorf("Some regions failed")
+	} else {
+		fmt.Println(color.GreenString("All regions passed"))
+	}
+	return nil
+}
 
 func RunCmd() *cli.Command {
 	runCmd := cli.Command{
@@ -14,8 +80,35 @@ func RunCmd() *cli.Command {
 		Usage:   "Run your synthetics tests defined in your configuration file",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 
-			fmt.Println(cmd.String("config"))
-			fmt.Println("Test ran 🔥")
+			path := cmd.String("config")
+			conf, err := config.ReadConfig(path)
+			if err != nil {
+				return err
+			}
+			size := len(conf.Tests.Ids)
+			ch := make(chan error, size)
+
+			fmt.Println("Tests are running")
+
+			var wg sync.WaitGroup
+
+			for _, id := range conf.Tests.Ids {
+				wg.Add(1)
+				go func(id int) {
+					defer wg.Done()
+					if err := monitorTrigger(http.DefaultClient, cmd.String("access-token"), fmt.Sprintf("%d", id)); err != nil {
+						ch <- err
+					}
+
+				}(id)
+			}
+			wg.Wait()
+			close(ch) // Close the channel when all workers have finished
+
+			if len(ch) > 0 {
+				return cli.Exit("Some tests failed", 1)
+			}
+			fmt.Println("Test ran succesfully🔥")
 			return nil
 		},
 		Flags: []cli.Flag{

@@ -100,9 +100,8 @@ func GetMonitorsTriggerCmd() *cli.Command {
 			monitorId := cmd.Args().Get(0)
 			err := monitorTrigger(http.DefaultClient, cmd.String("access-token"), monitorId)
 			if err != nil {
-				return err
+				return cli.Exit("Failed to trigger monitor", 1)
 			}
-			// fmt.Println("Triggering monitor test", r)
 			return nil
 		},
 	}

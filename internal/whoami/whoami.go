@@ -27,6 +27,9 @@ func getWhoamiCmd(httpClient *http.Client, apiKey string) error {
 	}
 
 	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("Failed to get workspace information")
+	}
 	body, _ := io.ReadAll(res.Body)
 	var whoami Whoami
 	err = json.Unmarshal(body, &whoami)
@@ -47,7 +50,10 @@ func WhoamiCmd() *cli.Command {
 		Usage:   "Get your current workspace information",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			fmt.Println("Your current workspace information")
-			getWhoamiCmd(http.DefaultClient, cmd.String("access-token"))
+			err := getWhoamiCmd(http.DefaultClient, cmd.String("access-token"))
+			if err != nil {
+				return cli.Exit("Failed to get workspace information", 1)
+			}
 			return nil
 		},
 		Flags: []cli.Flag{

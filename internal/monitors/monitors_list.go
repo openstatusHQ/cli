@@ -72,7 +72,10 @@ func GetMonitorsListCmd() *cli.Command {
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			fmt.Println("List of all monitors")
-			listMonitors(http.DefaultClient, cmd.String("access-token"))
+			err := listMonitors(http.DefaultClient, cmd.String("access-token"))
+			if err != nil {
+				return cli.Exit("Failed to list monitors", 1)
+			}
 			return nil
 		},
 	}

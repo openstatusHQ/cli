@@ -51,7 +51,10 @@ func GetMonitorInfoCmd() *cli.Command {
 			fmt.Println("Monitor information")
 			monitorId := cmd.Args().Get(0)
 			err := getMonitorInfo(http.DefaultClient, cmd.String("access-token"), monitorId)
-			return err
+			if err != nil {
+				return cli.Exit("Failed to get monitor information", 1)
+			}
+			return nil
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{

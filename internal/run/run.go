@@ -15,7 +15,7 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func monitorTrigger(httpClient *http.Client, apiKey string, monitorId string) error {
+func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) error {
 
 	if monitorId == "" {
 		return fmt.Errorf("Monitor ID is required")
@@ -54,12 +54,31 @@ func monitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 
 	var inError bool
 	for _, r := range result {
-		if r.Error != "" {
-			inError = true
-			tbl.AddRow(r.Region, r.Latency, color.RedString("❌"))
-		} else {
-			tbl.AddRow(r.Region, r.Latency, color.GreenString("✔"))
+		if r.JobType == "tcp" {
+			var result monitors.TCPRunResult
+			if err := json.Unmarshal(r.Message, &result); err != nil {
+				return fmt.Errorf("unable to unmarshal : %w", err)
+			}
+			if result.ErrorMessge != "" {
+				inError = true
+				tbl.AddRow(r.Region, r.Latency, color.RedString("❌"))
+				continue
+			}
+
 		}
+		if r.JobType == "http" {
+			var result monitors.HTTPRunResult
+			if err := json.Unmarshal(r.Message, &result); err != nil {
+				return fmt.Errorf("unable to unmarshal : %w", err)
+			}
+			if result.Error != "" {
+				inError = true
+				tbl.AddRow(r.Region, r.Latency, color.RedString("❌"))
+				continue
+			}
+		}
+
+		tbl.AddRow(r.Region, r.Latency, color.GreenString("✔"))
 
 	}
 	tbl.Print()
@@ -96,7 +115,7 @@ func RunCmd() *cli.Command {
 				wg.Add(1)
 				go func(id int) {
 					defer wg.Done()
-					if err := monitorTrigger(http.DefaultClient, cmd.String("access-token"), fmt.Sprintf("%d", id)); err != nil {
+					if err := MonitorTrigger(http.DefaultClient, cmd.String("access-token"), fmt.Sprintf("%d", id)); err != nil {
 						ch <- err
 					}
 

@@ -73,9 +73,8 @@ brews:
       # Repository name.
       #
       # Templates: allowed.
-      name: homebrew-tap
+      name: homebrew-cli
 
 
       branch: main
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-

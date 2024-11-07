@@ -1,6 +1,8 @@
 package monitors
 
 import (
+	"encoding/json"
+
 	"github.com/urfave/cli/v3"
 )
 
@@ -46,14 +48,27 @@ type TriggerResultResponse struct {
 }
 
 type RunResult struct {
-	Headers   map[string]string `json:"headers,omitempty"`
-	Body      string            `json:"body,omitempty"`
-	Error     string            `json:"error,omitempty"`
-	Region    string            `json:"region"`
-	Latency   int64             `json:"latency"`
-	Timestamp int64             `json:"timestamp"`
-	Status    int               `json:"status,omitempty"`
-	Timing    Timing            `json:"timing"`
+	JobType   string `json:"jobType"`
+	Region    string `json:"region"`
+	Message   json.RawMessage
+	Timestamp int64 `json:"timestamp"`
+	Latency   int64 `json:"latency"`
+}
+
+type HTTPRunResult struct {
+	Headers map[string]string `json:"headers,omitempty"`
+	Body    string            `json:"body,omitempty"`
+	Error   string            `json:"error,omitempty"`
+	Status  int               `json:"status,omitempty"`
+	Timing  Timing            `json:"timing"`
+}
+
+type TCPRunResult struct {
+	ErrorMessge string `json:"errorMessage"`
+	Timing      struct {
+		TCPStart int64 `json:"tcpStart"`
+		TCPDone  int64 `json:"tcpDone"`
+	} `json:"timing"`
 }
 
 func MonitorsCmd() *cli.Command {

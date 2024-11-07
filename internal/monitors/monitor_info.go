@@ -10,7 +10,7 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func getMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) error {
+func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) error {
 
 	if monitorId == "" {
 		return fmt.Errorf("Monitor ID is required")
@@ -50,7 +50,7 @@ func GetMonitorInfoCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			fmt.Println("Monitor information")
 			monitorId := cmd.Args().Get(0)
-			err := getMonitorInfo(http.DefaultClient, cmd.String("access-token"), monitorId)
+			err := GetMonitorInfo(http.DefaultClient, cmd.String("access-token"), monitorId)
 			if err != nil {
 				return cli.Exit("Failed to get monitor information", 1)
 			}

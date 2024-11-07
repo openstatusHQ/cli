@@ -14,7 +14,7 @@ import (
 
 var allMonitor bool
 
-func listMonitors(httpClient *http.Client, apiKey string) error {
+func ListMonitors(httpClient *http.Client, apiKey string) error {
 	url := "https://api.openstatus.dev/v1/monitor"
 
 	req, _ := http.NewRequest("GET", url, nil)
@@ -72,7 +72,7 @@ func GetMonitorsListCmd() *cli.Command {
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			fmt.Println("List of all monitors")
-			err := listMonitors(http.DefaultClient, cmd.String("access-token"))
+			err := ListMonitors(http.DefaultClient, cmd.String("access-token"))
 			if err != nil {
 				return cli.Exit("Failed to list monitors", 1)
 			}

@@ -17,7 +17,7 @@ var (
 	noResult bool
 )
 
-func monitorTrigger(httpClient *http.Client, apiKey string, monitorId string) error {
+func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) error {
 
 	if monitorId == "" {
 		return fmt.Errorf("Monitor ID is required")
@@ -57,12 +57,30 @@ func monitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 
 	var inError bool
 	for _, r := range result {
-		if r.Error != "" {
-			inError = true
-			tbl.AddRow(r.Region, r.Latency, color.RedString("❌"))
-		} else {
-			tbl.AddRow(r.Region, r.Latency, color.GreenString("✔"))
+		if r.JobType == "tcp" {
+			var result TCPRunResult
+			if err := json.Unmarshal(r.Message, &result); err != nil {
+				return fmt.Errorf("unable to unmarshal : %w", err)
+			}
+			if result.ErrorMessge != "" {
+				inError = true
+				tbl.AddRow(r.Region, r.Latency, color.RedString("❌"))
+				continue
+			}
+
 		}
+		if r.JobType == "http" {
+			var result HTTPRunResult
+			if err := json.Unmarshal(r.Message, &result); err != nil {
+				return fmt.Errorf("unable to unmarshal : %w", err)
+			}
+			if result.Error != "" {
+				inError = true
+				tbl.AddRow(r.Region, r.Latency, color.RedString("❌"))
+				continue
+			}
+		}
+		tbl.AddRow(r.Region, r.Latency, color.GreenString("✔"))
 
 	}
 	tbl.Print()
@@ -98,7 +116,7 @@ func GetMonitorsTriggerCmd() *cli.Command {
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			monitorId := cmd.Args().Get(0)
-			err := monitorTrigger(http.DefaultClient, cmd.String("access-token"), monitorId)
+			err := MonitorTrigger(http.DefaultClient, cmd.String("access-token"), monitorId)
 			if err != nil {
 				return cli.Exit("Failed to trigger monitor", 1)
 			}

@@ -16,7 +16,7 @@ type Whoami struct {
 	Plan string `json:"plan"`
 }
 
-func getWhoamiCmd(httpClient *http.Client, apiKey string) error {
+func GetWhoamiCmd(httpClient *http.Client, apiKey string) error {
 	url := "https://api.openstatus.dev/v1/whoami"
 
 	req, _ := http.NewRequest("GET", url, nil)
@@ -50,7 +50,7 @@ func WhoamiCmd() *cli.Command {
 		Usage:   "Get your current workspace information",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			fmt.Println("Your current workspace information")
-			err := getWhoamiCmd(http.DefaultClient, cmd.String("access-token"))
+			err := GetWhoamiCmd(http.DefaultClient, cmd.String("access-token"))
 			if err != nil {
 				return cli.Exit("Failed to get workspace information", 1)
 			}

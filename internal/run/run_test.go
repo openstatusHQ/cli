@@ -59,6 +59,7 @@ func Test_run(t *testing.T) {
 	t.Run("Successfully run http reponse", func(t *testing.T) {
 		body := `[
   {
+  "jobType": "http",
     "status": 200,
     "latency": 318,
     "region": "iad",
@@ -77,6 +78,42 @@ func Test_run(t *testing.T) {
     },
     "body": "{\"ping\":\"pong\"}"
   }]`
+		r := io.NopCloser(bytes.NewReader([]byte(body)))
+
+		interceptor := &interceptorHTTPClient{
+			f: func(req *http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       r,
+				}, nil
+			},
+		}
+
+		var bf bytes.Buffer
+		log.SetOutput(&bf)
+		t.Cleanup(func() {
+			log.SetOutput(os.Stdout)
+		})
+		err := run.MonitorTrigger(interceptor.GetHTTPClient(), "", "1")
+		if err != nil {
+			t.Error(err)
+			t.Errorf("Monitor Trigger should return error")
+		}
+	})
+	t.Run("Successfully run tcp reponse", func(t *testing.T) {
+		body := `[
+		{
+    "jobType": "tcp",
+    "latency": 3,
+    "region": "ams",
+    "timestamp": 1730990324626,
+    "timing": {
+      "tcpStart": 1730990324626,
+      "tcpDone": 1730990324629
+    },
+    "errorMessage": ""
+  }]`
+
 		r := io.NopCloser(bytes.NewReader([]byte(body)))
 
 		interceptor := &interceptorHTTPClient{

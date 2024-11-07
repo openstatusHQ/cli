@@ -64,8 +64,8 @@ type HTTPRunResult struct {
 }
 
 type TCPRunResult struct {
-	ErrorMessge string `json:"errorMessage"`
-	Timing      struct {
+	ErrorMessage string `json:"errorMessage"`
+	Timing       struct {
 		TCPStart int64 `json:"tcpStart"`
 		TCPDone  int64 `json:"tcpDone"`
 	} `json:"timing"`

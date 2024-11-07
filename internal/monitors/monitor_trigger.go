@@ -7,8 +7,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/fatih/color"
-	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
 )
 
@@ -24,7 +22,7 @@ func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 	}
 	fmt.Println("Waiting for the result...")
 
-	url := fmt.Sprintf("https://api.openstatus.dev/v1/monitor/%s/run", monitorId)
+	url := fmt.Sprintf("https://api.openstatus.dev/v1/monitor/%s/trigger", monitorId)
 
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
@@ -43,55 +41,14 @@ func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 	defer res.Body.Close()
 	body, _ := io.ReadAll(res.Body)
 
-	var result []RunResult
-	err = json.Unmarshal(body, &result)
+	var r MonitorTriggerResponse
+	err = json.Unmarshal(body, &r)
 	if err != nil {
+
 		return err
 	}
+	fmt.Printf("Result ID: %d\n", r.ResultId)
 
-	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
-	columnFmt := color.New(color.FgYellow).SprintfFunc()
-
-	tbl := table.New("Region", "Latency (ms)", "Status")
-	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
-
-	var inError bool
-	for _, r := range result {
-		if r.JobType == "tcp" {
-			var result TCPRunResult
-			if err := json.Unmarshal(r.Message, &result); err != nil {
-				return fmt.Errorf("unable to unmarshal : %w", err)
-			}
-			if result.ErrorMessge != "" {
-				inError = true
-				tbl.AddRow(r.Region, r.Latency, color.RedString("❌"))
-				continue
-			}
-
-		}
-		if r.JobType == "http" {
-			var result HTTPRunResult
-			if err := json.Unmarshal(r.Message, &result); err != nil {
-				return fmt.Errorf("unable to unmarshal : %w", err)
-			}
-			if result.Error != "" {
-				inError = true
-				tbl.AddRow(r.Region, r.Latency, color.RedString("❌"))
-				continue
-			}
-		}
-		tbl.AddRow(r.Region, r.Latency, color.GreenString("✔"))
-
-	}
-	tbl.Print()
-
-	if inError {
-		fmt.Println(color.RedString("Some regions failed"))
-
-		return fmt.Errorf("Some regions failed")
-	} else {
-		fmt.Println(color.GreenString("All regions passed"))
-	}
 	return nil
 }
 
@@ -100,12 +57,6 @@ func GetMonitorsTriggerCmd() *cli.Command {
 		Name:  "trigger",
 		Usage: "Trigger a monitor test",
 		Flags: []cli.Flag{
-
-			&cli.BoolFlag{
-				Name:        "no-result",
-				Usage:       "Do not return the result of the test, return the result ID",
-				Destination: &noResult,
-			},
 			&cli.StringFlag{
 				Name:     "access-token",
 				Usage:    "OpenStatus API Access Token",

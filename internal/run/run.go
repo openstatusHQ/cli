@@ -40,7 +40,7 @@ func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 	defer res.Body.Close()
 	body, _ := io.ReadAll(res.Body)
 
-	var result []monitors.RunResult
+	var result []json.RawMessage
 	err = json.Unmarshal(body, &result)
 	if err != nil {
 		return err
@@ -54,31 +54,44 @@ func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 
 	var inError bool
 	for _, r := range result {
-		if r.JobType == "tcp" {
-			var result monitors.TCPRunResult
-			if err := json.Unmarshal(r.Message, &result); err != nil {
-				return fmt.Errorf("unable to unmarshal : %w", err)
-			}
-			if result.ErrorMessge != "" {
-				inError = true
-				tbl.AddRow(r.Region, r.Latency, color.RedString("❌"))
-				continue
-			}
+		result := monitors.RunResult{}
 
+		if err := json.Unmarshal(r, &result); err != nil {
+
+			return fmt.Errorf("unable to unmarshal : %w", err)
 		}
-		if r.JobType == "http" {
-			var result monitors.HTTPRunResult
-			if err := json.Unmarshal(r.Message, &result); err != nil {
-				return fmt.Errorf("unable to unmarshal : %w", err)
+		switch result.JobType {
+		case "tcp":
+			{
+				var tcp monitors.TCPRunResult
+				if err := json.Unmarshal(r, &result); err != nil {
+					return fmt.Errorf("unable to unmarshal : %w", err)
+				}
+				if tcp.ErrorMessage != "" {
+					inError = true
+					tbl.AddRow(result.Region, result.Latency, color.RedString("❌"))
+					continue
+				}
+
 			}
-			if result.Error != "" {
-				inError = true
-				tbl.AddRow(r.Region, r.Latency, color.RedString("❌"))
-				continue
+		case "http":
+			{
+				var http monitors.HTTPRunResult
+				if err := json.Unmarshal(r, &http); err != nil {
+					fmt.Println("Error", err)
+					return fmt.Errorf("unable to unmarshal : %w", err)
+				}
+				if http.Error != "" {
+					inError = true
+					tbl.AddRow(result.Region, result.Latency, color.RedString("❌"))
+					continue
+				}
 			}
+		default:
+			return fmt.Errorf("Unknown job type")
 		}
 
-		tbl.AddRow(r.Region, r.Latency, color.GreenString("✔"))
+		tbl.AddRow(result.Region, result.Latency, color.GreenString("✔"))
 
 	}
 	tbl.Print()

@@ -53,9 +53,9 @@ func Test_getMonitorTrigger(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.MonitorTrigger(interceptor.GetHTTPClient(), "", "")
-		if err == nil {
-			t.Errorf("Expected log output, got nothing")
+		err := monitors.MonitorTrigger(interceptor.GetHTTPClient(), "", "1")
+		if err != nil {
+			t.Errorf("Expected no output, got error")
 		}
 	})
 	t.Run("No 200 throw error", func(t *testing.T) {

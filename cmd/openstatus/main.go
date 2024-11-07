@@ -15,7 +15,7 @@ func main() {
 	app := &cli.Command{
 		Name:    "OpenStatus",
 		Usage:   "This is OpenStatus Command Line Interface",
-		Version: "v0.0.1",
+		Version: "v0.0.2",
 		Commands: []*cli.Command{
 			monitors.MonitorsCmd(),
 			run.RunCmd(),

@@ -18,11 +18,18 @@ type Config struct {
 }
 
 func ReadConfig(path string) (*Config, error) {
-	k.Load(file.Provider(path), yaml.Parser())
+
+	file := file.Provider(path)
+
+	err:= k.Load(file, yaml.Parser())
+
+	if err != nil {
+		return nil, err
+	}
 
 	var out Config
 
-	err := k.Unmarshal("", &out)
+	err = k.Unmarshal("", &out)
 	if err != nil {
 		return nil, err
 	}

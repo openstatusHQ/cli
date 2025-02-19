@@ -3,10 +3,14 @@ package run
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/openstatusHQ/cli/internal/config"
@@ -23,7 +27,11 @@ func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 
 	url := fmt.Sprintf("https://api.openstatus.dev/v1/monitor/%s/run", monitorId)
 
-	req, err := http.NewRequest("POST", url, nil)
+	httpClient.Timeout = 2 * time.Minute
+
+	payload := strings.NewReader("{}")
+
+	req, err := http.NewRequest("POST", url, payload)
 	if err != nil {
 		return err
 	}
@@ -113,6 +121,12 @@ func RunCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 
 			path := cmd.String("config")
+			if path != "" {
+				if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+					return cli.Exit("Config does not exist", 1)
+				}
+			}
+
 			conf, err := config.ReadConfig(path)
 			if err != nil {
 				return err
@@ -123,6 +137,7 @@ func RunCmd() *cli.Command {
 			fmt.Println("Tests are running")
 
 			var wg sync.WaitGroup
+
 
 			for _, id := range conf.Tests.Ids {
 				wg.Add(1)

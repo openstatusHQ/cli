@@ -17,7 +17,7 @@ var allMonitor bool
 func ListMonitors(httpClient *http.Client, apiKey string) error {
 	url := "https://api.openstatus.dev/v1/monitor"
 
-	req, _ := http.NewRequest("GET", url, nil)
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
 	req.Header.Add("x-openstatus-key", apiKey)
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -56,6 +56,7 @@ func GetMonitorsListCmd() *cli.Command {
 	monitorsListCmd := cli.Command{
 		Name:  "list",
 		Usage: "List all monitors",
+		UsageText: "openstatus monitors list [options]",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:        "all",

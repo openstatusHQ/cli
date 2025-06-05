@@ -6,7 +6,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"strings"
 
+	// "github.com/logrusorgru/aurora/v4"
+	"github.com/logrusorgru/aurora/v4"
+	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/urfave/cli/v3"
 )
 
@@ -18,7 +25,7 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 
 	url := "https://api.openstatus.dev/v1/monitor/" + monitorId
 
-	req, _ := http.NewRequest("GET", url, nil)
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
 
 	req.Header.Add("x-openstatus-key", apiKey)
 
@@ -27,19 +34,76 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 		return err
 	}
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("Failed to get monitor information")
+		return fmt.Errorf("You don't have permission to access this monitor")
 	}
 	defer res.Body.Close()
 	body, _ := io.ReadAll(res.Body)
 
-	var monitors Monitor
-	err = json.Unmarshal(body, &monitors)
+	var monitor Monitor
+	err = json.Unmarshal(body, &monitor)
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 
-	fmt.Println("Monitor")
-	fmt.Printf("ID: %d\nName: %s\nURL: %s\nPeriodicity: %s\nDescription: %s\nMethod: %s\nActive: %t\nPublic: %t\nTimeout: %d\nDegradedAfter: %d\n", monitors.ID, monitors.Name, monitors.URL, monitors.Periodicity, monitors.Description, monitors.Method, monitors.Active, monitors.Public, monitors.Timeout, monitors.DegradedAfter)
+	// fmt.Println("Monitor")
+
+	fmt.Println(aurora.Bold("Monitor:"))
+	table := tablewriter.NewTable(os.Stdout,
+		tablewriter.WithRenderer(renderer.NewBlueprint()),
+		tablewriter.WithRendition(tw.Rendition{
+			Symbols: tw.NewSymbolCustom("custom").WithColumn("="),
+			Borders: tw.Border{
+				Top:    tw.Off,
+				Left:   tw.Off,
+				Right:  tw.Off,
+				Bottom: tw.Off,
+			},
+			Settings: tw.Settings{
+				Lines: tw.Lines{ // Major internal separator lines
+					ShowHeaderLine: tw.Off, // Line after header
+					ShowFooterLine: tw.On, // Line before footer (if footer exists)
+				},
+				Separators: tw.Separators{ // General row and column separators
+					BetweenRows:    tw.Off, // Horizontal lines between data rows
+					BetweenColumns: tw.On, // Vertical lines between columns
+				},
+			},
+		}),
+		tablewriter.WithRowAlignment(tw.AlignLeft),    // Common for Markdown
+		tablewriter.WithHeaderAlignment(tw.AlignLeft), //
+	)
+
+	data := [][]string{
+		{"ID",fmt.Sprintf("%d", monitor.ID)},
+		{"Name",monitor.Name},
+		{"Description",monitor.Description},
+		{"Endpoint",monitor.URL},
+
+	}
+	if monitor.Method != "" {
+		data = append(data, []string{"Method", monitor.Method})
+	}
+
+	data = append(data, []string{"Frequency",monitor.Periodicity})
+	data = append(data, []string{"Locations", strings.Join(monitor.Regions, ",")})
+	data = append(data, []string{"Active", fmt.Sprintf("%t", monitor.Active)})
+	data = append(data, []string{"Public", fmt.Sprintf("%t", monitor.Public)})
+
+	if monitor.Timeout > 0 {
+		data = append(data, []string{"Timeout", fmt.Sprintf("%d ms", monitor.Timeout)})
+	}
+	if monitor.DegradedAfter > 0 {
+		data = append(data, []string{"Degraded After", fmt.Sprintf("%d", monitor.DegradedAfter)})
+	}
+
+	if monitor.Body != "" {
+		s := fmt.Sprintf("%s", monitor.Body)
+		data = append(data, []string{"Body", s[:40]})
+	}
+	table.Bulk(data)
+	table.Render()
+
 	return nil
 }
 
@@ -48,11 +112,10 @@ func GetMonitorInfoCmd() *cli.Command {
 		Name:  "info",
 		Usage: "Get monitor information",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			fmt.Println("Monitor information")
 			monitorId := cmd.Args().Get(0)
 			err := GetMonitorInfo(http.DefaultClient, cmd.String("access-token"), monitorId)
 			if err != nil {
-				return cli.Exit("Failed to get monitor information", 1)
+				return cli.Exit(err.Error(), 1)
 			}
 			return nil
 		},

@@ -24,7 +24,7 @@ func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 
 	url := fmt.Sprintf("https://api.openstatus.dev/v1/monitor/%s/trigger", monitorId)
 
-	req, err := http.NewRequest("POST", url, nil)
+	req, err := http.NewRequest(http.MethodPost, url, nil)
 	if err != nil {
 		return err
 	}
@@ -44,10 +44,9 @@ func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 	var r MonitorTriggerResponse
 	err = json.Unmarshal(body, &r)
 	if err != nil {
-
 		return err
 	}
-	fmt.Printf("Result ID: %d\n", r.ResultId)
+	fmt.Printf("Check triggered successfully\n")
 
 	return nil
 }
@@ -56,6 +55,7 @@ func GetMonitorsTriggerCmd() *cli.Command {
 	monitorsCmd := cli.Command{
 		Name:  "trigger",
 		Usage: "Trigger a monitor test",
+		UsageText: "openstatus monitors trigger [MonitorId] [options]",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "access-token",

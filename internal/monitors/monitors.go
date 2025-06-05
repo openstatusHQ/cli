@@ -7,16 +7,32 @@ import (
 )
 
 type Monitor struct {
-	ID            int    `json:"id"`
-	Name          string `json:"name"`
-	URL           string `json:"url"`
-	Periodicity   string `json:"periodicity"`
-	Description   string `json:"description"`
-	Method        string `json:"method"`
-	Active        bool   `json:"active"`
-	Public        bool   `json:"public"`
-	Timeout       int    `json:"timeout"`
-	DegradedAfter int    `json:"degraded_after,omitempty"`
+	ID            int               `json:"id"`
+	Name          string            `json:"name"`
+	URL           string            `json:"url"`
+	Periodicity   string            `json:"periodicity"`
+	Description   string            `json:"description"`
+	Method        string            `json:"method"`
+	Regions       []string          `json:"regions"`
+	Active        bool              `json:"active"`
+	Public        bool              `json:"public"`
+	Timeout       int               `json:"timeout"`
+	DegradedAfter int               `json:"degraded_after,omitempty"`
+	Body          string            `json:"body"`
+	Headers       []Header          `json:"headers,omitempty"`
+	Assertions    []Assertion       `json:"assertions,omitempty"`
+}
+
+type Header struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type Assertion struct {
+	Type    string `json:"type"`
+	Compare string `json:"compare"`
+	Value   string `json:"value"`
+	Target  any    `json:"target"`
 }
 
 type Timing struct {
@@ -77,6 +93,8 @@ func MonitorsCmd() *cli.Command {
 		Usage: "Manage your monitors",
 
 		Commands: []*cli.Command{
+			GetMonitorCreateCmd(),
+			GetMonitorDeleteCmd(),
 			GetMonitorInfoCmd(),
 			GetMonitorsListCmd(),
 			GetMonitorsTriggerCmd(),

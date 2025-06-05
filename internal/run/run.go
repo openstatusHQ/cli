@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/logrusorgru/aurora/v4"
 	"github.com/openstatusHQ/cli/internal/config"
 	"github.com/openstatusHQ/cli/internal/monitors"
 	"github.com/rodaine/table"
@@ -53,7 +54,7 @@ func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 	if err != nil {
 		return err
 	}
-	fmt.Println("Results for monitor:", monitorId)
+	fmt.Println(aurora.Bold(fmt.Sprintf("Monitor: %s", monitorId)))
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
 
@@ -117,7 +118,9 @@ func RunCmd() *cli.Command {
 	runCmd := cli.Command{
 		Name:    "run",
 		Aliases: []string{"r"},
-		Usage:   "Run your synthetics tests defined in your configuration file",
+		Usage:   "Run your synthetics tests",
+		UsageText: "openstatus run[options]",
+		Description: "Run synthetic tests defined your config.openstatus.yaml",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 
 			path := cmd.String("config")
@@ -134,7 +137,7 @@ func RunCmd() *cli.Command {
 			size := len(conf.Tests.Ids)
 			ch := make(chan error, size)
 
-			fmt.Println("Tests are running")
+			fmt.Print("Tests are running\n\n")
 
 			var wg sync.WaitGroup
 
@@ -155,7 +158,6 @@ func RunCmd() *cli.Command {
 			if len(ch) > 0 {
 				return cli.Exit("Some tests failed", 1)
 			}
-			fmt.Println("Test ran succesfully🔥")
 			return nil
 		},
 		Flags: []cli.Flag{

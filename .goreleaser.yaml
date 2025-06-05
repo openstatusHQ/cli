@@ -65,7 +65,7 @@ brews:
     test: |
       system "#{bin}/openstatus --help"
     extra_install: |
-      man1.install "openstatus-docs.1"
+      man1.install "docs/openstatus-docs.1"
     repository:
       # Repository owner.
       #

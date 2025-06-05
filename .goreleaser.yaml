@@ -12,7 +12,7 @@ before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod tidy
-
+    - pandoc -s -t man openstatus-docs.md -o openstatus-docs
 builds:
   - env:
       - CGO_ENABLED=0
@@ -41,7 +41,7 @@ archives:
       - goos: windows
         formats:  [ 'zip' ]
     files:
-      - docs/*
+      - openstatus-docs
     # replacements:
     #   darwin: Darwin
     #   linux: Linux
@@ -65,7 +65,7 @@ brews:
     test: |
       system "#{bin}/openstatus --help"
     extra_install: |
-      man1.install "docs/openstatus-docs"
+      man1.install "openstatus-docs"
     repository:
       # Repository owner.
       #

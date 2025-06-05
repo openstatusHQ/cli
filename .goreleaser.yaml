@@ -12,7 +12,7 @@ before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod tidy
-    - pandoc -s -t man openstatus-docs.md -o openstatus-docs
+    # - pandoc -s -t man openstatus-docs.md -o openstatus-docs
 builds:
   - env:
       - CGO_ENABLED=0

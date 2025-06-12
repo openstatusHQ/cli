@@ -62,7 +62,7 @@ homebrew_casks:
     homepage: https://www.openstatus.dev
     skip_upload: auto
     description: "OpenStatus CLI"
-    directory: Formula
+    directory: Casks
     manpage: openstatus-docs.1
     repository:
 

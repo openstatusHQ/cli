@@ -63,7 +63,7 @@ homebrew_casks:
     skip_upload: auto
     description: "OpenStatus CLI"
     directory: Casks
-    manpage: docs/openstatus-docs.1
+    manpage: docs/openstatus.1
     repository:
       owner: openstatusHQ
       # Repository name.

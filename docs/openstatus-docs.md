@@ -1,4 +1,4 @@
-# CLI
+# OpenStatus CLI
 
 # NAME
 

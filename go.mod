@@ -12,6 +12,7 @@ require (
 	github.com/logrusorgru/aurora/v4 v4.0.0
 	github.com/olekukonko/tablewriter v1.0.7
 	github.com/rodaine/table v1.3.0
+	github.com/urfave/cli-docs/v3 v3.0.0-alpha6
 )
 
 require (
@@ -28,7 +29,6 @@ require (
 	github.com/olekukonko/ll v0.0.8 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/urfave/cli-docs/v3 v3.0.0-alpha6 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

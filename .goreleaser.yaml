@@ -41,7 +41,7 @@ archives:
       - goos: windows
         formats:  [ 'zip' ]
     files:
-      - openstatus-docs.1
+      - docs/openstatus.1
     # replacements:
     #   darwin: Darwin
     #   linux: Linux
@@ -63,7 +63,7 @@ homebrew_casks:
     skip_upload: auto
     description: "OpenStatus CLI"
     directory: Casks
-    manpage: openstatus-docs.1
+    manpage: docs/openstatus-docs.1
     repository:
       owner: openstatusHQ
       # Repository name.

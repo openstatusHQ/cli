@@ -55,42 +55,17 @@ changelog:
       - "^docs:"
       - "^test:"
 
-homebrew_casks:
-  -
-    name: openstatus
-    binary: openstatus
-    homepage: https://www.openstatus.dev
-    skip_upload: auto
-    description: "OpenStatus CLI"
-    directory: Casks
-    manpage: openstatus-docs.1
-    repository:
-
-      owner: openstatusHQ
-
-      # Repository name.
-      #
-      # Templates: allowed.
-      name: homebrew-cli
-
-
-      branch: main
-      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-
-# brews:
+# homebrew_casks:
 #   -
 #     name: openstatus
-#     directory: Formula
+#     binary: openstatus
 #     homepage: https://www.openstatus.dev
 #     skip_upload: auto
-#     test: |
-#       system "#{bin}/openstatus --help"
-#     extra_install: |
-#       man1.install "openstatus-docs.1"
+#     description: "OpenStatus CLI"
+#     directory: Casks
+#     manpage: openstatus-docs.1
 #     repository:
-#       # Repository owner.
-#       #
-#       # Templates: allowed.
+
 #       owner: openstatusHQ
 
 #       # Repository name.
@@ -101,3 +76,28 @@ homebrew_casks:
 
 #       branch: main
 #       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+
+brews:
+  -
+    name: openstatus
+    directory: Formula
+    homepage: https://www.openstatus.dev
+    skip_upload: auto
+    test: |
+      system "#{bin}/openstatus --help"
+    extra_install: |
+      man1.install "openstatus-docs.1"
+    repository:
+      # Repository owner.
+      #
+      # Templates: allowed.
+      owner: openstatusHQ
+
+      # Repository name.
+      #
+      # Templates: allowed.
+      name: homebrew-cli
+
+
+      branch: main
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"

@@ -55,17 +55,47 @@ changelog:
       - "^docs:"
       - "^test:"
 
-# homebrew_casks:
+homebrew_casks:
+  -
+    name: openstatus
+    binary: openstatus
+    homepage: https://www.openstatus.dev
+    skip_upload: auto
+    description: "OpenStatus CLI"
+    directory: Casks
+    manpage: openstatus-docs.1
+    repository:
+      owner: openstatusHQ
+      # Repository name.
+      #
+      # Templates: allowed.
+      name: homebrew-cli
+      branch: main
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+
+    hooks:
+      post:
+        # replace foo with the actual binary name
+        install: |
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            # replace 'foo' with the actual binary name
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/openstatus"]
+          end
+
+# brews:
 #   -
 #     name: openstatus
-#     binary: openstatus
+#     directory: Formula
 #     homepage: https://www.openstatus.dev
 #     skip_upload: auto
-#     description: "OpenStatus CLI"
-#     directory: Casks
-#     manpage: openstatus-docs.1
+#     test: |
+#       system "#{bin}/openstatus --help"
+#     extra_install: |
+#       man1.install "openstatus-docs.1"
 #     repository:
-
+#       # Repository owner.
+#       #
+#       # Templates: allowed.
 #       owner: openstatusHQ
 
 #       # Repository name.
@@ -76,28 +106,3 @@ changelog:
 
 #       branch: main
 #       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-
-brews:
-  -
-    name: openstatus
-    directory: Formula
-    homepage: https://www.openstatus.dev
-    skip_upload: auto
-    test: |
-      system "#{bin}/openstatus --help"
-    extra_install: |
-      man1.install "openstatus-docs.1"
-    repository:
-      # Repository owner.
-      #
-      # Templates: allowed.
-      owner: openstatusHQ
-
-      # Repository name.
-      #
-      # Templates: allowed.
-      name: homebrew-cli
-
-
-      branch: main
-      token: "{{ .Env.TAP_GITHUB_TOKEN }}"

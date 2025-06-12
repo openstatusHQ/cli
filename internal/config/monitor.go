@@ -1,55 +1,55 @@
 package config
 
 type Monitor struct {
-	// Whether the monitor is active
-	Active bool `json:"active,omitempty"`
-	// Assertions to run on the response
-	Assertions []Assertion `json:"assertions,omitempty"`
-	// Time in milliseconds to wait before marking the request as degraded
-	DegradedAfter int64          `json:"degradedAfter,omitempty"`
-	Description   string         `json:"description,omitempty"`
-	Frequency     Frequency      `json:"frequency"`
-	Kind          CoordinateKind `json:"kind"`
 	// Name of the monitor
-	Name string `json:"name"`
-	// Whether the monitor is public
-	Public bool `json:"public,omitempty"`
+	Name string `json:"name" ,yaml:"name"`
+	Description   string         `json:"description,omitempty" ,yaml:"description,omitempty"`
+	Frequency     Frequency      `json:"frequency" ,yaml:"frequency"`
 	// Regions to run the request in
-	Regions []Region `json:"regions"`
-	// The HTTP Request we are sending
-	Request Request `json:"request"`
+	Regions []Region `json:"regions" ,yaml:"regions"`
+	// Whether the monitor is active
+	Active bool `json:"active"`
+	Kind          CoordinateKind `json:"kind" ,yaml:"kind"`
 	// Number of retries to attempt
-	Retry int64 `json:"retry,omitempty"`
+	Retry int64 `json:"retry,omitempty" ,yaml:"retry,omitempty"`
+	// Whether the monitor is public
+	Public bool `json:"public,omitempty" ,yaml:"public,omitempty"`
+	// The HTTP Request we are sending
+	Request Request `json:"request" ,yaml:"request"`
+	// Time in milliseconds to wait before marking the request as degraded
+	DegradedAfter int64          `json:"degradedAfter,omitempty" ,yaml:"degradedAfter,omitempty"`
 	// Time in milliseconds to wait before marking the request as timed out
-	Timeout int64 `json:"timeout,omitempty"`
+	Timeout int64 `json:"timeout,omitempty" ,yaml:"timeout,omitempty"`
+	// Assertions to run on the response
+	Assertions []Assertion `json:"assertions,omitempty" ,yaml:"assertions,omitempty"`
 }
 
 type Assertion struct {
 	// Comparison operator
-	Compare Compare       `json:"compare"`
-	Kind    AssertionKind `json:"kind"`
+	Compare Compare       `json:"compare" ,yaml:"compare"`
+	Kind    AssertionKind `json:"kind" ,yaml:"kind"`
 	// Status code to assert
 	//
 	// Header value to assert
 	//
 	// Text body to assert
-	Target any `json:"target"`
+	Target any `json:"target" ,yaml:"target"`
 	// Header key to assert
-	Key string `json:"key,omitempty"`
+	Key string `json:"key,omitempty" ,yaml:"key,omitempty"`
 }
 
 // The HTTP Request we are sending
 type Request struct {
 	// Body to send with the request
-	Body    string            `json:"body,omitempty"`
-	Headers map[string]string `json:"headers,omitempty"`
-	Method  Method            `json:"method,omitempty"`
+	Body    string            `json:"body,omitempty" ,yaml:"body,omitempty"`
+	Headers map[string]string `json:"headers,omitempty" ,yaml:"headers,omitempty"`
+	Method  Method            `json:"method,omitempty" ,yaml:"method,omitempty"`
 	// URL to request
-	URL string `json:"url,omitempty"`
+	URL string `json:"url,omitempty" ,yaml:"url,omitempty"`
 	// Host to connect to
-	Host string `json:"host,omitempty"`
+	Host string `json:"host,omitempty" ,yaml:"host,omitempty"`
 	// Port to connect to
-	Port float64 `json:"port,omitempty"`
+	Port int64 `json:"port,omitempty" ,yaml:"port,omitempty"`
 }
 
 // Comparison operator

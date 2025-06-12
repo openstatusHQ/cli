@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -14,13 +15,22 @@ import (
 func main() {
 	app := &cli.Command{
 		Name:    "openstatus",
+		Suggest: true,
 		Usage:   "This is OpenStatus Command Line Interface",
-		Description: "OpenStatus is a command line interface for managing your monitors and triggering your synthetics tests. \n\nPlease report any issues at https://github.com/openstatusHQ/cli/issues/new",
+  		UsageText: "openstatus [command] [flags]",
+		Description: "OpenStatus is a command line interface for managing your monitors and triggering your synthetics tests.",
 		Version: "v0.0.4",
 		Commands: []*cli.Command{
 			monitors.MonitorsCmd(),
 			run.RunCmd(),
 			whoami.WhoamiCmd(),
+		},
+		EnableShellCompletion: true,
+
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			cli.ShowAppHelp(cmd)
+			fmt.Println("\n\nPlease report any issues at https://github.com/openstatusHQ/cli/issues/new")
+			return nil
 		},
 	}
 

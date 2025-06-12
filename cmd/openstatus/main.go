@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	cmd "github.com/openstatusHQ/cli/internal/cmd"

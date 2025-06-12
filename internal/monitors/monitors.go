@@ -21,6 +21,8 @@ type Monitor struct {
 	Body          string            `json:"body"`
 	Headers       []Header          `json:"headers,omitempty"`
 	Assertions    []Assertion       `json:"assertions,omitempty"`
+	Retry         int               `json:"retry"`
+	JobType       string            `json:"jobType"`
 }
 
 type Header struct {
@@ -31,7 +33,7 @@ type Header struct {
 type Assertion struct {
 	Type    string `json:"type"`
 	Compare string `json:"compare"`
-	Value   string `json:"value"`
+	Key     string `json:"key"`
 	Target  any    `json:"target"`
 }
 
@@ -95,6 +97,7 @@ func MonitorsCmd() *cli.Command {
 		Commands: []*cli.Command{
 			GetMonitorCreateCmd(),
 			GetMonitorDeleteCmd(),
+			GetMonitorExportCmd(),
 			GetMonitorInfoCmd(),
 			GetMonitorsListCmd(),
 			GetMonitorsTriggerCmd(),

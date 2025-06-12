@@ -13,6 +13,7 @@ require (
 	github.com/olekukonko/tablewriter v1.0.7
 	github.com/rodaine/table v1.3.0
 	github.com/urfave/cli-docs/v3 v3.0.0-alpha6
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require (

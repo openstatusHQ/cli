@@ -2,7 +2,7 @@
 
 # NAME
 
-openstatus - This is OpenStatus Command Line Interface
+openstatus - This is OpenStatus Command Line Interface, the OpenStatus.dev CLI
 
 # SYNOPSIS
 
@@ -48,9 +48,17 @@ Delete a monitor
 
 **--auto-accept, -y**: Automatically accept the prompt
 
+### export
+
+Export all your monitors
+
+**--access-token, -t**="": OpenStatus API Access Token
+
+**--output, -o**="": The output file name  (default: openstatus.yaml)
+
 ### info
 
-Get monitor information
+Get a monitor information
 
 **--access-token, -t**="": OpenStatus API Access Token
 
@@ -66,7 +74,7 @@ List all monitors
 
 ### trigger
 
-Trigger a monitor test
+Trigger a monitor execution
 
 >openstatus monitors trigger [MonitorId] [options]
 
@@ -84,7 +92,7 @@ Run your synthetics tests
 
 ## whoami, w
 
-Get your current workspace information
+Get your current workspace information, display the workspace name, slug, and plan
 
 >openstatus whoami [options]
 

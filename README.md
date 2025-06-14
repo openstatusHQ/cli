@@ -12,10 +12,12 @@ brew install openstatus
 
 ## Development
 
-### Docs
+### Generate Documentation
 
 Run this command to generate the documentation:
 
 ```bash
  go run cmd/docs/docs.go
+ cd docs
+ pandoc  -s -t man openstatus-docs.md -o openstatus.1
  ```

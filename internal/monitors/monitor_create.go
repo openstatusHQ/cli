@@ -50,7 +50,7 @@ func GetMonitorCreateCmd() *cli.Command {
 	monitorInfoCmd := cli.Command{
 		Name:  "create",
 		Usage: "Create monitors (beta)",
-		Description: "Create your monitors from your openstatus.yaml file ",
+		Description: "Create the monitors defined in the openstatus.yaml file",
 		UsageText: "openstatus monitors create [options]",
 
 		Action: func(ctx context.Context, cmd *cli.Command) error {

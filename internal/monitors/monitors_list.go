@@ -56,6 +56,7 @@ func GetMonitorsListCmd() *cli.Command {
 	monitorsListCmd := cli.Command{
 		Name:  "list",
 		Usage: "List all monitors",
+		Description: "List all monitors. The list shows all your monitors attached to your workspace. It displays the ID, name, and URL of each monitor.",
 		UsageText: "openstatus monitors list [options]",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{

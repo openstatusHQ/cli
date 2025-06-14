@@ -3,7 +3,8 @@
 .TH "" "" "" ""
 .SH OpenStatus CLI
 .SH NAME
-openstatus \- This is OpenStatus Command Line Interface
+openstatus \- This is OpenStatus Command Line Interface, the
+OpenStatus.dev CLI
 .SH SYNOPSIS
 openstatus
 .SH DESCRIPTION
@@ -44,8 +45,15 @@ openstatus monitors delete [MonitorID] [options]
 \f[B]\(enaccess\-token, \-t\f[R]=\(lq\(lq: OpenStatus API Access Token
 .PP
 \f[B]\(enauto\-accept, \-y\f[R]: Automatically accept the prompt
+.SS export
+Export all your monitors
+.PP
+\f[B]\(enaccess\-token, \-t\f[R]=\(lq\(lq: OpenStatus API Access Token
+.PP
+\f[B]\(enoutput, \-o\f[R]=\(lq\(lq: The output file name (default:
+openstatus.yaml)
 .SS info
-Get monitor information
+Get a monitor information
 .PP
 \f[B]\(enaccess\-token, \-t\f[R]=\(lq\(lq: OpenStatus API Access Token
 .SS list
@@ -59,7 +67,7 @@ openstatus monitors list [options]
 .PP
 \f[B]\(enall\f[R]: List all monitors including inactive ones
 .SS trigger
-Trigger a monitor test
+Trigger a monitor execution
 .RS
 .PP
 openstatus monitors trigger [MonitorId] [options]
@@ -78,7 +86,8 @@ openstatus run[options]
 \f[B]\(enconfig\f[R]=\(lq\(lq: The configuration file (default:
 config.openstatus.yaml)
 .SS whoami, w
-Get your current workspace information
+Get your current workspace information, display the workspace name,
+slug, and plan
 .RS
 .PP
 openstatus whoami [options]

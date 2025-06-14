@@ -62,11 +62,11 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 			Settings: tw.Settings{
 				Lines: tw.Lines{ // Major internal separator lines
 					ShowHeaderLine: tw.Off, // Line after header
-					ShowFooterLine: tw.On, // Line before footer (if footer exists)
+					ShowFooterLine: tw.On,  // Line before footer (if footer exists)
 				},
 				Separators: tw.Separators{ // General row and column separators
 					BetweenRows:    tw.Off, // Horizontal lines between data rows
-					BetweenColumns: tw.On, // Vertical lines between columns
+					BetweenColumns: tw.On,  // Vertical lines between columns
 				},
 			},
 		}),
@@ -75,17 +75,16 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 	)
 
 	data := [][]string{
-		{"ID",fmt.Sprintf("%d", monitor.ID)},
-		{"Name",monitor.Name},
-		{"Description",monitor.Description},
-		{"Endpoint",monitor.URL},
-
+		{"ID", fmt.Sprintf("%d", monitor.ID)},
+		{"Name", monitor.Name},
+		{"Description", monitor.Description},
+		{"Endpoint", monitor.URL},
 	}
 	if monitor.Method != "" {
 		data = append(data, []string{"Method", monitor.Method})
 	}
 
-	data = append(data, []string{"Frequency",monitor.Periodicity})
+	data = append(data, []string{"Frequency", monitor.Periodicity})
 	data = append(data, []string{"Locations", strings.Join(monitor.Regions, ",")})
 	data = append(data, []string{"Active", fmt.Sprintf("%t", monitor.Active)})
 	data = append(data, []string{"Public", fmt.Sprintf("%t", monitor.Public)})
@@ -109,8 +108,9 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 
 func GetMonitorInfoCmd() *cli.Command {
 	monitorInfoCmd := cli.Command{
-		Name:  "info",
-		Usage: "Get monitor information",
+		Name:        "info",
+		Usage:       "Get a monitor information",
+		Description: "Fetch the monitor information. The monitor information includes details such as name, description, endpoint, method, frequency, locations, active status, public status, timeout, degraded after, and body. The body is truncated to 40 characters.",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			monitorId := cmd.Args().Get(0)
 			err := GetMonitorInfo(http.DefaultClient, cmd.String("access-token"), monitorId)

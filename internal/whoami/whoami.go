@@ -46,9 +46,10 @@ func GetWhoamiCmd(httpClient *http.Client, apiKey string) error {
 func WhoamiCmd() *cli.Command {
 	whoamiCmd := cli.Command{
 		Name:    "whoami",
+		Usage: "Get your workspace information",
 		Aliases: []string{"w"},
 		UsageText: "openstatus whoami [options]",
-		Usage:   "Get your current workspace information, display the workspace name, slug, and plan",
+		Description:   "Get your current workspace information, display the workspace name, slug, and plan",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			fmt.Println("Your current workspace information")
 			err := GetWhoamiCmd(http.DefaultClient, cmd.String("access-token"))

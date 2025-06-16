@@ -119,7 +119,7 @@ func RunCmd() *cli.Command {
 		Name:    "run",
 		Aliases: []string{"r"},
 		Usage:   "Run your synthetics tests",
-		UsageText: "openstatus run[options]",
+		UsageText: "openstatus run [options]",
 		Description: "Run the synthetic tests defined in the config.openstatus.yaml",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 

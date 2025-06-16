@@ -10,7 +10,7 @@ openstatus
 
 # DESCRIPTION
 
-OpenStatus is a command line interface for managing your monitors and triggering your synthetics tests. 
+OpenStatus is a command line interface for managing your monitors and triggering your synthetics tests.
 
 Please report any issues at https://github.com/openstatusHQ/cli/issues/new
 
@@ -52,6 +52,8 @@ Delete a monitor
 
 Export all your monitors
 
+>openstatus monitor export [options]
+
 **--access-token, -t**="": OpenStatus API Access Token
 
 **--output, -o**="": The output file name  (default: openstatus.yaml)
@@ -59,6 +61,8 @@ Export all your monitors
 ### info
 
 Get a monitor information
+
+>openstatus monitor info [MonitorID]
 
 **--access-token, -t**="": OpenStatus API Access Token
 
@@ -84,7 +88,7 @@ Trigger a monitor execution
 
 Run your synthetics tests
 
->openstatus run[options]
+>openstatus run [options]
 
 **--access-token, -t**="": OpenStatus API Access Token
 
@@ -92,7 +96,7 @@ Run your synthetics tests
 
 ## whoami, w
 
-Get your current workspace information, display the workspace name, slug, and plan
+Get your workspace information
 
 >openstatus whoami [options]
 

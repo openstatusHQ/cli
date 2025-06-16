@@ -47,6 +47,10 @@ openstatus monitors delete [MonitorID] [options]
 \f[B]\(enauto\-accept, \-y\f[R]: Automatically accept the prompt
 .SS export
 Export all your monitors
+.RS
+.PP
+openstatus monitor export [options]
+.RE
 .PP
 \f[B]\(enaccess\-token, \-t\f[R]=\(lq\(lq: OpenStatus API Access Token
 .PP
@@ -54,6 +58,10 @@ Export all your monitors
 openstatus.yaml)
 .SS info
 Get a monitor information
+.RS
+.PP
+openstatus monitor info [MonitorID]
+.RE
 .PP
 \f[B]\(enaccess\-token, \-t\f[R]=\(lq\(lq: OpenStatus API Access Token
 .SS list
@@ -78,7 +86,7 @@ openstatus monitors trigger [MonitorId] [options]
 Run your synthetics tests
 .RS
 .PP
-openstatus run[options]
+openstatus run [options]
 .RE
 .PP
 \f[B]\(enaccess\-token, \-t\f[R]=\(lq\(lq: OpenStatus API Access Token
@@ -86,8 +94,7 @@ openstatus run[options]
 \f[B]\(enconfig\f[R]=\(lq\(lq: The configuration file (default:
 config.openstatus.yaml)
 .SS whoami, w
-Get your current workspace information, display the workspace name,
-slug, and plan
+Get your workspace information
 .RS
 .PP
 openstatus whoami [options]

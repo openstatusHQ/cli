@@ -110,6 +110,7 @@ func GetMonitorInfoCmd() *cli.Command {
 	monitorInfoCmd := cli.Command{
 		Name:        "info",
 		Usage:       "Get a monitor information",
+		UsageText: "openstatus monitor info [MonitorID]",
 		Description: "Fetch the monitor information. The monitor information includes details such as name, description, endpoint, method, frequency, locations, active status, public status, timeout, degraded after, and body. The body is truncated to 40 characters.",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			monitorId := cmd.Args().Get(0)

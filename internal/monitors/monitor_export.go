@@ -138,6 +138,7 @@ func GetMonitorExportCmd() *cli.Command {
 	monitorInfoCmd := cli.Command{
 		Name:  "export",
 		Usage: "Export all your monitors",
+		UsageText:   "openstatus monitor export [options]",
 		Description: "Export all your monitors to YAML",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			// monitorId := cmd.Args().Get(0)

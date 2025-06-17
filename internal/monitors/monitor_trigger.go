@@ -53,9 +53,9 @@ func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 
 func GetMonitorsTriggerCmd() *cli.Command {
 	monitorsCmd := cli.Command{
-		Name:  "trigger",
-		Usage: "Trigger a monitor execution",
-		UsageText: "openstatus monitors trigger [MonitorId] [options]",
+		Name:        "trigger",
+		Usage:       "Trigger a monitor execution",
+		UsageText:   "openstatus monitors trigger [MonitorId] [options]",
 		Description: "Trigger a monitor execution on demand. This command allows you to launch your tests on demand.",
 		Flags: []cli.Flag{
 			&cli.StringFlag{

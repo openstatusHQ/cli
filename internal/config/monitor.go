@@ -2,14 +2,14 @@ package config
 
 type Monitor struct {
 	// Name of the monitor
-	Name string `json:"name" ,yaml:"name"`
-	Description   string         `json:"description,omitempty" ,yaml:"description,omitempty"`
-	Frequency     Frequency      `json:"frequency" ,yaml:"frequency"`
+	Name        string    `json:"name" ,yaml:"name"`
+	Description string    `json:"description,omitempty" ,yaml:"description,omitempty"`
+	Frequency   Frequency `json:"frequency" ,yaml:"frequency"`
 	// Regions to run the request in
 	Regions []Region `json:"regions" ,yaml:"regions"`
 	// Whether the monitor is active
-	Active bool `json:"active"`
-	Kind          CoordinateKind `json:"kind" ,yaml:"kind"`
+	Active bool           `json:"active"`
+	Kind   CoordinateKind `json:"kind" ,yaml:"kind"`
 	// Number of retries to attempt
 	Retry int64 `json:"retry,omitempty" ,yaml:"retry,omitempty"`
 	// Whether the monitor is public
@@ -17,7 +17,7 @@ type Monitor struct {
 	// The HTTP Request we are sending
 	Request Request `json:"request" ,yaml:"request"`
 	// Time in milliseconds to wait before marking the request as degraded
-	DegradedAfter int64          `json:"degradedAfter,omitempty" ,yaml:"degradedAfter,omitempty"`
+	DegradedAfter int64 `json:"degradedAfter,omitempty" ,yaml:"degradedAfter,omitempty"`
 	// Time in milliseconds to wait before marking the request as timed out
 	Timeout int64 `json:"timeout,omitempty" ,yaml:"timeout,omitempty"`
 	// Assertions to run on the response

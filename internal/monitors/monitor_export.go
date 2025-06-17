@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func ExportMonitor(httpClient *http.Client, apiKey string, path string ) error {
+func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 	url := "https://api.openstatus.dev/v1/monitor"
 
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
@@ -74,10 +74,10 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string ) error {
 				}
 
 				assertions = append(assertions, config.Assertion{
-					Kind:  kind,
-					Target: assertion.Target,
+					Kind:    kind,
+					Target:  assertion.Target,
 					Compare: config.Compare(assertion.Compare),
-					Key: assertion.Key,
+					Key:     assertion.Key,
 				})
 			}
 
@@ -109,10 +109,10 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string ) error {
 			DegradedAfter: int64(monitor.DegradedAfter),
 			Frequency:     config.Frequency(monitor.Periodicity),
 			// Regions: monitor.Regions,
-			Request: request,
-			Kind:    config.CoordinateKind(monitor.JobType),
-			Retry:   int64(monitor.Retry),
-			Regions: regions,
+			Request:    request,
+			Kind:       config.CoordinateKind(monitor.JobType),
+			Retry:      int64(monitor.Retry),
+			Regions:    regions,
 			Assertions: assertions,
 		}
 	}
@@ -136,8 +136,8 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string ) error {
 
 func GetMonitorExportCmd() *cli.Command {
 	monitorInfoCmd := cli.Command{
-		Name:  "export",
-		Usage: "Export all your monitors",
+		Name:        "export",
+		Usage:       "Export all your monitors",
 		UsageText:   "openstatus monitor export [options]",
 		Description: "Export all your monitors to YAML",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
@@ -162,7 +162,7 @@ func GetMonitorExportCmd() *cli.Command {
 				Usage:       "The output file name ",
 				DefaultText: "openstatus.yaml",
 				Value:       "openstatus.yaml",
-				Aliases: []string{"o"},
+				Aliases:     []string{"o"},
 			},
 		},
 	}

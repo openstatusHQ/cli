@@ -21,7 +21,7 @@ func ReadConfig(path string) (*Config, error) {
 
 	file := file.Provider(path)
 
-	err:= k.Load(file, yaml.Parser())
+	err := k.Load(file, yaml.Parser())
 
 	if err != nil {
 		return nil, err

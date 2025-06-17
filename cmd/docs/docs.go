@@ -1,15 +1,14 @@
-
 package main
 
 import (
 	"os"
 
-	docs "github.com/urfave/cli-docs/v3"
 	cmd "github.com/openstatusHQ/cli/internal/cmd"
+	docs "github.com/urfave/cli-docs/v3"
 )
 
 func main() {
-	app :=  cmd.NewApp()
+	app := cmd.NewApp()
 	md, err := docs.ToMarkdown(app)
 	if err != nil {
 		panic(err)

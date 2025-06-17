@@ -11,8 +11,6 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-
-
 func DeleteMonitor(httpClient *http.Client, apiKey string, monitorId string) error {
 
 	if monitorId == "" {
@@ -50,8 +48,8 @@ func DeleteMonitor(httpClient *http.Client, apiKey string, monitorId string) err
 
 func GetMonitorDeleteCmd() *cli.Command {
 	monitorsCmd := cli.Command{
-		Name:  "delete",
-		Usage: "Delete a monitor",
+		Name:      "delete",
+		Usage:     "Delete a monitor",
 		UsageText: "openstatus monitors delete [MonitorID] [options]",
 
 		Flags: []cli.Flag{

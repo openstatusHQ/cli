@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
+	cmd "github.com/openstatusHQ/cli/internal/cmd"
 	"log"
 	"os"
-	cmd "github.com/openstatusHQ/cli/internal/cmd"
 )
 
 func main() {

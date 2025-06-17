@@ -7,8 +7,6 @@ import (
 
 type Monitors map[string]Monitor
 
-
-
 func ReadOpenStatus(path string) ([]Monitor, error) {
 	f := file.Provider(path)
 
@@ -38,7 +36,6 @@ func ReadOpenStatus(path string) ([]Monitor, error) {
 			}
 		}
 	}
-
 
 	var monitor []Monitor
 	for _, value := range out {

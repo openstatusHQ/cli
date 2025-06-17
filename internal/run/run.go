@@ -116,10 +116,10 @@ func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 
 func RunCmd() *cli.Command {
 	runCmd := cli.Command{
-		Name:    "run",
-		Aliases: []string{"r"},
-		Usage:   "Run your synthetics tests",
-		UsageText: "openstatus run [options]",
+		Name:        "run",
+		Aliases:     []string{"r"},
+		Usage:       "Run your synthetics tests",
+		UsageText:   "openstatus run [options]",
 		Description: "Run the synthetic tests defined in the config.openstatus.yaml",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 
@@ -140,7 +140,6 @@ func RunCmd() *cli.Command {
 			fmt.Print("Tests are running\n\n")
 
 			var wg sync.WaitGroup
-
 
 			for _, id := range conf.Tests.Ids {
 				wg.Add(1)

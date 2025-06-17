@@ -10,7 +10,7 @@ openstatus
 
 # DESCRIPTION
 
-OpenStatus is a command line interface for managing your monitors and triggering your synthetics tests.
+OpenStatus is a command line interface for managing your monitors and triggering your synthetics tests. 
 
 Please report any issues at https://github.com/openstatusHQ/cli/issues/new
 

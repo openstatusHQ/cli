@@ -65,16 +65,19 @@ func GetMonitorCreateCmd() *cli.Command {
 
 			accept := cmd.Bool("auto-accept")
 
-			monitors, err := config.ReadOpenStatus(path)
+			out, err := config.ReadOpenStatus(path)
 			if err != nil {
 				return cli.Exit("Unable to read config file", 1)
 			}
+
+			monitors := config.TranslateMonitors(out)
 
 			if !accept {
 				if !confirmation.AskForConfirmation(fmt.Sprintf("You are about to create %d monitors do you want to continue", len(monitors))) {
 					return nil
 				}
 			}
+
 			for _, value := range monitors {
 				err = CreateMonitor(http.DefaultClient, cmd.String("access-token"), value)
 				if err != nil {
@@ -108,5 +111,3 @@ func GetMonitorCreateCmd() *cli.Command {
 	}
 	return &monitorInfoCmd
 }
-
-// os_3Za36BLXy7pN9ZY36SvSLnjD

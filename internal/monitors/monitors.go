@@ -101,6 +101,7 @@ func MonitorsCmd() *cli.Command {
 			GetMonitorInfoCmd(),
 			GetMonitorsListCmd(),
 			GetMonitorsTriggerCmd(),
+			GetMonitorsApplyCmd(),
 		},
 	}
 	return &monitorsCmd

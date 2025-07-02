@@ -1,103 +1,187 @@
 # OpenStatus CLI
 
-# NAME
+## CLI interface - openstatus
 
-openstatus - This is OpenStatus Command Line Interface, the OpenStatus.dev CLI
+OpenStatus is a command line interface for managing your monitors and triggering your synthetics tests.   Please report any issues at https://github.com/openstatusHQ/cli/issues/new.
 
-# SYNOPSIS
+This is OpenStatus Command Line Interface, the OpenStatus.dev CLI.
 
-openstatus
+Usage:
 
-# DESCRIPTION
-
-OpenStatus is a command line interface for managing your monitors and triggering your synthetics tests. 
-
-Please report any issues at https://github.com/openstatusHQ/cli/issues/new
-
-**Usage**:
-
-```
-openstatus [GLOBAL OPTIONS] [command [COMMAND OPTIONS]] [ARGUMENTS...]
+```bash
+$ openstatus [COMMAND] [COMMAND FLAGS] [ARGUMENTS...]
 ```
 
-# COMMANDS
+### `monitors` command
 
-## monitors
+Manage your monitors.
 
-Manage your monitors
+Usage:
 
-### create
+```bash
+$ openstatus [GLOBAL FLAGS] monitors [ARGUMENTS...]
+```
 
-Create monitors (beta)
+### `monitors create` subcommand
 
->openstatus monitors create [options]
+Create monitors (beta).
 
-**--access-token, -t**="": OpenStatus API Access Token
+> openstatus monitors create [options]
 
-**--auto-accept, -y**: Automatically accept the prompt
+Create the monitors defined in the openstatus.yaml file.
 
-**--config**="": The configuration file containing monitor information (default: openstatus.yaml)
+Usage:
 
-### delete
+```bash
+$ openstatus [GLOBAL FLAGS] monitors create [COMMAND FLAGS] [ARGUMENTS...]
+```
 
-Delete a monitor
+The following flags are supported:
 
->openstatus monitors delete [MonitorID] [options]
+| Name                        | Description                                           |   Default value   |  Environment variables |
+|-----------------------------|-------------------------------------------------------|:-----------------:|:----------------------:|
+| `--config="…"`              | The configuration file containing monitor information | `openstatus.yaml` |         *none*         |
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           |                   | `OPENSTATUS_API_TOKEN` |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt                       |      `false`      |         *none*         |
 
-**--access-token, -t**="": OpenStatus API Access Token
+### `monitors delete` subcommand
 
-**--auto-accept, -y**: Automatically accept the prompt
+Delete a monitor.
 
-### export
+> openstatus monitors delete [MonitorID] [options]
 
-Export all your monitors
+Usage:
 
->openstatus monitor export [options]
+```bash
+$ openstatus [GLOBAL FLAGS] monitors delete [COMMAND FLAGS] [ARGUMENTS...]
+```
 
-**--access-token, -t**="": OpenStatus API Access Token
+The following flags are supported:
 
-**--output, -o**="": The output file name  (default: openstatus.yaml)
+| Name                        | Description                     | Default value |  Environment variables |
+|-----------------------------|---------------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token     |               | `OPENSTATUS_API_TOKEN` |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt |    `false`    |         *none*         |
 
-### info
+### `monitors export` subcommand
 
-Get a monitor information
+Export all your monitors.
 
->openstatus monitor info [MonitorID]
+> openstatus monitor export [options]
 
-**--access-token, -t**="": OpenStatus API Access Token
+Export all your monitors to YAML.
 
-### list
+Usage:
 
-List all monitors
+```bash
+$ openstatus [GLOBAL FLAGS] monitors export [COMMAND FLAGS] [ARGUMENTS...]
+```
 
->openstatus monitors list [options]
+The following flags are supported:
 
-**--access-token, -t**="": OpenStatus API Access Token
+| Name                        | Description                 |   Default value   |  Environment variables |
+|-----------------------------|-----------------------------|:-----------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token |                   | `OPENSTATUS_API_TOKEN` |
+| `--output="…"` (`-o`)       | The output file name        | `openstatus.yaml` |         *none*         |
 
-**--all**: List all monitors including inactive ones
+### `monitors info` subcommand
 
-### trigger
+Get a monitor information.
 
-Trigger a monitor execution
+> openstatus monitor info [MonitorID]
 
->openstatus monitors trigger [MonitorId] [options]
+Fetch the monitor information. The monitor information includes details such as name, description, endpoint, method, frequency, locations, active status, public status, timeout, degraded after, and body. The body is truncated to 40 characters.
 
-**--access-token, -t**="": OpenStatus API Access Token
+Usage:
 
-## run, r
+```bash
+$ openstatus [GLOBAL FLAGS] monitors info [COMMAND FLAGS] [ARGUMENTS...]
+```
 
-Run your synthetics tests
+The following flags are supported:
 
->openstatus run [options]
+| Name                        | Description                 | Default value |  Environment variables |
+|-----------------------------|-----------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
 
-**--access-token, -t**="": OpenStatus API Access Token
+### `monitors list` subcommand
 
-**--config**="": The configuration file (default: config.openstatus.yaml)
+List all monitors.
 
-## whoami, w
+> openstatus monitors list [options]
 
-Get your workspace information
+List all monitors. The list shows all your monitors attached to your workspace. It displays the ID, name, and URL of each monitor.
 
->openstatus whoami [options]
+Usage:
 
-**--access-token, -t**="": OpenStatus API Access Token
+```bash
+$ openstatus [GLOBAL FLAGS] monitors list [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                               | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------|:-------------:|:----------------------:|
+| `--all`                     | List all monitors including inactive ones |    `false`    |         *none*         |
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token               |               | `OPENSTATUS_API_TOKEN` |
+
+### `monitors trigger` subcommand
+
+Trigger a monitor execution.
+
+> openstatus monitors trigger [MonitorId] [options]
+
+Trigger a monitor execution on demand. This command allows you to launch your tests on demand.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] monitors trigger [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Default value |  Environment variables |
+|-----------------------------|-----------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+
+### `run` command (aliases: `r`)
+
+Run your synthetics tests.
+
+> openstatus run [options]
+
+Run the synthetic tests defined in the config.openstatus.yaml.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] run [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 |      Default value       |  Environment variables |
+|-----------------------------|-----------------------------|:------------------------:|:----------------------:|
+| `--config="…"`              | The configuration file      | `config.openstatus.yaml` |         *none*         |
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token |                          | `OPENSTATUS_API_TOKEN` |
+
+### `whoami` command (aliases: `w`)
+
+Get your workspace information.
+
+> openstatus whoami [options]
+
+Get your current workspace information, display the workspace name, slug, and plan.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] whoami [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Default value |  Environment variables |
+|-----------------------------|-----------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |

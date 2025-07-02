@@ -9,7 +9,7 @@ import (
 
 func main() {
 	app := cmd.NewApp()
-	md, err := docs.ToMarkdown(app)
+	md, err := docs.ToTabularMarkdown(app , "openstatus")
 	if err != nil {
 		panic(err)
 	}

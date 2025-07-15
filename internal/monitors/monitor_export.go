@@ -87,7 +87,6 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 				Body:    monitor.Body,
 				Headers: headers,
 			}
-			break
 		case "tcp":
 			uri := strings.Split(monitor.URL, ":")
 
@@ -96,7 +95,7 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 				Host: uri[0],
 				Port: int64(port),
 			}
-			break
+
 		default:
 			return fmt.Errorf("unknown job type: %s", monitor.JobType)
 		}
@@ -108,7 +107,6 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 			Description:   monitor.Description,
 			DegradedAfter: int64(monitor.DegradedAfter),
 			Frequency:     config.Frequency(monitor.Periodicity),
-			// Regions: monitor.Regions,
 			Request:    request,
 			Kind:       config.CoordinateKind(monitor.JobType),
 			Retry:      int64(monitor.Retry),
@@ -116,7 +114,6 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 			Assertions: assertions,
 		}
 	}
-	// defer file.Close()
 	y, err := yaml.Marshal(&t)
 	if err != nil {
 		return err
@@ -138,7 +135,7 @@ func GetMonitorExportCmd() *cli.Command {
 	monitorInfoCmd := cli.Command{
 		Name:        "export",
 		Usage:       "Export all your monitors",
-		UsageText:   "openstatus monitor export [options]",
+		UsageText:   "openstatus monitors export [options]",
 		Description: "Export all your monitors to YAML",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			// monitorId := cmd.Args().Get(0)

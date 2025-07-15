@@ -108,5 +108,3 @@ func GetMonitorCreateCmd() *cli.Command {
 	}
 	return &monitorInfoCmd
 }
-
-// os_3Za36BLXy7pN9ZY36SvSLnjD

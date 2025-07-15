@@ -10,12 +10,6 @@ type Monitors map[string]Monitor
 func ReadOpenStatus(path string) ([]Monitor, error) {
 	f := file.Provider(path)
 
-	// r, _:= f.ReadBytes()
-
-	// fmt.Printf("%v", string(r))
-	// for _, line := range string(r) {
-	// 	fmt.Println(line)
-	// }
 	err := k.Load(f, yaml.Parser())
 
 	if err != nil {

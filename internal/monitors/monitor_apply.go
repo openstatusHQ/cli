@@ -8,50 +8,101 @@ import (
 	"os"
 
 	"github.com/google/go-cmp/cmp"
+	confirmation "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/config"
 	"github.com/urfave/cli/v3"
 	"sigs.k8s.io/yaml"
 )
 
-func CompareLockWithConfig(apiKey string, lock config.MonitorsLock, configData config.Monitors) config.MonitorsLock {
+func CompareLockWithConfig(apiKey string, applyChange bool, lock config.MonitorsLock, configData config.Monitors) config.MonitorsLock {
 
+	var created, updated, deleted int
 	// Create or update monitors
 	for v, configValue := range configData {
-
 		value, exist := lock[v]
+
 		if !exist {
-			result, err := CreateMonitor(http.DefaultClient, apiKey, configValue)
-			if err != nil {
-				fmt.Println(err)
+
+			if applyChange {
+
+				result, err := CreateMonitor(http.DefaultClient, apiKey, configValue)
+				if err != nil {
+					fmt.Println(err)
+				}
+				lock[v] = config.Lock{
+					ID:      result.ID,
+					Monitor: configValue,
+				}
 			}
-			lock[v] = config.Lock{
-				ID: result.ID,
-				Monitor: configValue,
-			}
+
+			created++
+
 			continue
 		}
 		if !cmp.Equal(configValue, value.Monitor) {
-			result, err := UpdateMonitor(http.DefaultClient,apiKey, value.ID, configValue)
-			if err != nil {
-				fmt.Println(err)
+			if applyChange {
+
+				result, err := UpdateMonitor(http.DefaultClient, apiKey, value.ID, configValue)
+				if err != nil {
+					fmt.Println(err)
+				}
+				lock[v] = config.Lock{
+					ID:      result.ID,
+					Monitor: configValue,
+				}
 			}
-			lock[v] = config.Lock{
-				ID: result.ID,
-				Monitor: configValue,
-			}
+			updated++
+			continue
 		}
 	}
 
 	// Delete monitors
 	for v, value := range lock {
 		if _, exist := configData[v]; !exist {
+			if applyChange {
 
-			err := DeleteMonitor(http.DefaultClient,apiKey, fmt.Sprintf("%d", value.ID))
-			if err != nil {
-				fmt.Println(err)
+				err := DeleteMonitor(http.DefaultClient, apiKey, fmt.Sprintf("%d", value.ID))
+				if err != nil {
+					fmt.Println(err)
+				}
+				delete(lock, v)
 			}
-			delete(lock, v)
+			deleted++
 		}
+	}
+
+	if created == 0 && updated == 0 && deleted == 0 {
+		fmt.Println("No change founded")
+		return nil
+	}
+
+	if applyChange {
+		fmt.Println("Successfully apply")
+		// if created > 0 {
+		// fmt.Println("Monitor Created:", created)
+		// }
+		// if updated > 0 {
+		// 	fmt.Println("Monitor Updated:", updated)
+		// }
+		// if deleted > 0 {
+		// 	fmt.Println("Monitor Deleted:", deleted)
+		// }
+
+		return lock
+	}
+	fmt.Println("This will apply the following change:")
+	if created > 0 {
+		fmt.Println("Monitor Create:", created)
+	}
+	if updated > 0 {
+		fmt.Println("Monitor Update:", updated)
+	}
+	if deleted > 0 {
+		fmt.Println("Monitor Delete:", deleted)
+	}
+
+	if !confirmation.AskForConfirmation(("Do you want to continue?")) {
+		return nil
 	}
 	return lock
 }
@@ -77,6 +128,12 @@ func GetMonitorsApplyCmd() *cli.Command {
 				Sources:  cli.EnvVars("OPENSTATUS_API_TOKEN"),
 				Required: true,
 			},
+			&cli.BoolFlag{
+				Name:     "auto-accept",
+				Usage:    "Automatically accept the prompt",
+				Aliases:  []string{"y"},
+				Required: false,
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 
@@ -96,11 +153,24 @@ func GetMonitorsApplyCmd() *cli.Command {
 			}
 
 			lock, err := config.ReadLockFile("openstatus.lock")
+
 			if err != nil {
 				return cli.Exit("Unable to read lock file", 1)
 			}
 
-			newLock := CompareLockWithConfig(cmd.String("access-token"), lock, monitors)
+			accept := cmd.Bool("auto-accept")
+			if !accept {
+				r := CompareLockWithConfig(cmd.String("access-token"), false, lock, monitors)
+				if r == nil {
+					return nil
+				}
+			}
+
+			newLock := CompareLockWithConfig(cmd.String("access-token"), true, lock, monitors)
+			if newLock == nil {
+				fmt.Println("No change founded")
+				return nil
+			}
 			y, err := yaml.Marshal(&newLock)
 			if err != nil {
 				return err

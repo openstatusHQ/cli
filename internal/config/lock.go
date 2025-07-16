@@ -6,6 +6,7 @@ import (
 
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
 )
 
 
@@ -24,6 +25,8 @@ func ReadLockFile(filename string) (MonitorsLock, error) {
 	}
 
 	file := file.Provider(filename)
+	var k = koanf.New(".")
+
 
 	err := k.Load(file, yaml.Parser())
 

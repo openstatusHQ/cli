@@ -46,7 +46,6 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 		return err
 	}
 
-	// fmt.Println("Monitor")
 
 	fmt.Println(aurora.Bold("Monitor:"))
 	table := tablewriter.NewTable(os.Stdout,

@@ -54,7 +54,7 @@ func Test_getMonitorTrigger(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		expect :=  &config.MonitorsLock{
+		expect :=  config.MonitorsLock{
 			"test-monitor": {
 				ID: 1,
 				Monitor: config.Monitor{
@@ -95,7 +95,7 @@ func Test_getMonitorTrigger(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		expect :=  &config.MonitorsLock{}
+		expect :=  config.MonitorsLock{}
 
 		equal := cmp.Equal(expect, out)
 		if !equal {

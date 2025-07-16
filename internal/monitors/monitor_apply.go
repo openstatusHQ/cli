@@ -4,12 +4,57 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/openstatusHQ/cli/internal/config"
 	"github.com/urfave/cli/v3"
+	"sigs.k8s.io/yaml"
 )
 
+func CompareLockWithConfig(apiKey string, lock config.MonitorsLock, configData config.Monitors) config.MonitorsLock {
+
+	// Create or update monitors
+	for v, configValue := range configData {
+
+		value, exist := lock[v]
+		if !exist {
+			result, err := CreateMonitor(http.DefaultClient, apiKey, configValue)
+			if err != nil {
+				fmt.Println(err)
+			}
+			lock[v] = config.Lock{
+				ID: result.ID,
+				Monitor: configValue,
+			}
+			continue
+		}
+		if !cmp.Equal(configValue, value.Monitor) {
+			result, err := UpdateMonitor(http.DefaultClient,apiKey, value.ID, configValue)
+			if err != nil {
+				fmt.Println(err)
+			}
+			lock[v] = config.Lock{
+				ID: result.ID,
+				Monitor: configValue,
+			}
+		}
+	}
+
+	// Delete monitors
+	for v, value := range lock {
+		if _, exist := configData[v]; !exist {
+
+			err := DeleteMonitor(http.DefaultClient,apiKey, fmt.Sprintf("%d", value.ID))
+			if err != nil {
+				fmt.Println(err)
+			}
+			delete(lock, v)
+		}
+	}
+	return lock
+}
 
 func GetMonitorsApplyCmd() *cli.Command {
 	monitorsListCmd := cli.Command{
@@ -21,6 +66,7 @@ func GetMonitorsApplyCmd() *cli.Command {
 			&cli.StringFlag{
 				Name:        "config",
 				Usage:       "The configuration file containing monitor information",
+				Aliases:     []string{"c"},
 				DefaultText: "openstatus.yaml",
 				Value:       "openstatus.yaml",
 			},
@@ -49,16 +95,27 @@ func GetMonitorsApplyCmd() *cli.Command {
 				return cli.Exit("Unable to read config file", 1)
 			}
 
-			lock, err := config.ReadLockFile()
+			lock, err := config.ReadLockFile("openstatus.lock")
 			if err != nil {
 				return cli.Exit("Unable to read lock file", 1)
 			}
 
-			fmt.Println(monitors,lock)
+			newLock := CompareLockWithConfig(cmd.String("access-token"), lock, monitors)
+			y, err := yaml.Marshal(&newLock)
+			if err != nil {
+				return err
+			}
+			// Write Lock file
+			file, err := os.OpenFile("openstatus.lock", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
 
-			// Read Lock file
-			// Compare Config file with Lock file
-			// If changes detected, apply changes
+			_, err = file.Write(y)
+			if err != nil {
+				return err
+			}
 			return nil
 		},
 	}

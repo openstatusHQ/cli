@@ -7,7 +7,7 @@ import (
 
 type Monitors map[string]Monitor
 
-func ReadOpenStatus(path string) ([]Monitor, error) {
+func ReadOpenStatus(path string) (Monitors, error) {
 	f := file.Provider(path)
 
 	err := k.Load(f, yaml.Parser())
@@ -20,6 +20,10 @@ func ReadOpenStatus(path string) ([]Monitor, error) {
 
 	err = k.Unmarshal("", &out)
 
+	if err != nil {
+		return nil, err
+	}
+
 	for _, value := range out {
 		for _, assertion := range value.Assertions {
 			if assertion.Kind == Header || assertion.Kind == TextBody {
@@ -31,8 +35,13 @@ func ReadOpenStatus(path string) ([]Monitor, error) {
 		}
 	}
 
+	return out, nil
+}
+
+
+func ParseConfigMonitorsToMonitor(monitors Monitors) ([]Monitor){
 	var monitor []Monitor
-	for _, value := range out {
+	for _, value := range monitors {
 		for _, assertion := range value.Assertions {
 			if assertion.Kind == Header || assertion.Kind == TextBody {
 				assertion.Target = assertion.Target.(string)
@@ -44,9 +53,7 @@ func ReadOpenStatus(path string) ([]Monitor, error) {
 		monitor = append(monitor, value)
 	}
 
-	if err != nil {
-		return nil, err
-	}
 
-	return monitor, nil
+
+	return monitor
 }

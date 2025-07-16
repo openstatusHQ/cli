@@ -42,7 +42,6 @@ func DeleteMonitor(httpClient *http.Client, apiKey string, monitorId string) err
 
 		return err
 	}
-	fmt.Printf("Monitor deleted successfully\n")
 	return nil
 }
 
@@ -79,6 +78,7 @@ func GetMonitorDeleteCmd() *cli.Command {
 			if err != nil {
 				return cli.Exit("Failed to delete monitor", 1)
 			}
+			fmt.Printf("Monitor deleted successfully\n")
 			return nil
 		},
 	}

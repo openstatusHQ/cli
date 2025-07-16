@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func CompareLockWithConfig(apiKey string, applyChange bool, lock config.MonitorsLock, configData config.Monitors) config.MonitorsLock {
+func CompareLockWithConfig(apiKey string, applyChange bool, lock config.MonitorsLock, configData config.Monitors) (config.MonitorsLock, error) {
 
 	var created, updated, deleted int
 	// Create or update monitors
@@ -27,7 +27,7 @@ func CompareLockWithConfig(apiKey string, applyChange bool, lock config.Monitors
 
 				result, err := CreateMonitor(http.DefaultClient, apiKey, configValue)
 				if err != nil {
-					fmt.Println(err)
+					return nil, err
 				}
 				lock[v] = config.Lock{
 					ID:      result.ID,
@@ -44,7 +44,7 @@ func CompareLockWithConfig(apiKey string, applyChange bool, lock config.Monitors
 
 				result, err := UpdateMonitor(http.DefaultClient, apiKey, value.ID, configValue)
 				if err != nil {
-					fmt.Println(err)
+					return nil, err
 				}
 				lock[v] = config.Lock{
 					ID:      result.ID,
@@ -73,7 +73,7 @@ func CompareLockWithConfig(apiKey string, applyChange bool, lock config.Monitors
 
 	if created == 0 && updated == 0 && deleted == 0 {
 		fmt.Println("No change founded")
-		return nil
+		return nil, nil
 	}
 
 	if applyChange {
@@ -88,7 +88,7 @@ func CompareLockWithConfig(apiKey string, applyChange bool, lock config.Monitors
 		// 	fmt.Println("Monitor Deleted:", deleted)
 		// }
 
-		return lock
+		return lock, nil
 	}
 	fmt.Println("This will apply the following change:")
 	if created > 0 {
@@ -102,9 +102,9 @@ func CompareLockWithConfig(apiKey string, applyChange bool, lock config.Monitors
 	}
 
 	if !confirmation.AskForConfirmation(("Do you want to continue?")) {
-		return nil
+		return nil, nil
 	}
-	return lock
+	return lock, nil
 }
 
 func GetMonitorsApplyCmd() *cli.Command {
@@ -160,31 +160,39 @@ func GetMonitorsApplyCmd() *cli.Command {
 
 			accept := cmd.Bool("auto-accept")
 			if !accept {
-				r := CompareLockWithConfig(cmd.String("access-token"), false, lock, monitors)
+				r, err := CompareLockWithConfig(cmd.String("access-token"), false, lock, monitors)
+				if err != nil {
+					return cli.Exit("Failed to apply change", 1)
+
+				}
 				if r == nil {
 					return nil
 				}
 			}
 
-			newLock := CompareLockWithConfig(cmd.String("access-token"), true, lock, monitors)
+			newLock, err := CompareLockWithConfig(cmd.String("access-token"), true, lock, monitors)
+			if err != nil {
+				return cli.Exit("Failed to apply change", 1)
+			}
 			if newLock == nil {
 				fmt.Println("No change founded")
 				return nil
 			}
 			y, err := yaml.Marshal(&newLock)
 			if err != nil {
-				return err
+				return cli.Exit("Failed to apply change", 1)
 			}
 			// Write Lock file
 			file, err := os.OpenFile("openstatus.lock", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 			if err != nil {
-				return err
+				return cli.Exit("Failed to apply change", 1)
+
 			}
 			defer file.Close()
 
 			_, err = file.Write(y)
 			if err != nil {
-				return err
+				return cli.Exit("Failed to apply change", 1)
 			}
 			return nil
 		},

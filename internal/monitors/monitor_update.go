@@ -15,6 +15,7 @@ func UpdateMonitor(httpClient *http.Client, apiKey string, id int, monitor confi
 
 	url := fmt.Sprintf("https://api.openstatus.dev/v1/monitor/%d", id)
 
+
 	payloadBuf := new(bytes.Buffer)
 	json.NewEncoder(payloadBuf).Encode(monitor)
 	req, _ := http.NewRequest(http.MethodPut, url, payloadBuf)
@@ -28,8 +29,9 @@ func UpdateMonitor(httpClient *http.Client, apiKey string, id int, monitor confi
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return Monitor{}, fmt.Errorf("Failed to create monitor")
+		return Monitor{}, fmt.Errorf("Failed to Update monitor")
 	}
+
 	defer res.Body.Close()
 	body, _ := io.ReadAll(res.Body)
 

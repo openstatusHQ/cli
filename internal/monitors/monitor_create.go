@@ -88,7 +88,7 @@ func GetMonitorCreateCmd() *cli.Command {
 			&cli.StringFlag{
 				Name:        "config",
 				Usage:       "The configuration file containing monitor information",
-				Aliases:  	 []string{"c"},
+				Aliases:     []string{"c"},
 				DefaultText: "openstatus.yaml",
 				Value:       "openstatus.yaml",
 			},

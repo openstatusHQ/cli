@@ -24,6 +24,64 @@ Usage:
 .EX
 $ openstatus [GLOBAL FLAGS] monitors [ARGUMENTS...]
 .EE
+.SS \f[CR]monitors apply\f[R] subcommand
+Create or update monitors.
+.RS
+.PP
+openstatus monitors apply [options]
+.RE
+.PP
+Creates or updates monitors according to the OpenStatus configuration
+file.
+.PP
+Usage:
+.IP
+.EX
+$ openstatus [GLOBAL FLAGS] monitors apply [COMMAND FLAGS] [ARGUMENTS...]
+.EE
+.PP
+The following flags are supported:
+.PP
+.TS
+tab(@);
+lw(16.0n) lw(30.3n) cw(10.5n) cw(13.2n).
+T{
+Name
+T}@T{
+Description
+T}@T{
+Default value
+T}@T{
+Environment variables
+T}
+_
+T{
+\f[CR]\-\-config=\(dq\&...\(dq\f[R] (\f[CR]\-c\f[R])
+T}@T{
+The configuration file containing monitor information
+T}@T{
+\f[CR]openstatus.yaml\f[R]
+T}@T{
+\f[I]none\f[R]
+T}
+T{
+\f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
+T}@T{
+OpenStatus API Access Token
+T}@T{
+T}@T{
+\f[CR]OPENSTATUS_API_TOKEN\f[R]
+T}
+T{
+\f[CR]\-\-auto\-accept\f[R] (\f[CR]\-y\f[R])
+T}@T{
+Automatically accept the prompt
+T}@T{
+\f[CR]false\f[R]
+T}@T{
+\f[I]none\f[R]
+T}
+.TE
 .SS \f[CR]monitors create\f[R] subcommand
 Create monitors (beta).
 .RS
@@ -55,7 +113,7 @@ Environment variables
 T}
 _
 T{
-\f[CR]\-\-config=\(dq\&...\(dq\f[R]
+\f[CR]\-\-config=\(dq\&...\(dq\f[R] (\f[CR]\-c\f[R])
 T}@T{
 The configuration file containing monitor information
 T}@T{
@@ -131,10 +189,11 @@ T}
 Export all your monitors.
 .RS
 .PP
-openstatus monitor export [options]
+openstatus monitors export [options]
 .RE
 .PP
-Export all your monitors to YAML.
+Export all your monitors in your workspace to a YAML file; it will also
+create a lock file to manage your monitors with `apply'.
 .PP
 Usage:
 .IP
@@ -179,7 +238,7 @@ T}
 Get a monitor information.
 .RS
 .PP
-openstatus monitor info [MonitorID]
+openstatus monitors info [MonitorID]
 .RE
 .PP
 Fetch the monitor information.

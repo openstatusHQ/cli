@@ -22,6 +22,28 @@ Usage:
 $ openstatus [GLOBAL FLAGS] monitors [ARGUMENTS...]
 ```
 
+### `monitors apply` subcommand
+
+Create or update monitors.
+
+> openstatus monitors apply [options]
+
+Creates or updates monitors according to the OpenStatus configuration file.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] monitors apply [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                           |   Default value   |  Environment variables |
+|-----------------------------|-------------------------------------------------------|:-----------------:|:----------------------:|
+| `--config="…"` (`-c`)       | The configuration file containing monitor information | `openstatus.yaml` |         *none*         |
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           |                   | `OPENSTATUS_API_TOKEN` |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt                       |      `false`      |         *none*         |
+
 ### `monitors create` subcommand
 
 Create monitors (beta).
@@ -40,7 +62,7 @@ The following flags are supported:
 
 | Name                        | Description                                           |   Default value   |  Environment variables |
 |-----------------------------|-------------------------------------------------------|:-----------------:|:----------------------:|
-| `--config="…"`              | The configuration file containing monitor information | `openstatus.yaml` |         *none*         |
+| `--config="…"` (`-c`)       | The configuration file containing monitor information | `openstatus.yaml` |         *none*         |
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token                           |                   | `OPENSTATUS_API_TOKEN` |
 | `--auto-accept` (`-y`)      | Automatically accept the prompt                       |      `false`      |         *none*         |
 
@@ -67,9 +89,9 @@ The following flags are supported:
 
 Export all your monitors.
 
-> openstatus monitor export [options]
+> openstatus monitors export [options]
 
-Export all your monitors to YAML.
+Export all your monitors in your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.
 
 Usage:
 
@@ -88,7 +110,7 @@ The following flags are supported:
 
 Get a monitor information.
 
-> openstatus monitor info [MonitorID]
+> openstatus monitors info [MonitorID]
 
 Fetch the monitor information. The monitor information includes details such as name, description, endpoint, method, frequency, locations, active status, public status, timeout, degraded after, and body. The body is truncated to 40 characters.
 

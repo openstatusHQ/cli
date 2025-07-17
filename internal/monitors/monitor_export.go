@@ -165,7 +165,7 @@ func GetMonitorExportCmd() *cli.Command {
 		Name:        "export",
 		Usage:       "Export all your monitors",
 		UsageText:   "openstatus monitors export [options]",
-		Description: "Export all your monitors to YAML",
+		Description: "Export all your monitors in your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			// monitorId := cmd.Args().Get(0)
 			err := ExportMonitor(http.DefaultClient, cmd.String("access-token"), cmd.String("output"))

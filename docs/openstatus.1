@@ -185,20 +185,20 @@ T}@T{
 \f[I]none\f[R]
 T}
 .TE
-.SS \f[CR]monitors export\f[R] subcommand
-Export all your monitors.
+.SS \f[CR]monitors import\f[R] subcommand
+Import all your monitors.
 .RS
 .PP
-openstatus monitors export [options]
+openstatus monitors import [options]
 .RE
 .PP
-Export all your monitors in your workspace to a YAML file; it will also
-create a lock file to manage your monitors with `apply'.
+Import all your monitors from your workspace to a YAML file; it will
+also create a lock file to manage your monitors with `apply'.
 .PP
 Usage:
 .IP
 .EX
-$ openstatus [GLOBAL FLAGS] monitors export [COMMAND FLAGS] [ARGUMENTS...]
+$ openstatus [GLOBAL FLAGS] monitors import [COMMAND FLAGS] [ARGUMENTS...]
 .EE
 .PP
 The following flags are supported:

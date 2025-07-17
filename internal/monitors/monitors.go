@@ -98,7 +98,7 @@ func MonitorsCmd() *cli.Command {
 			GetMonitorsApplyCmd(),
 			GetMonitorCreateCmd(),
 			GetMonitorDeleteCmd(),
-			GetMonitorExportCmd(),
+			GetMonitorImportCmd(),
 			GetMonitorInfoCmd(),
 			GetMonitorsListCmd(),
 			GetMonitorsTriggerCmd(),

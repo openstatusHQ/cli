@@ -160,19 +160,19 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 	return nil
 }
 
-func GetMonitorExportCmd() *cli.Command {
+func GetMonitorImportCmd() *cli.Command {
 	monitorInfoCmd := cli.Command{
-		Name:        "export",
-		Usage:       "Export all your monitors",
-		UsageText:   "openstatus monitors export [options]",
-		Description: "Export all your monitors in your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.",
+		Name:        "import",
+		Usage:       "Import all your monitors",
+		UsageText:   "openstatus monitors import [options]",
+		Description: "Import all your monitors from your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			// monitorId := cmd.Args().Get(0)
 			err := ExportMonitor(http.DefaultClient, cmd.String("access-token"), cmd.String("output"))
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
-			fmt.Printf("Monitors successfully exported to: %s", cmd.String("output"))
+			fmt.Printf("Monitors successfully imported to: %s", cmd.String("output"))
 			return nil
 		},
 		Flags: []cli.Flag{

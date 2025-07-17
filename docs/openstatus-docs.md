@@ -85,18 +85,18 @@ The following flags are supported:
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token     |               | `OPENSTATUS_API_TOKEN` |
 | `--auto-accept` (`-y`)      | Automatically accept the prompt |    `false`    |         *none*         |
 
-### `monitors export` subcommand
+### `monitors import` subcommand
 
-Export all your monitors.
+Import all your monitors.
 
-> openstatus monitors export [options]
+> openstatus monitors import [options]
 
-Export all your monitors in your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.
+Import all your monitors from your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.
 
 Usage:
 
 ```bash
-$ openstatus [GLOBAL FLAGS] monitors export [COMMAND FLAGS] [ARGUMENTS...]
+$ openstatus [GLOBAL FLAGS] monitors import [COMMAND FLAGS] [ARGUMENTS...]
 ```
 
 The following flags are supported:

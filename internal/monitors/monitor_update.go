@@ -13,7 +13,7 @@ import (
 
 func UpdateMonitor(httpClient *http.Client, apiKey string, id int, monitor config.Monitor) (Monitor, error) {
 
-	url := fmt.Sprintf("https://api.openstatus.dev/v1/monitor/%d", id)
+	url := fmt.Sprintf("https://api.openstatus.dev/v1/monitor/%s/%d",monitor.Kind, id)
 
 
 	payloadBuf := new(bytes.Buffer)

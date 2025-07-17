@@ -38,6 +38,7 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 	}
 
 	t := map[string]config.Monitor{}
+	lock := make(map[string]config.Lock,len(monitors))
 
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
@@ -128,6 +129,34 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 	if err != nil {
 		return err
 	}
+
+	//
+	for id, monitor := range t {
+		i, _ := strconv.Atoi(id)
+		lock[id] = config.Lock{
+			ID:      i,
+			Monitor: monitor,
+		}
+	}
+
+	lockFile, err := os.OpenFile("openstatus.lock", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return cli.Exit("Failed to apply change", 1)
+
+	}
+	defer lockFile.Close()
+
+	y, err = yaml.Marshal(&lock)
+	if err != nil {
+		return cli.Exit("Failed to apply change", 1)
+	}
+
+	_, err = lockFile.Write(y)
+	if err != nil {
+		return cli.Exit("Failed to apply change", 1)
+	}
+
+
 	return nil
 }
 

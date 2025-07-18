@@ -38,7 +38,7 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 	}
 
 	t := map[string]config.Monitor{}
-	lock := make(map[string]config.Lock,len(monitors))
+	lock := make(map[string]config.Lock, len(monitors))
 
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
@@ -108,11 +108,11 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 			Description:   monitor.Description,
 			DegradedAfter: int64(monitor.DegradedAfter),
 			Frequency:     config.Frequency(monitor.Periodicity),
-			Request:    request,
-			Kind:       config.CoordinateKind(monitor.JobType),
-			Retry:      int64(monitor.Retry),
-			Regions:    regions,
-			Assertions: assertions,
+			Request:       request,
+			Kind:          config.CoordinateKind(monitor.JobType),
+			Retry:         int64(monitor.Retry),
+			Regions:       regions,
+			Assertions:    assertions,
 		}
 	}
 	y, err := yaml.Marshal(&t)
@@ -155,7 +155,6 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 	if err != nil {
 		return cli.Exit("Failed to apply change", 1)
 	}
-
 
 	return nil
 }

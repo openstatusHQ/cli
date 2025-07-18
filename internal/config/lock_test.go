@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/openstatusHQ/cli/internal/config"
 	"github.com/google/go-cmp/cmp"
+	"github.com/openstatusHQ/cli/internal/config"
 )
 
 var lockfile = `
@@ -54,28 +54,28 @@ func Test_getMonitorTrigger(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		expect :=  config.MonitorsLock{
+		expect := config.MonitorsLock{
 			"test-monitor": {
 				ID: 1,
 				Monitor: config.Monitor{
-					Active: true,
-					Name:"Uptime Monitor",
-				 	Description:"Uptime monitoring example",
-					Frequency:"10m",
-				 	Kind:config.HTTP,
-					Retry:3,
-					Public:false,
-					Regions: []config.Region{ config.Iad,config.Ams,config.Syd, config.Jnb, config.Gru},
+					Active:      true,
+					Name:        "Uptime Monitor",
+					Description: "Uptime monitoring example",
+					Frequency:   "10m",
+					Kind:        config.HTTP,
+					Retry:       3,
+					Public:      false,
+					Regions:     []config.Region{config.Iad, config.Ams, config.Syd, config.Jnb, config.Gru},
 					Request: config.Request{
-						URL: "https://openstat.us",
-						Method: config.Get,
+						URL:     "https://openstat.us",
+						Method:  config.Get,
 						Headers: map[string]string{"User-Agent": "OpenStatus"},
 					},
 					Assertions: []config.Assertion{
 						{
 							Compare: config.Eq,
-							Kind: config.StatusCode,
-							Target: 200,
+							Kind:    config.StatusCode,
+							Target:  200,
 						},
 					},
 				},
@@ -95,7 +95,7 @@ func Test_getMonitorTrigger(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		expect :=  config.MonitorsLock{}
+		expect := config.MonitorsLock{}
 
 		equal := cmp.Equal(expect, out)
 		if !equal {

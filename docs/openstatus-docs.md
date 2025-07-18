@@ -44,46 +44,6 @@ The following flags are supported:
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token                           |                   | `OPENSTATUS_API_TOKEN` |
 | `--auto-accept` (`-y`)      | Automatically accept the prompt                       |      `false`      |         *none*         |
 
-### `monitors create` subcommand
-
-Create monitors (beta).
-
-> openstatus monitors create [options]
-
-Create the monitors defined in the openstatus.yaml file.
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] monitors create [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                        | Description                                           |   Default value   |  Environment variables |
-|-----------------------------|-------------------------------------------------------|:-----------------:|:----------------------:|
-| `--config="…"` (`-c`)       | The configuration file containing monitor information | `openstatus.yaml` |         *none*         |
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           |                   | `OPENSTATUS_API_TOKEN` |
-| `--auto-accept` (`-y`)      | Automatically accept the prompt                       |      `false`      |         *none*         |
-
-### `monitors delete` subcommand
-
-Delete a monitor.
-
-> openstatus monitors delete [MonitorID] [options]
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] monitors delete [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                        | Description                     | Default value |  Environment variables |
-|-----------------------------|---------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token     |               | `OPENSTATUS_API_TOKEN` |
-| `--auto-accept` (`-y`)      | Automatically accept the prompt |    `false`    |         *none*         |
 
 ### `monitors import` subcommand
 

@@ -38,8 +38,7 @@ func ReadOpenStatus(path string) (Monitors, error) {
 	return out, nil
 }
 
-
-func ParseConfigMonitorsToMonitor(monitors Monitors) ([]Monitor){
+func ParseConfigMonitorsToMonitor(monitors Monitors) []Monitor {
 	var monitor []Monitor
 	for _, value := range monitors {
 		for _, assertion := range value.Assertions {
@@ -52,8 +51,6 @@ func ParseConfigMonitorsToMonitor(monitors Monitors) ([]Monitor){
 		}
 		monitor = append(monitor, value)
 	}
-
-
 
 	return monitor
 }

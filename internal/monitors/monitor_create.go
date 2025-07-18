@@ -48,10 +48,13 @@ func CreateMonitor(httpClient *http.Client, apiKey string, monitor config.Monito
 
 func GetMonitorCreateCmd() *cli.Command {
 	monitorInfoCmd := cli.Command{
-		Name:        "create",
-		Usage:       "Create monitors (beta)",
-		Description: "Create the monitors defined in the openstatus.yaml file",
-		UsageText:   "openstatus monitors create [options]",
+		Name:            "create",
+		Usage:           "Create monitors (beta)",
+		Hidden:          true,
+		HideHelp:        true,
+		HideHelpCommand: true,
+		Description:     "Create the monitors defined in the openstatus.yaml file",
+		UsageText:       "openstatus monitors create [options]",
 
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 

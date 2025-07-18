@@ -9,10 +9,9 @@ import (
 	"github.com/knadh/koanf/v2"
 )
 
-
 type Lock struct {
 	Monitor Monitor `yaml:"monitor"`
-	ID      int  `yaml:"id"`
+	ID      int     `yaml:"id"`
 }
 
 type MonitorsLock map[string]Lock
@@ -26,7 +25,6 @@ func ReadLockFile(filename string) (MonitorsLock, error) {
 
 	file := file.Provider(filename)
 	var k = koanf.New(".")
-
 
 	err := k.Load(file, yaml.Parser())
 

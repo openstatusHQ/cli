@@ -120,7 +120,15 @@ func RunCmd() *cli.Command {
 		Aliases:     []string{"r"},
 		Usage:       "Run your synthetics tests",
 		UsageText:   "openstatus run [options]",
-		Description: "Run the synthetic tests defined in the config.openstatus.yaml",
+		Description: `Run the synthetic tests defined in the config.openstatus.yaml.
+The config file should be in the following format:
+
+tests:
+  ids:
+     - monitor-id-1
+     - monitor-id-2
+
+     `,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 
 			path := cmd.String("config")

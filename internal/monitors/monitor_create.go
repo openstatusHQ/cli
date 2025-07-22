@@ -15,7 +15,7 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func CreateMonitor(httpClient *http.Client, apiKey string, monitor config.Monitor) error {
+func CreateMonitor(httpClient *http.Client, apiKey string, monitor config.Monitor) (Monitor, error) {
 
 	url := fmt.Sprintf("https://api.openstatus.dev/v1/monitor/%s", monitor.Kind)
 
@@ -28,11 +28,11 @@ func CreateMonitor(httpClient *http.Client, apiKey string, monitor config.Monito
 
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return err
+		return Monitor{}, err
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("Failed to create monitor")
+		return Monitor{}, fmt.Errorf("Failed to create monitor")
 	}
 	defer res.Body.Close()
 	body, _ := io.ReadAll(res.Body)
@@ -40,18 +40,21 @@ func CreateMonitor(httpClient *http.Client, apiKey string, monitor config.Monito
 	var monitors Monitor
 	err = json.Unmarshal(body, &monitors)
 	if err != nil {
-		return err
+		return Monitor{}, err
 	}
 
-	return nil
+	return monitors, nil
 }
 
 func GetMonitorCreateCmd() *cli.Command {
 	monitorInfoCmd := cli.Command{
-		Name:        "create",
-		Usage:       "Create monitors (beta)",
-		Description: "Create the monitors defined in the openstatus.yaml file",
-		UsageText:   "openstatus monitors create [options]",
+		Name:            "create",
+		Usage:           "Create monitors (beta)",
+		Hidden:          true,
+		HideHelp:        true,
+		HideHelpCommand: true,
+		Description:     "Create the monitors defined in the openstatus.yaml file",
+		UsageText:       "openstatus monitors create [options]",
 
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 
@@ -76,7 +79,7 @@ func GetMonitorCreateCmd() *cli.Command {
 				}
 			}
 			for _, value := range monitors {
-				err = CreateMonitor(http.DefaultClient, cmd.String("access-token"), value)
+				_, err = CreateMonitor(http.DefaultClient, cmd.String("access-token"), value)
 				if err != nil {
 					return cli.Exit("Unable to create monitor", 1)
 				}
@@ -88,6 +91,7 @@ func GetMonitorCreateCmd() *cli.Command {
 			&cli.StringFlag{
 				Name:        "config",
 				Usage:       "The configuration file containing monitor information",
+				Aliases:     []string{"c"},
 				DefaultText: "openstatus.yaml",
 				Value:       "openstatus.yaml",
 			},
@@ -108,5 +112,3 @@ func GetMonitorCreateCmd() *cli.Command {
 	}
 	return &monitorInfoCmd
 }
-
-// os_3Za36BLXy7pN9ZY36SvSLnjD

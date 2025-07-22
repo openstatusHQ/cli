@@ -22,59 +22,41 @@ Usage:
 $ openstatus [GLOBAL FLAGS] monitors [ARGUMENTS...]
 ```
 
-### `monitors create` subcommand
+### `monitors apply` subcommand
 
-Create monitors (beta).
+Create or update monitors.
 
-> openstatus monitors create [options]
+> openstatus monitors apply [options]
 
-Create the monitors defined in the openstatus.yaml file.
+Creates or updates monitors according to the OpenStatus configuration file.
 
 Usage:
 
 ```bash
-$ openstatus [GLOBAL FLAGS] monitors create [COMMAND FLAGS] [ARGUMENTS...]
+$ openstatus [GLOBAL FLAGS] monitors apply [COMMAND FLAGS] [ARGUMENTS...]
 ```
 
 The following flags are supported:
 
 | Name                        | Description                                           |   Default value   |  Environment variables |
 |-----------------------------|-------------------------------------------------------|:-----------------:|:----------------------:|
-| `--config="…"`              | The configuration file containing monitor information | `openstatus.yaml` |         *none*         |
+| `--config="…"` (`-c`)       | The configuration file containing monitor information | `openstatus.yaml` |         *none*         |
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token                           |                   | `OPENSTATUS_API_TOKEN` |
 | `--auto-accept` (`-y`)      | Automatically accept the prompt                       |      `false`      |         *none*         |
 
-### `monitors delete` subcommand
 
-Delete a monitor.
+### `monitors import` subcommand
 
-> openstatus monitors delete [MonitorID] [options]
+Import all your monitors.
 
-Usage:
+> openstatus monitors import [options]
 
-```bash
-$ openstatus [GLOBAL FLAGS] monitors delete [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                        | Description                     | Default value |  Environment variables |
-|-----------------------------|---------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token     |               | `OPENSTATUS_API_TOKEN` |
-| `--auto-accept` (`-y`)      | Automatically accept the prompt |    `false`    |         *none*         |
-
-### `monitors export` subcommand
-
-Export all your monitors.
-
-> openstatus monitor export [options]
-
-Export all your monitors to YAML.
+Import all your monitors from your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.
 
 Usage:
 
 ```bash
-$ openstatus [GLOBAL FLAGS] monitors export [COMMAND FLAGS] [ARGUMENTS...]
+$ openstatus [GLOBAL FLAGS] monitors import [COMMAND FLAGS] [ARGUMENTS...]
 ```
 
 The following flags are supported:
@@ -88,7 +70,7 @@ The following flags are supported:
 
 Get a monitor information.
 
-> openstatus monitor info [MonitorID]
+> openstatus monitors info [MonitorID]
 
 Fetch the monitor information. The monitor information includes details such as name, description, endpoint, method, frequency, locations, active status, public status, timeout, degraded after, and body. The body is truncated to 40 characters.
 

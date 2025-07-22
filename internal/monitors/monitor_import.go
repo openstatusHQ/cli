@@ -38,6 +38,7 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 	}
 
 	t := map[string]config.Monitor{}
+	lock := make(map[string]config.Lock, len(monitors))
 
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
@@ -87,7 +88,6 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 				Body:    monitor.Body,
 				Headers: headers,
 			}
-			break
 		case "tcp":
 			uri := strings.Split(monitor.URL, ":")
 
@@ -96,7 +96,7 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 				Host: uri[0],
 				Port: int64(port),
 			}
-			break
+
 		default:
 			return fmt.Errorf("unknown job type: %s", monitor.JobType)
 		}
@@ -108,15 +108,13 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 			Description:   monitor.Description,
 			DegradedAfter: int64(monitor.DegradedAfter),
 			Frequency:     config.Frequency(monitor.Periodicity),
-			// Regions: monitor.Regions,
-			Request:    request,
-			Kind:       config.CoordinateKind(monitor.JobType),
-			Retry:      int64(monitor.Retry),
-			Regions:    regions,
-			Assertions: assertions,
+			Request:       request,
+			Kind:          config.CoordinateKind(monitor.JobType),
+			Retry:         int64(monitor.Retry),
+			Regions:       regions,
+			Assertions:    assertions,
 		}
 	}
-	// defer file.Close()
 	y, err := yaml.Marshal(&t)
 	if err != nil {
 		return err
@@ -131,22 +129,49 @@ func ExportMonitor(httpClient *http.Client, apiKey string, path string) error {
 	if err != nil {
 		return err
 	}
+
+	//
+	for id, monitor := range t {
+		i, _ := strconv.Atoi(id)
+		lock[id] = config.Lock{
+			ID:      i,
+			Monitor: monitor,
+		}
+	}
+
+	lockFile, err := os.OpenFile("openstatus.lock", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return cli.Exit("Failed to apply change", 1)
+
+	}
+	defer lockFile.Close()
+
+	y, err = yaml.Marshal(&lock)
+	if err != nil {
+		return cli.Exit("Failed to apply change", 1)
+	}
+
+	_, err = lockFile.Write(y)
+	if err != nil {
+		return cli.Exit("Failed to apply change", 1)
+	}
+
 	return nil
 }
 
-func GetMonitorExportCmd() *cli.Command {
+func GetMonitorImportCmd() *cli.Command {
 	monitorInfoCmd := cli.Command{
-		Name:        "export",
-		Usage:       "Export all your monitors",
-		UsageText:   "openstatus monitor export [options]",
-		Description: "Export all your monitors to YAML",
+		Name:        "import",
+		Usage:       "Import all your monitors",
+		UsageText:   "openstatus monitors import [options]",
+		Description: "Import all your monitors from your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			// monitorId := cmd.Args().Get(0)
 			err := ExportMonitor(http.DefaultClient, cmd.String("access-token"), cmd.String("output"))
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
-			fmt.Printf("Monitors successfully exported to: %s", cmd.String("output"))
+			fmt.Printf("Monitors successfully imported to: %s", cmd.String("output"))
 			return nil
 		},
 		Flags: []cli.Flag{

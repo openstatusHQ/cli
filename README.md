@@ -5,10 +5,23 @@ OpenStatus CLI is a command line interface for OpenStatus.
 ## Installation
 
 ```bash
-brew tap openstatusHQ/cli
-brew install openstatus
+brew install openstatusHQ/cli/openstatus --cask
 ```
 
+#### Windows
+```powershell
+iwr instl.sh/openstatushq/cli/windows | iex
+```
+
+#### macOS
+```bash
+curl -sSL instl.sh/openstatushq/cli/macos | bash
+```
+
+#### Linux
+```bash
+curl -sSL instl.sh/openstatushq/cli/linux | bash
+```
 
 ## Development
 

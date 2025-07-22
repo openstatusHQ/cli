@@ -42,15 +42,17 @@ func DeleteMonitor(httpClient *http.Client, apiKey string, monitorId string) err
 
 		return err
 	}
-	fmt.Printf("Monitor deleted successfully\n")
 	return nil
 }
 
 func GetMonitorDeleteCmd() *cli.Command {
 	monitorsCmd := cli.Command{
-		Name:      "delete",
-		Usage:     "Delete a monitor",
-		UsageText: "openstatus monitors delete [MonitorID] [options]",
+		Name:            "delete",
+		Usage:           "Delete a monitor",
+		Hidden:          true,
+		HideHelpCommand: true,
+		HideHelp:        true,
+		UsageText:       "openstatus monitors delete [MonitorID] [options]",
 
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -79,6 +81,7 @@ func GetMonitorDeleteCmd() *cli.Command {
 			if err != nil {
 				return cli.Exit("Failed to delete monitor", 1)
 			}
+			fmt.Printf("Monitor deleted successfully\n")
 			return nil
 		},
 	}

@@ -22,6 +22,8 @@ type Monitor struct {
 	Timeout int64 `json:"timeout,omitempty" ,yaml:"timeout,omitempty"`
 	// Assertions to run on the response
 	Assertions []Assertion `json:"assertions,omitempty" ,yaml:"assertions,omitempty"`
+	// OpenTelemetry configuration
+	OpenTelemetry OpenTelemetryConfig `json:"openTelemetry,omitempty" ,yaml:"openTelemetry,omitempty"`
 }
 
 type Assertion struct {
@@ -50,6 +52,11 @@ type Request struct {
 	Host string `json:"host,omitempty" ,yaml:"host,omitempty"`
 	// Port to connect to
 	Port int64 `json:"port,omitempty" ,yaml:"port,omitempty"`
+}
+
+type OpenTelemetryConfig struct {
+	Endpoint string `json:"endpoint,omitempty" ,yaml:"endpoint,omitempty"`
+	Headers  map[string]string `json:"headers,omitempty" ,yaml:"headers,omitempty"`
 }
 
 // Comparison operator

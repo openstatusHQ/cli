@@ -101,7 +101,11 @@ func CompareLockWithConfig(apiKey string, applyChange bool, lock config.Monitors
 		fmt.Println("Monitor Delete:", deleted)
 	}
 
-	if !confirmation.AskForConfirmation(("Do you want to continue?")) {
+	confirmed, err := confirmation.AskForConfirmation("Do you want to continue?")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read user input: %w", err)
+	}
+	if !confirmed {
 		return nil, nil
 	}
 	return lock, nil

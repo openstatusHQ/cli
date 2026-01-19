@@ -17,11 +17,14 @@ import (
 
 func CreateMonitor(httpClient *http.Client, apiKey string, monitor config.Monitor) (Monitor, error) {
 
-	url := fmt.Sprintf("https://api.openstatus.dev/v1/monitor/%s", monitor.Kind)
+	url := fmt.Sprintf("%s/monitor/%s", APIBaseURL, monitor.Kind)
 
 	payloadBuf := new(bytes.Buffer)
 	json.NewEncoder(payloadBuf).Encode(monitor)
-	req, _ := http.NewRequest(http.MethodPost, url, payloadBuf)
+	req, err := http.NewRequest(http.MethodPost, url, payloadBuf)
+	if err != nil {
+		return Monitor{}, fmt.Errorf("failed to create request: %w", err)
+	}
 
 	req.Header.Add("x-openstatus-key", apiKey)
 	req.Header.Add("Content-Type", "application/json")
@@ -35,7 +38,10 @@ func CreateMonitor(httpClient *http.Client, apiKey string, monitor config.Monito
 		return Monitor{}, fmt.Errorf("Failed to create monitor")
 	}
 	defer res.Body.Close()
-	body, _ := io.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return Monitor{}, fmt.Errorf("failed to read response body: %w", err)
+	}
 
 	var monitors Monitor
 	err = json.Unmarshal(body, &monitors)
@@ -74,7 +80,11 @@ func GetMonitorCreateCmd() *cli.Command {
 			}
 
 			if !accept {
-				if !confirmation.AskForConfirmation(fmt.Sprintf("You are about to create %d monitors do you want to continue", len(monitors))) {
+				confirmed, err := confirmation.AskForConfirmation(fmt.Sprintf("You are about to create %d monitors do you want to continue", len(monitors)))
+				if err != nil {
+					return cli.Exit(fmt.Sprintf("Failed to read input: %v", err), 1)
+				}
+				if !confirmed {
 					return nil
 				}
 			}

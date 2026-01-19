@@ -10,11 +10,6 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-var (
-	noWait   bool
-	noResult bool
-)
-
 func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) error {
 
 	if monitorId == "" {
@@ -22,7 +17,7 @@ func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 	}
 	fmt.Println("Waiting for the result...")
 
-	url := fmt.Sprintf("https://api.openstatus.dev/v1/monitor/%s/trigger", monitorId)
+	url := fmt.Sprintf("%s/monitor/%s/trigger", APIBaseURL, monitorId)
 
 	req, err := http.NewRequest(http.MethodPost, url, nil)
 	if err != nil {
@@ -39,7 +34,10 @@ func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 	}
 
 	defer res.Body.Close()
-	body, _ := io.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
 
 	var r MonitorTriggerResponse
 	err = json.Unmarshal(body, &r)

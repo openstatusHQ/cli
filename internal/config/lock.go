@@ -37,14 +37,7 @@ func ReadLockFile(filename string) (MonitorsLock, error) {
 	}
 
 	for _, value := range out {
-		for _, assertion := range value.Monitor.Assertions {
-			if assertion.Kind == Header || assertion.Kind == TextBody {
-				assertion.Target = assertion.Target.(string)
-			}
-			if assertion.Kind == StatusCode {
-				assertion.Target = assertion.Target.(int)
-			}
-		}
+		ConvertAssertionTargets(value.Monitor.Assertions)
 	}
 
 	return out, nil

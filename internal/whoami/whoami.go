@@ -17,9 +17,12 @@ type Whoami struct {
 }
 
 func GetWhoamiCmd(httpClient *http.Client, apiKey string) error {
-	url := "https://api.openstatus.dev/v1/whoami"
+	url := "https://api.openstatus.dev/v1/whoami" // Using monitors.APIBaseURL would create circular import
 
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
 	req.Header.Add("x-openstatus-key", apiKey)
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -30,7 +33,10 @@ func GetWhoamiCmd(httpClient *http.Client, apiKey string) error {
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("Failed to get workspace information")
 	}
-	body, _ := io.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
 	var whoami Whoami
 	err = json.Unmarshal(body, &whoami)
 	if err != nil {

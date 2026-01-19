@@ -26,7 +26,7 @@ func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 		return fmt.Errorf("Monitor ID is required")
 	}
 
-	url := fmt.Sprintf("https://api.openstatus.dev/v1/monitor/%s/run", monitorId)
+	url := fmt.Sprintf("%s/monitor/%s/run", monitors.APIBaseURL, monitorId)
 
 	httpClient.Timeout = 2 * time.Minute
 
@@ -47,7 +47,10 @@ func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 	}
 
 	defer res.Body.Close()
-	body, _ := io.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
 
 	var result []json.RawMessage
 	err = json.Unmarshal(body, &result)

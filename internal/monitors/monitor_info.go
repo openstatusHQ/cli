@@ -23,9 +23,12 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 		return fmt.Errorf("Monitor ID is required")
 	}
 
-	url := "https://api.openstatus.dev/v1/monitor/" + monitorId
+	url := APIBaseURL + "/monitor/" + monitorId
 
-	req, _ := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
 
 	req.Header.Add("x-openstatus-key", apiKey)
 
@@ -37,7 +40,10 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 		return fmt.Errorf("You don't have permission to access this monitor")
 	}
 	defer res.Body.Close()
-	body, _ := io.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
 
 	var monitor Monitor
 	err = json.Unmarshal(body, &monitor)

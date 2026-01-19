@@ -25,14 +25,7 @@ func ReadOpenStatus(path string) (Monitors, error) {
 	}
 
 	for _, value := range out {
-		for _, assertion := range value.Assertions {
-			if assertion.Kind == Header || assertion.Kind == TextBody {
-				assertion.Target = assertion.Target.(string)
-			}
-			if assertion.Kind == StatusCode {
-				assertion.Target = assertion.Target.(int)
-			}
-		}
+		ConvertAssertionTargets(value.Assertions)
 	}
 
 	return out, nil
@@ -41,14 +34,7 @@ func ReadOpenStatus(path string) (Monitors, error) {
 func ParseConfigMonitorsToMonitor(monitors Monitors) []Monitor {
 	var monitor []Monitor
 	for _, value := range monitors {
-		for _, assertion := range value.Assertions {
-			if assertion.Kind == Header || assertion.Kind == TextBody {
-				assertion.Target = assertion.Target.(string)
-			}
-			if assertion.Kind == StatusCode {
-				assertion.Target = assertion.Target.(int)
-			}
-		}
+		ConvertAssertionTargets(value.Assertions)
 		monitor = append(monitor, value)
 	}
 

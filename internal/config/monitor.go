@@ -158,3 +158,27 @@ type Target struct {
 	Int    *int64
 	String *string
 }
+
+// ConvertAssertionTargets safely converts assertion targets to the appropriate types
+// based on the assertion kind. This prevents panics from unsafe type assertions.
+func ConvertAssertionTargets(assertions []Assertion) {
+	for i := range assertions {
+		assertion := &assertions[i]
+		switch assertion.Kind {
+		case Header, TextBody:
+			if s, ok := assertion.Target.(string); ok {
+				assertion.Target = s
+			}
+		case StatusCode:
+			// YAML may parse integers as int, int64, or float64
+			switch v := assertion.Target.(type) {
+			case int:
+				assertion.Target = v
+			case int64:
+				assertion.Target = int(v)
+			case float64:
+				assertion.Target = int(v)
+			}
+		}
+	}
+}

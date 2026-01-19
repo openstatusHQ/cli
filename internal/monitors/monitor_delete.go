@@ -17,7 +17,7 @@ func DeleteMonitor(httpClient *http.Client, apiKey string, monitorId string) err
 		return fmt.Errorf("Monitor ID is required")
 	}
 
-	url := fmt.Sprintf("https://api.openstatus.dev/v1/monitor/%s", monitorId)
+	url := fmt.Sprintf("%s/monitor/%s", APIBaseURL, monitorId)
 
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
@@ -34,7 +34,10 @@ func DeleteMonitor(httpClient *http.Client, apiKey string, monitorId string) err
 	}
 
 	defer res.Body.Close()
-	body, _ := io.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
 
 	var r MonitorTriggerResponse
 	err = json.Unmarshal(body, &r)
@@ -73,7 +76,11 @@ func GetMonitorDeleteCmd() *cli.Command {
 			monitorId := cmd.Args().Get(0)
 
 			if !cmd.Bool("auto-accept") {
-				if !confirmation.AskForConfirmation(fmt.Sprintf("You are about to delete monitor: %s, do you want to continue", monitorId)) {
+				confirmed, err := confirmation.AskForConfirmation(fmt.Sprintf("You are about to delete monitor: %s, do you want to continue", monitorId))
+				if err != nil {
+					return cli.Exit(fmt.Sprintf("Failed to read input: %v", err), 1)
+				}
+				if !confirmed {
 					return nil
 				}
 			}

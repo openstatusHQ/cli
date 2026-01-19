@@ -6,6 +6,9 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
+// APIBaseURL is the base URL for the OpenStatus API
+const APIBaseURL = "https://api.openstatus.dev/v1"
+
 type Monitor struct {
 	ID            int         `json:"id"`
 	Name          string      `json:"name"`

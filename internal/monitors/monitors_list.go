@@ -15,9 +15,12 @@ import (
 var allMonitor bool
 
 func ListMonitors(httpClient *http.Client, apiKey string) error {
-	url := "https://api.openstatus.dev/v1/monitor"
+	url := APIBaseURL + "/monitor"
 
-	req, _ := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
 	req.Header.Add("x-openstatus-key", apiKey)
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -29,7 +32,10 @@ func ListMonitors(httpClient *http.Client, apiKey string) error {
 	}
 
 	defer res.Body.Close()
-	body, _ := io.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
 	var monitors []Monitor
 	err = json.Unmarshal(body, &monitors)
 	if err != nil {

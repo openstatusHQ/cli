@@ -10,17 +10,17 @@ brew install openstatusHQ/cli/openstatus --cask
 
 #### Windows
 ```powershell
-iwr instl.sh/openstatushq/cli/windows | iex
+iwr https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.ps1 | iex
 ```
 
 #### macOS
 ```bash
-curl -sSL instl.sh/openstatushq/cli/macos | bash
+curl -fsSL https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.sh| bash
 ```
 
 #### Linux
 ```bash
-curl -sSL instl.sh/openstatushq/cli/linux | bash
+curl -fsSL https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.sh | bash
 ```
 
 ## Development

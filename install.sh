@@ -6,11 +6,13 @@
 set -e
 
 if [ "$OS" = "Windows_NT" ]; then
-	target="win-x64.exe"
+	target="Windows_x86_64.zip"
 else
 	case $(uname -sm) in
-	"Darwin arm64") target="macos-arm" ;;
-	"Linux x86_64") target="linux-x64" ;;
+	"Darwin arm64") target="Darwin_arm64.tar.gz" ;;
+	"Darwin x86_64") target="Darwin_x86_64.tar.gz" ;;
+	"Linux x86_64") target="Linux_x86_64.tar.gz" ;;
+	"Linux aarch64") target="Linux_arm64.tar.gz" ;;
 	*) target="unknown" ;;
 	esac
 fi
@@ -76,18 +78,35 @@ if [ -z "$openstatus_version" ]; then
 	openstatus_version=$(get_latest_version)
 fi
 
-echo "Installing openstatus-${openstatus_version} for ${target}"
+platform=$(echo "$target" | sed 's/\.\(tar\.gz\|zip\)$//')
+echo "Installing openstatus ${openstatus_version} for ${platform}"
 
-openstatus_uri="https://github.com/openstatusHQ/cli/releases/download/${openstatus_version}/openstatus-${target}"
+openstatus_uri="https://github.com/openstatusHQ/cli/releases/download/${openstatus_version}/cli_${target}"
 openstatus_install="${OPENSTATUS_INSTALL:-$HOME/.openstatus}"
 bin_dir="$openstatus_install/bin"
 exe="$bin_dir/openstatus"
 
+echo "Downloading openstatus from $openstatus_uri"
 if [ ! -d "$bin_dir" ]; then
 	mkdir -p "$bin_dir"
 fi
 
-curl --fail --location --progress-bar --output "$exe" "$openstatus_uri"
+# Download and extract the archive
+tmp_dir=$(mktemp -d)
+trap "rm -rf $tmp_dir" EXIT
+
+if echo "$target" | grep -q "\.zip$"; then
+	# Windows zip file
+	curl --fail --location --progress-bar --output "$tmp_dir/openstatus.zip" "$openstatus_uri"
+	unzip -q "$tmp_dir/openstatus.zip" -d "$tmp_dir"
+	mv "$tmp_dir/openstatus.exe" "$exe"
+else
+	# Unix tar.gz file
+	curl --fail --location --progress-bar --output "$tmp_dir/openstatus.tar.gz" "$openstatus_uri"
+	tar -xzf "$tmp_dir/openstatus.tar.gz" -C "$tmp_dir"
+	mv "$tmp_dir/openstatus" "$exe"
+fi
+
 chmod +x "$exe"
 
 echo "openstatus was installed successfully to $exe"

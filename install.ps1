@@ -20,7 +20,14 @@ $BinDir = if ($OpenstatusInstall) {
 }
 
 $OpenstatusExe = "$BinDir\openstatus.exe"
-$Target = 'win-x64'
+
+# Detect architecture
+$Arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
+$Target = switch ($Arch) {
+  "Arm64" { "Windows_arm64" }
+  "X86" { "Windows_i386" }
+  default { "Windows_x86_64" }
+}
 
 $Version = if (!$Version) {
   curl.exe --ssl-revoke-best-effort -s "https://api.github.com/repos/openstatusHQ/cli/releases/latest" |
@@ -32,13 +39,23 @@ $Version = if (!$Version) {
 
 Write-Output "Installing openstatus ${Version} for ${Target}"
 
-$DownloadUrl = "https://github.com/openstatusHQ/cli/releases/download/${Version}/openstatus-${Target}.exe"
+$DownloadUrl = "https://github.com/openstatusHQ/cli/releases/download/${Version}/cli_${Target}.zip"
 
 if (!(Test-Path $BinDir)) {
   New-Item $BinDir -ItemType Directory | Out-Null
 }
 
-curl.exe --ssl-revoke-best-effort -Lo $OpenstatusExe $DownloadUrl
+# Download and extract the zip file
+$TempDir = New-Item -ItemType Directory -Path (Join-Path $env:TEMP ([System.IO.Path]::GetRandomFileName()))
+$ZipFile = Join-Path $TempDir "openstatus.zip"
+
+try {
+  curl.exe --ssl-revoke-best-effort -Lo $ZipFile $DownloadUrl
+  Expand-Archive -Path $ZipFile -DestinationPath $TempDir -Force
+  Move-Item -Path (Join-Path $TempDir "openstatus.exe") -Destination $OpenstatusExe -Force
+} finally {
+  Remove-Item -Path $TempDir -Recurse -Force -ErrorAction SilentlyContinue
+}
 
 $User = [System.EnvironmentVariableTarget]::User
 $Path = [System.Environment]::GetEnvironmentVariable('Path', $User)

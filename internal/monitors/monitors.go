@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
@@ -100,6 +101,7 @@ func httpMethodToString(m monitorv1.HTTPMethod) string {
 // regionToString converts SDK Region enum to string
 func regionToString(r monitorv1.Region) string {
 	switch r {
+	// Fly.io regions
 	case monitorv1.Region_REGION_FLY_AMS:
 		return "ams"
 	case monitorv1.Region_REGION_FLY_ARN:
@@ -136,6 +138,22 @@ func regionToString(r monitorv1.Region) string {
 		return "syd"
 	case monitorv1.Region_REGION_FLY_YYZ:
 		return "yyz"
+	// Koyeb regions
+	case monitorv1.Region_REGION_KOYEB_SFO:
+		return "sfo"
+	case monitorv1.Region_REGION_KOYEB_WAS:
+		return "was"
+	case monitorv1.Region_REGION_KOYEB_FRA:
+		return "fra"
+	case monitorv1.Region_REGION_KOYEB_PAR:
+		return "par"
+	case monitorv1.Region_REGION_KOYEB_SIN:
+		return "sin"
+	case monitorv1.Region_REGION_KOYEB_TYO:
+		return "tyo"
+	// Railway regions
+	case monitorv1.Region_REGION_RAILWAY_US_WEST2:
+		return "us-west2"
 	default:
 		return r.String()
 	}
@@ -145,9 +163,30 @@ func regionToString(r monitorv1.Region) string {
 func regionsToStrings(regions []monitorv1.Region) []string {
 	result := make([]string, len(regions))
 	for i, r := range regions {
-		result[i] = r.String()
+		result[i] = regionToString(r)
 	}
 	return result
+}
+
+// groupRegionsByProvider categorizes regions into Fly.io, Koyeb, and Railway groups
+func groupRegionsByProvider(regions []monitorv1.Region) map[string][]string {
+	groups := map[string][]string{
+		"Fly.io":  {},
+		"Koyeb":   {},
+		"Railway": {},
+	}
+	for _, r := range regions {
+		code := regionToString(r)
+		switch {
+		case strings.HasPrefix(r.String(), "REGION_FLY_"):
+			groups["Fly.io"] = append(groups["Fly.io"], code)
+		case strings.HasPrefix(r.String(), "REGION_KOYEB_"):
+			groups["Koyeb"] = append(groups["Koyeb"], code)
+		case strings.HasPrefix(r.String(), "REGION_RAILWAY_"):
+			groups["Railway"] = append(groups["Railway"], code)
+		}
+	}
+	return groups
 }
 
 // Inverse converter functions (config types → SDK types)

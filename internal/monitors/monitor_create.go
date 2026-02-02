@@ -1,55 +1,97 @@
 package monitors
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
+	"strconv"
 
+	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
+	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
 	confirmation "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/config"
 	"github.com/urfave/cli/v3"
 )
 
+// CreateMonitor creates a monitor using the SDK, dispatching to the appropriate type
 func CreateMonitor(httpClient *http.Client, apiKey string, monitor config.Monitor) (Monitor, error) {
+	client := NewMonitorClientWithHTTPClient(httpClient, apiKey)
 
-	url := fmt.Sprintf("%s/monitor/%s", APIBaseURL, monitor.Kind)
+	switch monitor.Kind {
+	case config.HTTP:
+		return CreateHTTPMonitor(client, monitor)
+	case config.TCP:
+		return CreateTCPMonitor(client, monitor)
+	default:
+		return Monitor{}, fmt.Errorf("unsupported monitor kind: %s", monitor.Kind)
+	}
+}
 
-	payloadBuf := new(bytes.Buffer)
-	json.NewEncoder(payloadBuf).Encode(monitor)
-	req, err := http.NewRequest(http.MethodPost, url, payloadBuf)
+// CreateHTTPMonitor creates an HTTP monitor using the SDK
+func CreateHTTPMonitor(client monitorv1connect.MonitorServiceClient, monitor config.Monitor) (Monitor, error) {
+	req := &monitorv1.CreateHTTPMonitorRequest{
+		Monitor: configToHTTPMonitor(monitor),
+	}
+
+	resp, err := client.CreateHTTPMonitor(context.Background(), req)
 	if err != nil {
-		return Monitor{}, fmt.Errorf("failed to create request: %w", err)
+		return Monitor{}, fmt.Errorf("failed to create HTTP monitor: %w", err)
 	}
 
-	req.Header.Add("x-openstatus-key", apiKey)
-	req.Header.Add("Content-Type", "application/json")
+	return httpMonitorToLocal(resp.GetMonitor()), nil
+}
 
-	res, err := httpClient.Do(req)
+// CreateTCPMonitor creates a TCP monitor using the SDK
+func CreateTCPMonitor(client monitorv1connect.MonitorServiceClient, monitor config.Monitor) (Monitor, error) {
+	req := &monitorv1.CreateTCPMonitorRequest{
+		Monitor: configToTCPMonitor(monitor),
+	}
+
+	resp, err := client.CreateTCPMonitor(context.Background(), req)
 	if err != nil {
-		return Monitor{}, err
+		return Monitor{}, fmt.Errorf("failed to create TCP monitor: %w", err)
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return Monitor{}, fmt.Errorf("Failed to create monitor")
-	}
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return Monitor{}, fmt.Errorf("failed to read response body: %w", err)
-	}
+	return tcpMonitorToLocal(resp.GetMonitor()), nil
+}
 
-	var monitors Monitor
-	err = json.Unmarshal(body, &monitors)
-	if err != nil {
-		return Monitor{}, err
+// httpMonitorToLocal converts SDK HTTPMonitor to local Monitor type
+func httpMonitorToLocal(m *monitorv1.HTTPMonitor) Monitor {
+	id, _ := strconv.Atoi(m.GetId())
+	return Monitor{
+		ID:          id,
+		Name:        m.GetName(),
+		Description: m.GetDescription(),
+		URL:         m.GetUrl(),
+		Periodicity: periodicityToString(m.GetPeriodicity()),
+		Method:      httpMethodToString(m.GetMethod()),
+		Regions:     regionsToStrings(m.GetRegions()),
+		Active:      m.GetActive(),
+		Public:      m.GetPublic(),
+		Timeout:     int(m.GetTimeout()),
+		Retry:       int(m.GetRetry()),
+		JobType:     "http",
 	}
+}
 
-	return monitors, nil
+// tcpMonitorToLocal converts SDK TCPMonitor to local Monitor type
+func tcpMonitorToLocal(m *monitorv1.TCPMonitor) Monitor {
+	id, _ := strconv.Atoi(m.GetId())
+	return Monitor{
+		ID:          id,
+		Name:        m.GetName(),
+		Description: m.GetDescription(),
+		URL:         m.GetUri(),
+		Periodicity: periodicityToString(m.GetPeriodicity()),
+		Regions:     regionsToStrings(m.GetRegions()),
+		Active:      m.GetActive(),
+		Public:      m.GetPublic(),
+		Timeout:     int(m.GetTimeout()),
+		Retry:       int(m.GetRetry()),
+		JobType:     "tcp",
+	}
 }
 
 func GetMonitorCreateCmd() *cli.Command {

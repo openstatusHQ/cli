@@ -2,50 +2,35 @@ package monitors
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
+	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
+	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
 	confirmation "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/urfave/cli/v3"
 )
 
-func DeleteMonitor(httpClient *http.Client, apiKey string, monitorId string) error {
-
+// DeleteMonitor deletes a monitor using the SDK
+func DeleteMonitor(client monitorv1connect.MonitorServiceClient, monitorId string) error {
 	if monitorId == "" {
 		return fmt.Errorf("Monitor ID is required")
 	}
 
-	url := fmt.Sprintf("%s/monitor/%s", APIBaseURL, monitorId)
-
-	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	_, err := client.DeleteMonitor(context.Background(), &monitorv1.DeleteMonitorRequest{
+		Id: monitorId,
+	})
 	if err != nil {
-		return err
-	}
-	req.Header.Add("x-openstatus-key", apiKey)
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return err
+		return fmt.Errorf("failed to delete monitor: %w", err)
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("Failed to delete monitor")
-	}
-
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var r MonitorTriggerResponse
-	err = json.Unmarshal(body, &r)
-	if err != nil {
-
-		return err
-	}
 	return nil
+}
+
+// DeleteMonitorWithHTTPClient is a convenience function that creates a client and deletes a monitor
+func DeleteMonitorWithHTTPClient(httpClient *http.Client, apiKey string, monitorId string) error {
+	client := NewMonitorClientWithHTTPClient(httpClient, apiKey)
+	return DeleteMonitor(client, monitorId)
 }
 
 func GetMonitorDeleteCmd() *cli.Command {
@@ -84,7 +69,8 @@ func GetMonitorDeleteCmd() *cli.Command {
 					return nil
 				}
 			}
-			err := DeleteMonitor(http.DefaultClient, cmd.String("access-token"), monitorId)
+			client := NewMonitorClient(cmd.String("access-token"))
+			err := DeleteMonitor(client, monitorId)
 			if err != nil {
 				return cli.Exit("Failed to delete monitor", 1)
 			}

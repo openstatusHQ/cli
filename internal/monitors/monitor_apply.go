@@ -61,7 +61,7 @@ func CompareLockWithConfig(apiKey string, applyChange bool, lock config.Monitors
 		if _, exist := configData[v]; !exist {
 			if applyChange {
 
-				err := DeleteMonitor(http.DefaultClient, apiKey, fmt.Sprintf("%d", value.ID))
+				err := DeleteMonitorWithHTTPClient(http.DefaultClient, apiKey, fmt.Sprintf("%d", value.ID))
 				if err != nil {
 					fmt.Println(err)
 				}

@@ -2,14 +2,12 @@ package monitors
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strings"
 
-	// "github.com/logrusorgru/aurora/v4"
+	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"github.com/logrusorgru/aurora/v4"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
@@ -23,33 +21,26 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 		return fmt.Errorf("Monitor ID is required")
 	}
 
-	url := APIBaseURL + "/monitor/" + monitorId
+	client := NewMonitorClientWithHTTPClient(httpClient, apiKey)
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req := &monitorv1.GetMonitorRequest{
+		Id: monitorId,
+	}
+
+	resp, err := client.GetMonitor(context.Background(), req)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return fmt.Errorf("failed to get monitor: %w", err)
 	}
 
-	req.Header.Add("x-openstatus-key", apiKey)
-
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("You don't have permission to access this monitor")
-	}
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
-	}
-
+	monitorConfig := resp.GetMonitor()
 	var monitor Monitor
-	err = json.Unmarshal(body, &monitor)
-	if err != nil {
-		fmt.Println(err)
-		return err
+	switch {
+	case monitorConfig.HasHttp():
+		monitor = httpMonitorToLocal(monitorConfig.GetHttp())
+	case monitorConfig.HasTcp():
+		monitor = tcpMonitorToLocal(monitorConfig.GetTcp())
+	default:
+		return fmt.Errorf("unknown monitor type")
 	}
 
 	fmt.Println(aurora.Bold("Monitor:"))

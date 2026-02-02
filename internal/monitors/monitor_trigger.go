@@ -2,51 +2,36 @@ package monitors
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
+	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
+	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
 	"github.com/urfave/cli/v3"
 )
 
-func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) error {
-
+// TriggerMonitor triggers a monitor using the SDK
+func TriggerMonitor(client monitorv1connect.MonitorServiceClient, monitorId string) error {
 	if monitorId == "" {
 		return fmt.Errorf("Monitor ID is required")
 	}
 	fmt.Println("Waiting for the result...")
 
-	url := fmt.Sprintf("%s/monitor/%s/trigger", APIBaseURL, monitorId)
-
-	req, err := http.NewRequest(http.MethodPost, url, nil)
+	_, err := client.TriggerMonitor(context.Background(), &monitorv1.TriggerMonitorRequest{
+		Id: monitorId,
+	})
 	if err != nil {
-		return err
-	}
-	req.Header.Add("x-openstatus-key", apiKey)
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return err
+		return fmt.Errorf("failed to trigger monitor: %w", err)
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("Failed to trigger monitor test")
-	}
-
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var r MonitorTriggerResponse
-	err = json.Unmarshal(body, &r)
-	if err != nil {
-		return err
-	}
 	fmt.Printf("Check triggered successfully\n")
-
 	return nil
+}
+
+// TriggerMonitorWithHTTPClient is a convenience function that creates a client and triggers a monitor
+func TriggerMonitorWithHTTPClient(httpClient *http.Client, apiKey string, monitorId string) error {
+	client := NewMonitorClientWithHTTPClient(httpClient, apiKey)
+	return TriggerMonitor(client, monitorId)
 }
 
 func GetMonitorsTriggerCmd() *cli.Command {
@@ -66,7 +51,8 @@ func GetMonitorsTriggerCmd() *cli.Command {
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			monitorId := cmd.Args().Get(0)
-			err := MonitorTrigger(http.DefaultClient, cmd.String("access-token"), monitorId)
+			client := NewMonitorClient(cmd.String("access-token"))
+			err := TriggerMonitor(client, monitorId)
 			if err != nil {
 				return cli.Exit("Failed to trigger monitor", 1)
 			}

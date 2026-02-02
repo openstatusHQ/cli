@@ -2,11 +2,11 @@ package monitors
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
+	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
+	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
@@ -14,32 +14,11 @@ import (
 
 var allMonitor bool
 
-func ListMonitors(httpClient *http.Client, apiKey string) error {
-	url := APIBaseURL + "/monitor"
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+// ListMonitors fetches and displays all monitors using the SDK
+func ListMonitors(client monitorv1connect.MonitorServiceClient) error {
+	resp, err := client.ListMonitors(context.Background(), &monitorv1.ListMonitorsRequest{})
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Add("x-openstatus-key", apiKey)
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("Failed to list monitors")
-	}
-
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
-	}
-	var monitors []Monitor
-	err = json.Unmarshal(body, &monitors)
-	if err != nil {
-		return err
+		return fmt.Errorf("failed to list monitors: %w", err)
 	}
 
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
@@ -48,14 +27,36 @@ func ListMonitors(httpClient *http.Client, apiKey string) error {
 	tbl := table.New("ID", "Name", "Url")
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
-	for _, monitor := range monitors {
-		if monitor.Active || allMonitor {
-			tbl.AddRow(monitor.ID, monitor.Name, monitor.URL)
+	// Add HTTP monitors
+	for _, monitor := range resp.GetHttpMonitors() {
+		if monitor.GetActive() || allMonitor {
+			tbl.AddRow(monitor.GetId(), monitor.GetName(), monitor.GetUrl())
 		}
 	}
+
+	// Add TCP monitors
+	for _, monitor := range resp.GetTcpMonitors() {
+		if monitor.GetActive() || allMonitor {
+			tbl.AddRow(monitor.GetId(), monitor.GetName(), monitor.GetUri())
+		}
+	}
+
+	// Add DNS monitors
+	for _, monitor := range resp.GetDnsMonitors() {
+		if monitor.GetActive() || allMonitor {
+			tbl.AddRow(monitor.GetId(), monitor.GetName(), monitor.GetUri())
+		}
+	}
+
 	tbl.Print()
 
 	return nil
+}
+
+// ListMonitorsWithHTTPClient is a convenience function that creates a client and lists monitors
+func ListMonitorsWithHTTPClient(httpClient *http.Client, apiKey string) error {
+	client := NewMonitorClientWithHTTPClient(httpClient, apiKey)
+	return ListMonitors(client)
 }
 
 func GetMonitorsListCmd() *cli.Command {
@@ -80,7 +81,8 @@ func GetMonitorsListCmd() *cli.Command {
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			fmt.Println("List of all monitors")
-			err := ListMonitors(http.DefaultClient, cmd.String("access-token"))
+			client := NewMonitorClient(cmd.String("access-token"))
+			err := ListMonitors(client)
 			if err != nil {
 				return cli.Exit("Failed to list monitors", 1)
 			}

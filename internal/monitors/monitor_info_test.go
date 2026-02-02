@@ -36,35 +36,8 @@ func Test_getMonitorInfo(t *testing.T) {
 	})
 
 	t.Run("Should work", func(t *testing.T) {
-
-		body := `{
-  "id": 2260,
-  "periodicity": "10m",
-  "url": "https://www.openstatus.dev",
-  "regions": [
-    "iad",
-    "hkg",
-    "jnb",
-    "syd",
-    "gru"
-  ],
-  "name": "Vercel Checker Edge",
-  "description": "",
-  "method": "GET",
-  "body": "",
-  "headers": [
-    {
-      "key": "",
-      "value": ""
-    }
-  ],
-  "assertions": [],
-  "active": false,
-  "public": false,
-  "degradedAfter": null,
-  "timeout": 45000,
-  "jobType": "http"
-}`
+		// Connect RPC response format with MonitorConfig oneof
+		body := `{"monitor":{"http":{"id":"2260","name":"Vercel Checker Edge","description":"","url":"https://www.openstatus.dev","periodicity":"PERIODICITY_10M","method":"HTTP_METHOD_GET","regions":["REGION_FLY_IAD","REGION_FLY_JNB","REGION_FLY_SYD","REGION_FLY_GRU"],"active":false,"public":false,"timeout":45000}}}`
 		r := io.NopCloser(bytes.NewReader([]byte(body)))
 
 		interceptor := &interceptorHTTPClient{
@@ -72,6 +45,7 @@ func Test_getMonitorInfo(t *testing.T) {
 				return &http.Response{
 					StatusCode: http.StatusOK,
 					Body:       r,
+					Header:     http.Header{"Content-Type": []string{"application/json"}},
 				}, nil
 			},
 		}
@@ -83,7 +57,7 @@ func Test_getMonitorInfo(t *testing.T) {
 		})
 		err := monitors.GetMonitorInfo(interceptor.GetHTTPClient(), "test", "1")
 		if err != nil {
-			t.Errorf("Expected log output, got nothing")
+			t.Errorf("Expected no error, got %v", err)
 		}
 	})
 

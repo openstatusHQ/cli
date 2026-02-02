@@ -2,6 +2,7 @@ package monitors_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"net/http"
 	"testing"
@@ -206,6 +207,106 @@ func Test_CreateMonitor(t *testing.T) {
 		_, err := monitors.CreateMonitor(interceptor.GetHTTPClient(), "test-api-key", monitor)
 		if err == nil {
 			t.Error("Expected error for unsupported monitor kind, got nil")
+		}
+	})
+}
+
+func boolPtr(b bool) *bool {
+	return &b
+}
+
+func Test_CreateMonitor_FollowRedirects(t *testing.T) {
+	t.Parallel()
+
+	t.Run("followRedirects false is sent in request body", func(t *testing.T) {
+		var capturedBody map[string]json.RawMessage
+
+		interceptor := &interceptorHTTPClient{
+			f: func(req *http.Request) (*http.Response, error) {
+				bodyBytes, _ := io.ReadAll(req.Body)
+				json.Unmarshal(bodyBytes, &capturedBody)
+
+				respBody := `{"monitor":{"id":"100","name":"Redirect Monitor","url":"https://example.com","periodicity":"PERIODICITY_10M","method":"HTTP_METHOD_GET","regions":["REGION_FLY_IAD"],"active":true,"followRedirects":false}}`
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(bytes.NewReader([]byte(respBody))),
+					Header:     http.Header{"Content-Type": []string{"application/json"}},
+				}, nil
+			},
+		}
+
+		monitor := config.Monitor{
+			Name:      "Redirect Monitor",
+			Active:    true,
+			Frequency: config.The10M,
+			Kind:      config.HTTP,
+			Regions:   []config.Region{config.Iad},
+			Request: config.Request{
+				URL:             "https://example.com",
+				Method:          config.Get,
+				FollowRedirects: boolPtr(false),
+			},
+		}
+
+		_, err := monitors.CreateMonitor(interceptor.GetHTTPClient(), "test-api-key", monitor)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		var monitorPayload map[string]json.RawMessage
+		json.Unmarshal(capturedBody["monitor"], &monitorPayload)
+
+		followRedirectsRaw, exists := monitorPayload["followRedirects"]
+		if !exists {
+			t.Fatal("Expected followRedirects to be present in request body")
+		}
+
+		var followRedirects bool
+		json.Unmarshal(followRedirectsRaw, &followRedirects)
+		if followRedirects != false {
+			t.Errorf("Expected followRedirects to be false, got %v", followRedirects)
+		}
+	})
+
+	t.Run("followRedirects nil is omitted from request body", func(t *testing.T) {
+		var capturedBody map[string]json.RawMessage
+
+		interceptor := &interceptorHTTPClient{
+			f: func(req *http.Request) (*http.Response, error) {
+				bodyBytes, _ := io.ReadAll(req.Body)
+				json.Unmarshal(bodyBytes, &capturedBody)
+
+				respBody := `{"monitor":{"id":"101","name":"Default Monitor","url":"https://example.com","periodicity":"PERIODICITY_10M","method":"HTTP_METHOD_GET","regions":["REGION_FLY_IAD"],"active":true}}`
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(bytes.NewReader([]byte(respBody))),
+					Header:     http.Header{"Content-Type": []string{"application/json"}},
+				}, nil
+			},
+		}
+
+		monitor := config.Monitor{
+			Name:      "Default Monitor",
+			Active:    true,
+			Frequency: config.The10M,
+			Kind:      config.HTTP,
+			Regions:   []config.Region{config.Iad},
+			Request: config.Request{
+				URL:    "https://example.com",
+				Method: config.Get,
+			},
+		}
+
+		_, err := monitors.CreateMonitor(interceptor.GetHTTPClient(), "test-api-key", monitor)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		var monitorPayload map[string]json.RawMessage
+		json.Unmarshal(capturedBody["monitor"], &monitorPayload)
+
+		if _, exists := monitorPayload["followRedirects"]; exists {
+			t.Error("Expected followRedirects to be absent from request body when nil")
 		}
 	})
 }

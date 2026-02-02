@@ -97,6 +97,94 @@ func Test_ReadOpenStatus(t *testing.T) {
 	})
 }
 
+func Test_ReadOpenStatus_FollowRedirects(t *testing.T) {
+	t.Run("followRedirects false is parsed correctly", func(t *testing.T) {
+		yaml := `
+"redirect-monitor":
+  active: true
+  frequency: 10m
+  kind: http
+  name: Redirect Monitor
+  regions:
+    - iad
+  request:
+    method: GET
+    url: https://example.com
+    followRedirects: false
+`
+		f, err := os.CreateTemp(".", "openstatus*.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer os.Remove(f.Name())
+
+		if _, err := f.Write([]byte(yaml)); err != nil {
+			t.Fatal(err)
+		}
+		if err := f.Close(); err != nil {
+			t.Fatal(err)
+		}
+
+		out, err := config.ReadOpenStatus(f.Name())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		monitor, exists := out["redirect-monitor"]
+		if !exists {
+			t.Fatal("Expected 'redirect-monitor' to exist in output")
+		}
+
+		if monitor.Request.FollowRedirects == nil {
+			t.Fatal("Expected FollowRedirects to be non-nil")
+		}
+		if *monitor.Request.FollowRedirects != false {
+			t.Errorf("Expected FollowRedirects to be false, got %v", *monitor.Request.FollowRedirects)
+		}
+	})
+
+	t.Run("followRedirects omitted is nil", func(t *testing.T) {
+		yaml := `
+"no-redirect-field":
+  active: true
+  frequency: 10m
+  kind: http
+  name: No Redirect Field
+  regions:
+    - iad
+  request:
+    method: GET
+    url: https://example.com
+`
+		f, err := os.CreateTemp(".", "openstatus*.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer os.Remove(f.Name())
+
+		if _, err := f.Write([]byte(yaml)); err != nil {
+			t.Fatal(err)
+		}
+		if err := f.Close(); err != nil {
+			t.Fatal(err)
+		}
+
+		out, err := config.ReadOpenStatus(f.Name())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		monitor, exists := out["no-redirect-field"]
+		if !exists {
+			t.Fatal("Expected 'no-redirect-field' to exist in output")
+		}
+
+		if monitor.Request.FollowRedirects != nil {
+			t.Errorf("Expected FollowRedirects to be nil, got %v", *monitor.Request.FollowRedirects)
+		}
+	})
+}
+
 func Test_ParseConfigMonitorsToMonitor(t *testing.T) {
 	t.Run("Parse monitors map to slice", func(t *testing.T) {
 		monitors := config.Monitors{

@@ -48,6 +48,8 @@ type Request struct {
 	Method  Method            `json:"method,omitempty" ,yaml:"method,omitempty"`
 	// URL to request
 	URL string `json:"url,omitempty" ,yaml:"url,omitempty"`
+	// Whether to follow HTTP redirects (defaults to true when not specified)
+	FollowRedirects *bool `json:"followRedirects,omitempty" ,yaml:"followRedirects,omitempty"`
 	// Host to connect to
 	Host string `json:"host,omitempty" ,yaml:"host,omitempty"`
 	// Port to connect to

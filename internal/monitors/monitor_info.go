@@ -34,11 +34,14 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 
 	monitorConfig := resp.GetMonitor()
 	var monitor Monitor
+	var regions []monitorv1.Region
 	switch {
 	case monitorConfig.HasHttp():
 		monitor = httpMonitorToLocal(monitorConfig.GetHttp())
+		regions = monitorConfig.GetHttp().GetRegions()
 	case monitorConfig.HasTcp():
 		monitor = tcpMonitorToLocal(monitorConfig.GetTcp())
+		regions = monitorConfig.GetTcp().GetRegions()
 	default:
 		return fmt.Errorf("unknown monitor type")
 	}
@@ -80,7 +83,17 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 	}
 
 	data = append(data, []string{"Frequency", monitor.Periodicity})
-	data = append(data, []string{"Locations", strings.Join(monitor.Regions, ",")})
+
+	// Group regions by provider and display each provider on its own row
+	regionGroups := groupRegionsByProvider(regions)
+	providers := []string{"Fly.io", "Koyeb", "Railway"}
+	for _, provider := range providers {
+		codes := regionGroups[provider]
+		if len(codes) > 0 {
+			data = append(data, []string{fmt.Sprintf("Locations (%s)", provider), strings.Join(codes, ", ")})
+		}
+	}
+
 	data = append(data, []string{"Active", fmt.Sprintf("%t", monitor.Active)})
 	data = append(data, []string{"Public", fmt.Sprintf("%t", monitor.Public)})
 

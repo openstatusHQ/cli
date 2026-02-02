@@ -17,11 +17,14 @@ func Test_DeleteMonitor(t *testing.T) {
 			f: func(req *http.Request) (*http.Response, error) {
 				return &http.Response{
 					StatusCode: http.StatusOK,
+					Header: http.Header{
+						"Content-Type": []string{"application/json"},
+					},
 				}, nil
 			},
 		}
 
-		err := monitors.DeleteMonitor(interceptor.GetHTTPClient(), "test-api-key", "")
+		err := monitors.DeleteMonitorWithHTTPClient(interceptor.GetHTTPClient(), "test-api-key", "")
 		if err == nil {
 			t.Error("Expected error for empty monitor ID, got nil")
 		}
@@ -31,66 +34,52 @@ func Test_DeleteMonitor(t *testing.T) {
 	})
 
 	t.Run("Delete monitor successfully", func(t *testing.T) {
-		body := `{"resultId": 123}`
+		body := `{"success": true}`
 		r := io.NopCloser(bytes.NewReader([]byte(body)))
 
 		interceptor := &interceptorHTTPClient{
 			f: func(req *http.Request) (*http.Response, error) {
-				if req.Method != http.MethodDelete {
-					t.Errorf("Expected DELETE method, got %s", req.Method)
+				if req.Method != http.MethodPost {
+					t.Errorf("Expected POST method (Connect RPC), got %s", req.Method)
 				}
 				if req.Header.Get("x-openstatus-key") != "test-api-key" {
 					t.Errorf("Expected x-openstatus-key header, got %s", req.Header.Get("x-openstatus-key"))
 				}
-				expectedURL := "https://api.openstatus.dev/v1/monitor/123"
-				if req.URL.String() != expectedURL {
-					t.Errorf("Expected URL %s, got %s", expectedURL, req.URL.String())
-				}
 				return &http.Response{
 					StatusCode: http.StatusOK,
 					Body:       r,
+					Header: http.Header{
+						"Content-Type": []string{"application/json"},
+					},
 				}, nil
 			},
 		}
 
-		err := monitors.DeleteMonitor(interceptor.GetHTTPClient(), "test-api-key", "123")
+		err := monitors.DeleteMonitorWithHTTPClient(interceptor.GetHTTPClient(), "test-api-key", "123")
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
 	})
 
-	t.Run("Delete monitor fails with non-200 status", func(t *testing.T) {
-		interceptor := &interceptorHTTPClient{
-			f: func(req *http.Request) (*http.Response, error) {
-				return &http.Response{
-					StatusCode: http.StatusNotFound,
-					Body:       io.NopCloser(bytes.NewReader([]byte(`{"error": "not found"}`))),
-				}, nil
-			},
-		}
-
-		err := monitors.DeleteMonitor(interceptor.GetHTTPClient(), "test-api-key", "999")
-		if err == nil {
-			t.Error("Expected error for non-200 status, got nil")
-		}
-	})
-
-	t.Run("Delete monitor with valid response body", func(t *testing.T) {
-		body := `{"resultId": 456}`
+	t.Run("Delete monitor fails with error status", func(t *testing.T) {
+		body := `{"code":"not_found","message":"monitor not found"}`
 		r := io.NopCloser(bytes.NewReader([]byte(body)))
 
 		interceptor := &interceptorHTTPClient{
 			f: func(req *http.Request) (*http.Response, error) {
 				return &http.Response{
-					StatusCode: http.StatusOK,
+					StatusCode: http.StatusNotFound,
 					Body:       r,
+					Header: http.Header{
+						"Content-Type": []string{"application/json"},
+					},
 				}, nil
 			},
 		}
 
-		err := monitors.DeleteMonitor(interceptor.GetHTTPClient(), "test-api-key", "456")
-		if err != nil {
-			t.Errorf("Expected no error, got %v", err)
+		err := monitors.DeleteMonitorWithHTTPClient(interceptor.GetHTTPClient(), "test-api-key", "999")
+		if err == nil {
+			t.Error("Expected error for non-200 status, got nil")
 		}
 	})
 }

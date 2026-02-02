@@ -1,49 +1,62 @@
 package monitors
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
 	"net/http"
+	"strconv"
 
+	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
+	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
 	"github.com/openstatusHQ/cli/internal/config"
 )
 
+// UpdateMonitor updates a monitor using the SDK, dispatching to the appropriate type
 func UpdateMonitor(httpClient *http.Client, apiKey string, id int, monitor config.Monitor) (Monitor, error) {
+	client := NewMonitorClientWithHTTPClient(httpClient, apiKey)
 
-	url := fmt.Sprintf("%s/monitor/%s/%d", APIBaseURL, monitor.Kind, id)
+	switch monitor.Kind {
+	case config.HTTP:
+		return UpdateHTTPMonitor(client, id, monitor)
+	case config.TCP:
+		return UpdateTCPMonitor(client, id, monitor)
+	default:
+		return Monitor{}, fmt.Errorf("unsupported monitor kind: %s", monitor.Kind)
+	}
+}
 
-	payloadBuf := new(bytes.Buffer)
-	json.NewEncoder(payloadBuf).Encode(monitor)
-	req, err := http.NewRequest(http.MethodPut, url, payloadBuf)
+// UpdateHTTPMonitor updates an HTTP monitor using the SDK
+func UpdateHTTPMonitor(client monitorv1connect.MonitorServiceClient, id int, monitor config.Monitor) (Monitor, error) {
+	httpMonitor := configToHTTPMonitor(monitor)
+	httpMonitor.Id = strconv.Itoa(id)
+
+	req := &monitorv1.UpdateHTTPMonitorRequest{
+		Id:      strconv.Itoa(id),
+		Monitor: httpMonitor,
+	}
+
+	resp, err := client.UpdateHTTPMonitor(context.Background(), req)
 	if err != nil {
-		return Monitor{}, fmt.Errorf("failed to create request: %w", err)
+		return Monitor{}, fmt.Errorf("failed to update HTTP monitor: %w", err)
 	}
 
-	req.Header.Add("x-openstatus-key", apiKey)
-	req.Header.Add("Content-Type", "application/json")
+	return httpMonitorToLocal(resp.GetMonitor()), nil
+}
 
-	res, err := httpClient.Do(req)
+// UpdateTCPMonitor updates a TCP monitor using the SDK
+func UpdateTCPMonitor(client monitorv1connect.MonitorServiceClient, id int, monitor config.Monitor) (Monitor, error) {
+	tcpMonitor := configToTCPMonitor(monitor)
+	tcpMonitor.Id = strconv.Itoa(id)
+
+	req := &monitorv1.UpdateTCPMonitorRequest{
+		Id:      strconv.Itoa(id),
+		Monitor: tcpMonitor,
+	}
+
+	resp, err := client.UpdateTCPMonitor(context.Background(), req)
 	if err != nil {
-		return Monitor{}, err
+		return Monitor{}, fmt.Errorf("failed to update TCP monitor: %w", err)
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return Monitor{}, fmt.Errorf("Failed to Update monitor")
-	}
-
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return Monitor{}, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var monitors Monitor
-	err = json.Unmarshal(body, &monitors)
-	if err != nil {
-		return Monitor{}, err
-	}
-
-	return monitors, nil
+	return tcpMonitorToLocal(resp.GetMonitor()), nil
 }

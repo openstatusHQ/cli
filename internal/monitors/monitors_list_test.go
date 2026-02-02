@@ -15,32 +15,9 @@ func Test_listMonitors(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Successfully return", func(t *testing.T) {
-		body := `[
-  {
-    "id": 1,
-    "periodicity": "10m",
-    "url": "https://www.openstatus.dev",
-    "regions": [
-      "ams",
-      "scl"
-    ],
-    "name": "OpenStatus ",
-    "description": "Our website 🌐",
-    "method": "GET",
-    "body": "",
-    "headers": [
-      {
-        "key": "",
-        "value": ""
-      }
-    ],
-    "assertions": [],
-    "active": true,
-    "public": true,
-    "degradedAfter": null,
-    "timeout": 45000,
-    "jobType": "http"
-  }]`
+		// Connect RPC response format with protobuf content
+		// The response is a ListMonitorsResponse in JSON format with Connect headers
+		body := `{"httpMonitors":[{"id":"1","name":"OpenStatus","url":"https://www.openstatus.dev","periodicity":"PERIODICITY_10M","active":true,"public":true}]}`
 		r := io.NopCloser(bytes.NewReader([]byte(body)))
 
 		interceptor := &interceptorHTTPClient{
@@ -48,6 +25,9 @@ func Test_listMonitors(t *testing.T) {
 				return &http.Response{
 					StatusCode: http.StatusOK,
 					Body:       r,
+					Header: http.Header{
+						"Content-Type": []string{"application/json"},
+					},
 				}, nil
 			},
 		}
@@ -57,18 +37,24 @@ func Test_listMonitors(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.ListMonitors(interceptor.GetHTTPClient(), "")
+		err := monitors.ListMonitorsWithHTTPClient(interceptor.GetHTTPClient(), "test-token")
 		if err != nil {
 			t.Error(err)
 			t.Errorf("Expected log output, got nothing")
 		}
 	})
 	t.Run("No 200 throw error", func(t *testing.T) {
+		body := `{"code":"internal","message":"internal error"}`
+		r := io.NopCloser(bytes.NewReader([]byte(body)))
 
 		interceptor := &interceptorHTTPClient{
 			f: func(req *http.Request) (*http.Response, error) {
 				return &http.Response{
 					StatusCode: http.StatusInternalServerError,
+					Body:       r,
+					Header: http.Header{
+						"Content-Type": []string{"application/json"},
+					},
 				}, nil
 			},
 		}
@@ -78,9 +64,9 @@ func Test_listMonitors(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.ListMonitors(interceptor.GetHTTPClient(), "1")
+		err := monitors.ListMonitorsWithHTTPClient(interceptor.GetHTTPClient(), "1")
 		if err == nil {
-			t.Errorf("Expected log output, got nothing")
+			t.Errorf("Expected error, got nothing")
 		}
 	})
 }

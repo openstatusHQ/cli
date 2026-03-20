@@ -403,6 +403,10 @@ func configToHTTPMonitor(m config.Monitor) *monitorv1.HTTPMonitor {
 		monitor.DegradedAt = &m.DegradedAfter
 	}
 
+	if m.Request.FollowRedirects != nil {
+		monitor.FollowRedirects = m.Request.FollowRedirects
+	}
+
 	return monitor
 }
 

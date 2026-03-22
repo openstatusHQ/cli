@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/urfave/cli/v3"
 )
 
@@ -17,7 +18,7 @@ type Whoami struct {
 }
 
 func GetWhoamiCmd(httpClient *http.Client, apiKey string) error {
-	url := "https://api.openstatus.dev/v1/whoami" // Using monitors.APIBaseURL would create circular import
+	url := fmt.Sprintf("%s/whoami", api.APIBaseURL)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

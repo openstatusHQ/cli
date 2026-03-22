@@ -2,6 +2,7 @@ package run_test
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"log"
 	"net/http"
@@ -50,7 +51,7 @@ func Test_run(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := run.MonitorTrigger(interceptor.GetHTTPClient(), "", "")
+		_, err := run.MonitorTrigger(context.Background(), interceptor.GetHTTPClient(), "", "")
 		if err == nil {
 			t.Error(err)
 			t.Errorf("Monitor Trigger should return error")
@@ -94,7 +95,7 @@ func Test_run(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := run.MonitorTrigger(interceptor.GetHTTPClient(), "", "1")
+		_, err := run.MonitorTrigger(context.Background(), interceptor.GetHTTPClient(), "", "1")
 		if err != nil {
 			t.Error(err)
 			t.Errorf("Monitor Trigger should return error")
@@ -130,7 +131,7 @@ func Test_run(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := run.MonitorTrigger(interceptor.GetHTTPClient(), "", "1")
+		_, err := run.MonitorTrigger(context.Background(), interceptor.GetHTTPClient(), "", "1")
 		if err != nil {
 			t.Error(err)
 			t.Errorf("Monitor Trigger should return error")

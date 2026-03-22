@@ -2,6 +2,7 @@ package monitors_test
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"log"
 	"net/http"
@@ -29,7 +30,7 @@ func Test_getMonitorInfo(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.GetMonitorInfo(interceptor.GetHTTPClient(), "", "")
+		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "", "", nil)
 		if err == nil {
 			t.Errorf("Expected log output, got nothing")
 		}
@@ -55,7 +56,7 @@ func Test_getMonitorInfo(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.GetMonitorInfo(interceptor.GetHTTPClient(), "test", "1")
+		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "1", nil)
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}

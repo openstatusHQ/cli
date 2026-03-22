@@ -4,15 +4,22 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/status_report/v1/status_reportv1connect"
+	"github.com/openstatusHQ/cli/internal/auth"
+	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/urfave/cli/v3"
 )
 
-func AddStatusReportUpdate(client status_reportv1connect.StatusReportServiceClient, reportId, status, message, date string, notify bool) error {
+func AddStatusReportUpdate(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, reportId, status, message, date string, notify bool, s *output.Spinner) error {
 	if reportId == "" {
+		output.StopSpinner(s)
+		fmt.Fprintln(os.Stderr, "Usage: openstatus status-report add-update <report-id> --status <status> --message <message>")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "Example: openstatus sr add-update 12345 --status resolved --message \"Fix deployed\"")
 		return fmt.Errorf("report ID is required")
 	}
 
@@ -35,9 +42,10 @@ func AddStatusReportUpdate(client status_reportv1connect.StatusReportServiceClie
 		req.SetNotify(true)
 	}
 
-	resp, err := client.AddStatusReportUpdate(context.Background(), req)
+	resp, err := client.AddStatusReportUpdate(ctx, req)
+	output.StopSpinner(s)
 	if err != nil {
-		return fmt.Errorf("failed to add status report update: %w", err)
+		return output.FormatError(err, "status-report", reportId)
 	}
 
 	report := resp.GetStatusReport()
@@ -50,9 +58,9 @@ func AddStatusReportUpdate(client status_reportv1connect.StatusReportServiceClie
 	return nil
 }
 
-func AddStatusReportUpdateWithHTTPClient(httpClient *http.Client, apiKey string, reportId, status, message, date string, notify bool) error {
+func AddStatusReportUpdateWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, reportId, status, message, date string, notify bool) error {
 	client := NewStatusReportClientWithHTTPClient(httpClient, apiKey)
-	return AddStatusReportUpdate(client, reportId, status, message, date, notify)
+	return AddStatusReportUpdate(ctx, client, reportId, status, message, date, notify, nil)
 }
 
 func GetStatusReportAddUpdateCmd() *cli.Command {
@@ -62,11 +70,10 @@ func GetStatusReportAddUpdateCmd() *cli.Command {
 		UsageText: "openstatus status-report add-update <ReportID> --status resolved --message \"Issue has been resolved\"",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:     "access-token",
-				Usage:    "OpenStatus API Access Token",
-				Aliases:  []string{"t"},
-				Sources:  cli.EnvVars("OPENSTATUS_API_TOKEN"),
-				Required: true,
+				Name:    "access-token",
+				Usage:   "OpenStatus API Access Token",
+				Aliases: []string{"t"},
+				Sources: cli.EnvVars("OPENSTATUS_API_TOKEN"),
 			},
 			&cli.StringFlag{
 				Name:     "status",
@@ -88,6 +95,10 @@ func GetStatusReportAddUpdateCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			apiKey, err := auth.ResolveAccessToken(cmd)
+			if err != nil {
+				return cli.Exit(err.Error(), 1)
+			}
 			reportId := cmd.Args().Get(0)
 
 			date := cmd.String("date")
@@ -95,14 +106,17 @@ func GetStatusReportAddUpdateCmd() *cli.Command {
 				date = time.Now().UTC().Format(time.RFC3339)
 			}
 
-			client := NewStatusReportClient(cmd.String("access-token"))
-			err := AddStatusReportUpdate(
+			s := output.StartSpinner("Adding update...")
+			client := NewStatusReportClient(apiKey)
+			err = AddStatusReportUpdate(
+				ctx,
 				client,
 				reportId,
 				cmd.String("status"),
 				cmd.String("message"),
 				date,
 				cmd.Bool("notify"),
+				s,
 			)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)

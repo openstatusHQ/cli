@@ -4,33 +4,38 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
-	confirmation "github.com/openstatusHQ/cli/internal/cli"
+	"github.com/openstatusHQ/cli/internal/auth"
+	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/urfave/cli/v3"
 )
 
 // DeleteMonitor deletes a monitor using the SDK
-func DeleteMonitor(client monitorv1connect.MonitorServiceClient, monitorId string) error {
+func DeleteMonitor(ctx context.Context, client monitorv1connect.MonitorServiceClient, monitorId string) error {
 	if monitorId == "" {
-		return fmt.Errorf("Monitor ID is required")
+		fmt.Fprintln(os.Stderr, "Usage: openstatus monitors delete <monitor-id>")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "Example: openstatus monitors delete 12345")
+		return fmt.Errorf("monitor ID is required")
 	}
 
-	_, err := client.DeleteMonitor(context.Background(), &monitorv1.DeleteMonitorRequest{
+	_, err := client.DeleteMonitor(ctx, &monitorv1.DeleteMonitorRequest{
 		Id: monitorId,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to delete monitor: %w", err)
+		return output.FormatError(err, "monitor", monitorId)
 	}
 
 	return nil
 }
 
 // DeleteMonitorWithHTTPClient is a convenience function that creates a client and deletes a monitor
-func DeleteMonitorWithHTTPClient(httpClient *http.Client, apiKey string, monitorId string) error {
+func DeleteMonitorWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, monitorId string) error {
 	client := NewMonitorClientWithHTTPClient(httpClient, apiKey)
-	return DeleteMonitor(client, monitorId)
+	return DeleteMonitor(ctx, client, monitorId)
 }
 
 func GetMonitorDeleteCmd() *cli.Command {
@@ -40,15 +45,15 @@ func GetMonitorDeleteCmd() *cli.Command {
 		Hidden:          true,
 		HideHelpCommand: true,
 		HideHelp:        true,
-		UsageText:       "openstatus monitors delete [MonitorID] [options]",
+		UsageText: `openstatus monitors delete <MonitorID>
+  openstatus monitors delete 12345 -y`,
 
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:     "access-token",
-				Usage:    "OpenStatus API Access Token",
-				Aliases:  []string{"t"},
-				Sources:  cli.EnvVars("OPENSTATUS_API_TOKEN"),
-				Required: true,
+				Name:    "access-token",
+				Usage:   "OpenStatus API Access Token",
+				Aliases: []string{"t"},
+				Sources: cli.EnvVars("OPENSTATUS_API_TOKEN"),
 			},
 			&cli.BoolFlag{
 				Name:     "auto-accept",
@@ -58,10 +63,14 @@ func GetMonitorDeleteCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			apiKey, err := auth.ResolveAccessToken(cmd)
+			if err != nil {
+				return cli.Exit(err.Error(), 1)
+			}
 			monitorId := cmd.Args().Get(0)
 
 			if !cmd.Bool("auto-accept") {
-				confirmed, err := confirmation.AskForConfirmation(fmt.Sprintf("You are about to delete monitor: %s, do you want to continue", monitorId))
+				confirmed, err := output.AskForConfirmation(fmt.Sprintf("You are about to delete monitor: %s, do you want to continue", monitorId))
 				if err != nil {
 					return cli.Exit(fmt.Sprintf("Failed to read input: %v", err), 1)
 				}
@@ -69,12 +78,15 @@ func GetMonitorDeleteCmd() *cli.Command {
 					return nil
 				}
 			}
-			client := NewMonitorClient(cmd.String("access-token"))
-			err := DeleteMonitor(client, monitorId)
+			client := NewMonitorClient(apiKey)
+			s := output.StartSpinner("Deleting monitor...")
+			err = DeleteMonitor(ctx, client, monitorId)
+			output.StopSpinner(s)
 			if err != nil {
-				return cli.Exit("Failed to delete monitor", 1)
+				return cli.Exit(err.Error(), 1)
 			}
 			fmt.Printf("Monitor deleted successfully\n")
+			fmt.Println("Run 'openstatus monitors list' to see remaining monitors")
 			return nil
 		},
 	}

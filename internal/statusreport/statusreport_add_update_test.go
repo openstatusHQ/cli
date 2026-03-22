@@ -2,6 +2,7 @@ package statusreport_test
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"testing"
@@ -29,7 +30,7 @@ func Test_AddStatusReportUpdate(t *testing.T) {
 		}
 
 		err := statusreport.AddStatusReportUpdateWithHTTPClient(
-			interceptor.GetHTTPClient(), "test-token",
+			context.Background(), interceptor.GetHTTPClient(),"test-token",
 			"1", "identified", "Root cause found", "2026-03-20T10:30:00Z", false,
 		)
 		if err != nil {
@@ -54,7 +55,7 @@ func Test_AddStatusReportUpdate(t *testing.T) {
 		}
 
 		err := statusreport.AddStatusReportUpdateWithHTTPClient(
-			interceptor.GetHTTPClient(), "test-token",
+			context.Background(), interceptor.GetHTTPClient(),"test-token",
 			"1", "resolved", "Issue resolved", "", true,
 		)
 		if err != nil {
@@ -75,7 +76,7 @@ func Test_AddStatusReportUpdate(t *testing.T) {
 		}
 
 		err := statusreport.AddStatusReportUpdateWithHTTPClient(
-			interceptor.GetHTTPClient(), "test-token",
+			context.Background(), interceptor.GetHTTPClient(),"test-token",
 			"1", "invalid", "Message", "", false,
 		)
 		if err == nil {
@@ -96,7 +97,7 @@ func Test_AddStatusReportUpdate(t *testing.T) {
 		}
 
 		err := statusreport.AddStatusReportUpdateWithHTTPClient(
-			interceptor.GetHTTPClient(), "test-token",
+			context.Background(), interceptor.GetHTTPClient(),"test-token",
 			"", "investigating", "Message", "", false,
 		)
 		if err == nil {
@@ -121,7 +122,7 @@ func Test_AddStatusReportUpdate(t *testing.T) {
 		}
 
 		err := statusreport.AddStatusReportUpdateWithHTTPClient(
-			interceptor.GetHTTPClient(), "test-token",
+			context.Background(), interceptor.GetHTTPClient(),"test-token",
 			"999", "investigating", "Message", "", false,
 		)
 		if err == nil {

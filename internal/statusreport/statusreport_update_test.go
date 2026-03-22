@@ -2,6 +2,7 @@ package statusreport_test
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"testing"
@@ -29,7 +30,7 @@ func Test_UpdateStatusReport(t *testing.T) {
 		}
 
 		err := statusreport.UpdateStatusReportWithHTTPClient(
-			interceptor.GetHTTPClient(), "test-token",
+			context.Background(), interceptor.GetHTTPClient(),"test-token",
 			"1", "New Title", nil, true, false,
 		)
 		if err != nil {
@@ -54,7 +55,7 @@ func Test_UpdateStatusReport(t *testing.T) {
 		}
 
 		err := statusreport.UpdateStatusReportWithHTTPClient(
-			interceptor.GetHTTPClient(), "test-token",
+			context.Background(), interceptor.GetHTTPClient(),"test-token",
 			"1", "", []string{"c1", "c2"}, false, true,
 		)
 		if err != nil {
@@ -79,7 +80,7 @@ func Test_UpdateStatusReport(t *testing.T) {
 		}
 
 		err := statusreport.UpdateStatusReportWithHTTPClient(
-			interceptor.GetHTTPClient(), "test-token",
+			context.Background(), interceptor.GetHTTPClient(),"test-token",
 			"1", "Updated Title", []string{"c3"}, true, true,
 		)
 		if err != nil {
@@ -100,7 +101,7 @@ func Test_UpdateStatusReport(t *testing.T) {
 		}
 
 		err := statusreport.UpdateStatusReportWithHTTPClient(
-			interceptor.GetHTTPClient(), "test-token",
+			context.Background(), interceptor.GetHTTPClient(),"test-token",
 			"1", "", nil, false, false,
 		)
 		if err == nil {
@@ -124,7 +125,7 @@ func Test_UpdateStatusReport(t *testing.T) {
 		}
 
 		err := statusreport.UpdateStatusReportWithHTTPClient(
-			interceptor.GetHTTPClient(), "test-token",
+			context.Background(), interceptor.GetHTTPClient(),"test-token",
 			"", "Title", nil, true, false,
 		)
 		if err == nil {

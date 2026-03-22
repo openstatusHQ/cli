@@ -3,21 +3,23 @@ package monitors
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
+	"github.com/openstatusHQ/cli/internal/auth"
+	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/config"
 	"github.com/urfave/cli/v3"
 	"sigs.k8s.io/yaml"
 )
 
 // ExportMonitor exports all monitors to a YAML file using the SDK
-func ExportMonitor(client monitorv1connect.MonitorServiceClient, path string) error {
-	resp, err := client.ListMonitors(context.Background(), &monitorv1.ListMonitorsRequest{})
+func ExportMonitor(ctx context.Context, client monitorv1connect.MonitorServiceClient, path string) error {
+	resp, err := client.ListMonitors(ctx, &monitorv1.ListMonitorsRequest{})
 	if err != nil {
 		return fmt.Errorf("failed to list monitors: %w", err)
 	}
@@ -73,18 +75,18 @@ func ExportMonitor(client monitorv1connect.MonitorServiceClient, path string) er
 
 	lockFile, err := os.OpenFile("openstatus.lock", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		return cli.Exit("Failed to apply change", 1)
+		return fmt.Errorf("failed to create lock file: %w", err)
 	}
 	defer lockFile.Close()
 
 	y, err = yaml.Marshal(&lock)
 	if err != nil {
-		return cli.Exit("Failed to apply change", 1)
+		return fmt.Errorf("failed to marshal lock file: %w", err)
 	}
 
 	_, err = lockFile.Write(y)
 	if err != nil {
-		return cli.Exit("Failed to apply change", 1)
+		return fmt.Errorf("failed to write lock file: %w", err)
 	}
 
 	return nil
@@ -156,13 +158,15 @@ func convertTCPMonitorToConfig(m *monitorv1.TCPMonitor) config.Monitor {
 		regions[i] = config.Region(regionToString(r))
 	}
 
-	// Parse host:port from URI
+	// Parse host:port from URI using net.SplitHostPort for IPv6 support
 	uri := m.GetUri()
-	parts := strings.Split(uri, ":")
-	host := parts[0]
+	host, portStr, err := net.SplitHostPort(uri)
 	var port int64
-	if len(parts) > 1 {
-		p, _ := strconv.Atoi(parts[1])
+	if err != nil {
+		// Fallback: treat the whole URI as host if no port separator found
+		host = uri
+	} else {
+		p, _ := strconv.Atoi(portStr)
 		port = int64(p)
 	}
 
@@ -275,33 +279,40 @@ func convertStringComparator(c monitorv1.StringComparator) config.Compare {
 }
 
 // ExportMonitorWithHTTPClient is a convenience function that creates a client and exports monitors
-func ExportMonitorWithHTTPClient(httpClient *http.Client, apiKey string, path string) error {
+func ExportMonitorWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, path string) error {
 	client := NewMonitorClientWithHTTPClient(httpClient, apiKey)
-	return ExportMonitor(client, path)
+	return ExportMonitor(ctx, client, path)
 }
 
 func GetMonitorImportCmd() *cli.Command {
-	monitorInfoCmd := cli.Command{
+	monitorImportCmd := cli.Command{
 		Name:        "import",
 		Usage:       "Import all your monitors",
-		UsageText:   "openstatus monitors import [options]",
+		UsageText: `openstatus monitors import
+  openstatus monitors import --output monitors.yaml`,
 		Description: "Import all your monitors from your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			client := NewMonitorClient(cmd.String("access-token"))
-			err := ExportMonitor(client, cmd.String("output"))
+			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
-			fmt.Printf("Monitors successfully imported to: %s", cmd.String("output"))
+			s := output.StartSpinner("Importing monitors...")
+			client := NewMonitorClient(apiKey)
+			err = ExportMonitor(ctx, client, cmd.String("output"))
+			output.StopSpinner(s)
+			if err != nil {
+				return cli.Exit(err.Error(), 1)
+			}
+			fmt.Printf("Monitors successfully imported to: %s\n", cmd.String("output"))
+			fmt.Println("Run 'openstatus monitors apply' to sync changes")
 			return nil
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:     "access-token",
-				Usage:    "OpenStatus API Access Token",
-				Aliases:  []string{"t"},
-				Sources:  cli.EnvVars("OPENSTATUS_API_TOKEN"),
-				Required: true,
+				Name:    "access-token",
+				Usage:   "OpenStatus API Access Token",
+				Aliases: []string{"t"},
+				Sources: cli.EnvVars("OPENSTATUS_API_TOKEN"),
 			},
 			&cli.StringFlag{
 				Name:        "output",
@@ -312,5 +323,5 @@ func GetMonitorImportCmd() *cli.Command {
 			},
 		},
 	}
-	return &monitorInfoCmd
+	return &monitorImportCmd
 }

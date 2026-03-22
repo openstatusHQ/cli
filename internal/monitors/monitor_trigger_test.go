@@ -2,6 +2,7 @@ package monitors_test
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"log"
 	"net/http"
@@ -31,7 +32,7 @@ func Test_getMonitorTrigger(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.TriggerMonitorWithHTTPClient(interceptor.GetHTTPClient(), "", "")
+		err := monitors.TriggerMonitorWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "", "")
 		if err == nil {
 			t.Errorf("Expected error for empty monitor ID, got nil")
 		}
@@ -58,7 +59,7 @@ func Test_getMonitorTrigger(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.TriggerMonitorWithHTTPClient(interceptor.GetHTTPClient(), "test-token", "1")
+		err := monitors.TriggerMonitorWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-token", "1")
 		if err != nil {
 			t.Errorf("Expected no error, got: %v", err)
 		}
@@ -84,7 +85,7 @@ func Test_getMonitorTrigger(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.TriggerMonitorWithHTTPClient(interceptor.GetHTTPClient(), "test-token", "1")
+		err := monitors.TriggerMonitorWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-token", "1")
 		if err == nil {
 			t.Errorf("Expected error for non-200 status, got nil")
 		}

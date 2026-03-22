@@ -12,21 +12,21 @@ import (
 )
 
 // UpdateMonitor updates a monitor using the SDK, dispatching to the appropriate type
-func UpdateMonitor(httpClient *http.Client, apiKey string, id int, monitor config.Monitor) (Monitor, error) {
+func UpdateMonitor(ctx context.Context, httpClient *http.Client, apiKey string, id int, monitor config.Monitor) (Monitor, error) {
 	client := NewMonitorClientWithHTTPClient(httpClient, apiKey)
 
 	switch monitor.Kind {
 	case config.HTTP:
-		return UpdateHTTPMonitor(client, id, monitor)
+		return UpdateHTTPMonitor(ctx, client, id, monitor)
 	case config.TCP:
-		return UpdateTCPMonitor(client, id, monitor)
+		return UpdateTCPMonitor(ctx, client, id, monitor)
 	default:
 		return Monitor{}, fmt.Errorf("unsupported monitor kind: %s", monitor.Kind)
 	}
 }
 
 // UpdateHTTPMonitor updates an HTTP monitor using the SDK
-func UpdateHTTPMonitor(client monitorv1connect.MonitorServiceClient, id int, monitor config.Monitor) (Monitor, error) {
+func UpdateHTTPMonitor(ctx context.Context, client monitorv1connect.MonitorServiceClient, id int, monitor config.Monitor) (Monitor, error) {
 	httpMonitor := configToHTTPMonitor(monitor)
 	httpMonitor.Id = strconv.Itoa(id)
 
@@ -35,7 +35,7 @@ func UpdateHTTPMonitor(client monitorv1connect.MonitorServiceClient, id int, mon
 		Monitor: httpMonitor,
 	}
 
-	resp, err := client.UpdateHTTPMonitor(context.Background(), req)
+	resp, err := client.UpdateHTTPMonitor(ctx, req)
 	if err != nil {
 		return Monitor{}, fmt.Errorf("failed to update HTTP monitor: %w", err)
 	}
@@ -44,7 +44,7 @@ func UpdateHTTPMonitor(client monitorv1connect.MonitorServiceClient, id int, mon
 }
 
 // UpdateTCPMonitor updates a TCP monitor using the SDK
-func UpdateTCPMonitor(client monitorv1connect.MonitorServiceClient, id int, monitor config.Monitor) (Monitor, error) {
+func UpdateTCPMonitor(ctx context.Context, client monitorv1connect.MonitorServiceClient, id int, monitor config.Monitor) (Monitor, error) {
 	tcpMonitor := configToTCPMonitor(monitor)
 	tcpMonitor.Id = strconv.Itoa(id)
 
@@ -53,7 +53,7 @@ func UpdateTCPMonitor(client monitorv1connect.MonitorServiceClient, id int, moni
 		Monitor: tcpMonitor,
 	}
 
-	resp, err := client.UpdateTCPMonitor(context.Background(), req)
+	resp, err := client.UpdateTCPMonitor(ctx, req)
 	if err != nil {
 		return Monitor{}, fmt.Errorf("failed to update TCP monitor: %w", err)
 	}

@@ -9,10 +9,12 @@ import (
 
 	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/status_report/v1/status_reportv1connect"
+	"github.com/openstatusHQ/cli/internal/auth"
+	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/urfave/cli/v3"
 )
 
-func CreateStatusReport(client status_reportv1connect.StatusReportServiceClient, title, status, message, date, pageId string, componentIds []string, notify bool) (string, error) {
+func CreateStatusReport(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, title, status, message, date, pageId string, componentIds []string, notify bool) (string, error) {
 	sdkStatus, err := statusToSDK(status)
 	if err != nil {
 		return "", err
@@ -34,17 +36,17 @@ func CreateStatusReport(client status_reportv1connect.StatusReportServiceClient,
 		req.SetNotify(true)
 	}
 
-	resp, err := client.CreateStatusReport(context.Background(), req)
+	resp, err := client.CreateStatusReport(ctx, req)
 	if err != nil {
-		return "", fmt.Errorf("failed to create status report: %w", err)
+		return "", output.FormatError(err, "status-report", "")
 	}
 
 	return resp.GetStatusReport().GetId(), nil
 }
 
-func CreateStatusReportWithHTTPClient(httpClient *http.Client, apiKey string, title, status, message, date, pageId string, componentIds []string, notify bool) (string, error) {
+func CreateStatusReportWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, title, status, message, date, pageId string, componentIds []string, notify bool) (string, error) {
 	client := NewStatusReportClientWithHTTPClient(httpClient, apiKey)
-	return CreateStatusReport(client, title, status, message, date, pageId, componentIds, notify)
+	return CreateStatusReport(ctx, client, title, status, message, date, pageId, componentIds, notify)
 }
 
 func GetStatusReportCreateCmd() *cli.Command {
@@ -54,11 +56,10 @@ func GetStatusReportCreateCmd() *cli.Command {
 		UsageText: "openstatus status-report create --title \"API Degradation\" --status investigating --message \"Investigating increased latency\" --page-id 123",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:     "access-token",
-				Usage:    "OpenStatus API Access Token",
-				Aliases:  []string{"t"},
-				Sources:  cli.EnvVars("OPENSTATUS_API_TOKEN"),
-				Required: true,
+				Name:    "access-token",
+				Usage:   "OpenStatus API Access Token",
+				Aliases: []string{"t"},
+				Sources: cli.EnvVars("OPENSTATUS_API_TOKEN"),
 			},
 			&cli.StringFlag{
 				Name:     "title",
@@ -94,6 +95,10 @@ func GetStatusReportCreateCmd() *cli.Command {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			apiKey, err := auth.ResolveAccessToken(cmd)
+			if err != nil {
+				return cli.Exit(err.Error(), 1)
+			}
 			date := cmd.String("date")
 			if date == "" {
 				date = time.Now().UTC().Format(time.RFC3339)
@@ -104,8 +109,10 @@ func GetStatusReportCreateCmd() *cli.Command {
 				componentIds = strings.Split(ids, ",")
 			}
 
-			client := NewStatusReportClient(cmd.String("access-token"))
+			client := NewStatusReportClient(apiKey)
+			s := output.StartSpinner("Creating status report...")
 			id, err := CreateStatusReport(
+				ctx,
 				client,
 				cmd.String("title"),
 				cmd.String("status"),
@@ -115,6 +122,7 @@ func GetStatusReportCreateCmd() *cli.Command {
 				componentIds,
 				cmd.Bool("notify"),
 			)
+			output.StopSpinner(s)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}

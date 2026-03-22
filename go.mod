@@ -8,15 +8,19 @@ require (
 	buf.build/gen/go/openstatus/api/connectrpc/gosimple v1.19.1-20260202165838-5bd92a1e5d53.2
 	buf.build/gen/go/openstatus/api/protocolbuffers/go v1.36.11-20260202165838-5bd92a1e5d53.1
 	connectrpc.com/connect v1.19.1
+	github.com/briandowns/spinner v1.23.2
 	github.com/fatih/color v1.18.0
 	github.com/google/go-cmp v0.7.0
+	github.com/joho/godotenv v1.5.1
 	github.com/knadh/koanf/parsers/yaml v0.1.0
 	github.com/knadh/koanf/providers/file v1.1.2
 	github.com/knadh/koanf/v2 v2.1.1
 	github.com/logrusorgru/aurora/v4 v4.0.0
+	github.com/mattn/go-isatty v0.0.20
 	github.com/olekukonko/tablewriter v1.0.7
 	github.com/rodaine/table v1.3.0
 	github.com/urfave/cli-docs/v3 v3.0.0-alpha6
+	golang.org/x/term v0.1.0
 	sigs.k8s.io/yaml v1.4.0
 )
 
@@ -27,7 +31,6 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/knadh/koanf/maps v0.1.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect

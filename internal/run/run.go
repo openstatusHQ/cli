@@ -14,6 +14,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/logrusorgru/aurora/v4"
+	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/config"
 	"github.com/openstatusHQ/cli/internal/monitors"
 	"github.com/rodaine/table"
@@ -26,7 +27,7 @@ func MonitorTrigger(httpClient *http.Client, apiKey string, monitorId string) er
 		return fmt.Errorf("Monitor ID is required")
 	}
 
-	url := fmt.Sprintf("%s/monitor/%s/run", monitors.APIBaseURL, monitorId)
+	url := fmt.Sprintf("%s/monitor/%s/run", api.APIBaseURL, monitorId)
 
 	httpClient.Timeout = 2 * time.Minute
 

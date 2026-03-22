@@ -1,7 +1,6 @@
 package monitors
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,42 +9,25 @@ import (
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
 	"connectrpc.com/connect"
+	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/config"
 	"github.com/urfave/cli/v3"
 )
 
-// APIBaseURL is the base URL for the OpenStatus API
-const APIBaseURL = "https://api.openstatus.dev/v1"
-
-// ConnectBaseURL is the base URL for the Connect RPC API
-const ConnectBaseURL = "https://api.openstatus.dev/rpc"
-
-// NewAuthInterceptor creates an interceptor that adds the API key to all requests
-func NewAuthInterceptor(apiKey string) connect.UnaryInterceptorFunc {
-	return func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			req.Header().Set("x-openstatus-key", apiKey)
-			return next(ctx, req)
-		}
-	}
-}
-
-// NewMonitorClient creates a new Monitor service client with authentication
 func NewMonitorClient(apiKey string) monitorv1connect.MonitorServiceClient {
 	return monitorv1connect.NewMonitorServiceClient(
 		http.DefaultClient,
-		ConnectBaseURL,
-		connect.WithInterceptors(NewAuthInterceptor(apiKey)),
+		api.ConnectBaseURL,
+		connect.WithInterceptors(api.NewAuthInterceptor(apiKey)),
 		connect.WithProtoJSON(),
 	)
 }
 
-// NewMonitorClientWithHTTPClient creates a new Monitor service client with a custom HTTP client
 func NewMonitorClientWithHTTPClient(httpClient *http.Client, apiKey string) monitorv1connect.MonitorServiceClient {
 	return monitorv1connect.NewMonitorServiceClient(
 		httpClient,
-		ConnectBaseURL,
-		connect.WithInterceptors(NewAuthInterceptor(apiKey)),
+		api.ConnectBaseURL,
+		connect.WithInterceptors(api.NewAuthInterceptor(apiKey)),
 		connect.WithProtoJSON(),
 	)
 }

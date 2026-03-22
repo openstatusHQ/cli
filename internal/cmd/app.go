@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/openstatusHQ/cli/internal/monitors"
 	"github.com/openstatusHQ/cli/internal/run"
+	"github.com/openstatusHQ/cli/internal/statusreport"
 	"github.com/openstatusHQ/cli/internal/whoami"
 	"github.com/urfave/cli/v3"
 )
@@ -16,6 +17,7 @@ func NewApp() *cli.Command {
 		Version:     "v1.0.1",
 		Commands: []*cli.Command{
 			monitors.MonitorsCmd(),
+			statusreport.StatusReportCmd(),
 			run.RunCmd(),
 			whoami.WhoamiCmd(),
 		},

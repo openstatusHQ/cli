@@ -68,19 +68,53 @@ func httpMonitorToLocal(m *monitorv1.HTTPMonitor) (Monitor, error) {
 	if err != nil {
 		return Monitor{}, fmt.Errorf("invalid monitor ID %q: %w", m.GetId(), err)
 	}
+
+	var headers []Header
+	for _, h := range m.GetHeaders() {
+		headers = append(headers, Header{Key: h.GetKey(), Value: h.GetValue()})
+	}
+
+	var assertions []Assertion
+	for _, a := range m.GetStatusCodeAssertions() {
+		assertions = append(assertions, Assertion{
+			Type:    "status_code",
+			Compare: string(convertNumberComparator(a.GetComparator())),
+			Target:  int(a.GetTarget()),
+		})
+	}
+	for _, a := range m.GetBodyAssertions() {
+		assertions = append(assertions, Assertion{
+			Type:    "text_body",
+			Compare: string(convertStringComparator(a.GetComparator())),
+			Target:  a.GetTarget(),
+		})
+	}
+	for _, a := range m.GetHeaderAssertions() {
+		assertions = append(assertions, Assertion{
+			Type:    "header",
+			Compare: string(convertStringComparator(a.GetComparator())),
+			Target:  a.GetTarget(),
+			Key:     a.GetKey(),
+		})
+	}
+
 	return Monitor{
-		ID:          id,
-		Name:        m.GetName(),
-		Description: m.GetDescription(),
-		URL:         m.GetUrl(),
-		Periodicity: periodicityToString(m.GetPeriodicity()),
-		Method:      httpMethodToString(m.GetMethod()),
-		Regions:     regionsToStrings(m.GetRegions()),
-		Active:      m.GetActive(),
-		Public:      m.GetPublic(),
-		Timeout:     int(m.GetTimeout()),
-		Retry:       int(m.GetRetry()),
-		JobType:     "http",
+		ID:            id,
+		Name:          m.GetName(),
+		Description:   m.GetDescription(),
+		URL:           m.GetUrl(),
+		Periodicity:   periodicityToString(m.GetPeriodicity()),
+		Method:        httpMethodToString(m.GetMethod()),
+		Regions:       regionsToStrings(m.GetRegions()),
+		Active:        m.GetActive(),
+		Public:        m.GetPublic(),
+		Timeout:       int(m.GetTimeout()),
+		DegradedAfter: int(m.GetDegradedAt()),
+		Body:          m.GetBody(),
+		Headers:       headers,
+		Assertions:    assertions,
+		Retry:         int(m.GetRetry()),
+		JobType:       "http",
 	}, nil
 }
 
@@ -90,17 +124,18 @@ func tcpMonitorToLocal(m *monitorv1.TCPMonitor) (Monitor, error) {
 		return Monitor{}, fmt.Errorf("invalid monitor ID %q: %w", m.GetId(), err)
 	}
 	return Monitor{
-		ID:          id,
-		Name:        m.GetName(),
-		Description: m.GetDescription(),
-		URL:         m.GetUri(),
-		Periodicity: periodicityToString(m.GetPeriodicity()),
-		Regions:     regionsToStrings(m.GetRegions()),
-		Active:      m.GetActive(),
-		Public:      m.GetPublic(),
-		Timeout:     int(m.GetTimeout()),
-		Retry:       int(m.GetRetry()),
-		JobType:     "tcp",
+		ID:            id,
+		Name:          m.GetName(),
+		Description:   m.GetDescription(),
+		URL:           m.GetUri(),
+		Periodicity:   periodicityToString(m.GetPeriodicity()),
+		Regions:       regionsToStrings(m.GetRegions()),
+		Active:        m.GetActive(),
+		Public:        m.GetPublic(),
+		Timeout:       int(m.GetTimeout()),
+		DegradedAfter: int(m.GetDegradedAt()),
+		Retry:         int(m.GetRetry()),
+		JobType:       "tcp",
 	}, nil
 }
 

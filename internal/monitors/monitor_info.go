@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
+	"github.com/openstatusHQ/cli/internal/auth"
+	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/logrusorgru/aurora/v4"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
@@ -15,10 +17,14 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) error {
+func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string, monitorId string, s *output.Spinner) error {
 
 	if monitorId == "" {
-		return fmt.Errorf("Monitor ID is required")
+		output.StopSpinner(s)
+		fmt.Fprintln(os.Stderr, "Usage: openstatus monitors info <monitor-id>")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "Example: openstatus monitors info 12345")
+		return fmt.Errorf("monitor ID is required")
 	}
 
 	client := NewMonitorClientWithHTTPClient(httpClient, apiKey)
@@ -27,9 +33,10 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 		Id: monitorId,
 	}
 
-	resp, err := client.GetMonitor(context.Background(), req)
+	resp, err := client.GetMonitor(ctx, req)
+	output.StopSpinner(s)
 	if err != nil {
-		return fmt.Errorf("failed to get monitor: %w", err)
+		return output.FormatError(err, "monitor", monitorId)
 	}
 
 	monitorConfig := resp.GetMonitor()
@@ -46,6 +53,10 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 		return fmt.Errorf("unknown monitor type")
 	}
 
+	if output.IsJSONOutput() {
+		return output.PrintJSON(monitor)
+	}
+
 	fmt.Println(aurora.Bold("Monitor:"))
 	table := tablewriter.NewTable(os.Stdout,
 		tablewriter.WithRenderer(renderer.NewBlueprint()),
@@ -58,18 +69,18 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 				Bottom: tw.Off,
 			},
 			Settings: tw.Settings{
-				Lines: tw.Lines{ // Major internal separator lines
-					ShowHeaderLine: tw.Off, // Line after header
-					ShowFooterLine: tw.On,  // Line before footer (if footer exists)
+				Lines: tw.Lines{
+					ShowHeaderLine: tw.Off,
+					ShowFooterLine: tw.On,
 				},
-				Separators: tw.Separators{ // General row and column separators
-					BetweenRows:    tw.Off, // Horizontal lines between data rows
-					BetweenColumns: tw.On,  // Vertical lines between columns
+				Separators: tw.Separators{
+					BetweenRows:    tw.Off,
+					BetweenColumns: tw.On,
 				},
 			},
 		}),
-		tablewriter.WithRowAlignment(tw.AlignLeft),    // Common for Markdown
-		tablewriter.WithHeaderAlignment(tw.AlignLeft), //
+		tablewriter.WithRowAlignment(tw.AlignLeft),
+		tablewriter.WithHeaderAlignment(tw.AlignLeft),
 	)
 
 	data := [][]string{
@@ -84,7 +95,6 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 
 	data = append(data, []string{"Frequency", monitor.Periodicity})
 
-	// Group regions by provider and display each provider on its own row
 	regionGroups := groupRegionsByProvider(regions)
 	providers := []string{"Fly.io", "Koyeb", "Railway"}
 	for _, provider := range providers {
@@ -105,8 +115,11 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 	}
 
 	if monitor.Body != "" {
-		s := fmt.Sprintf("%s", monitor.Body)
-		data = append(data, []string{"Body", s[:40]})
+		s := monitor.Body
+		if len(s) > 40 {
+			s = s[:40]
+		}
+		data = append(data, []string{"Body", s})
 	}
 	table.Bulk(data)
 	table.Render()
@@ -116,13 +129,19 @@ func GetMonitorInfo(httpClient *http.Client, apiKey string, monitorId string) er
 
 func GetMonitorInfoCmd() *cli.Command {
 	monitorInfoCmd := cli.Command{
-		Name:        "info",
-		Usage:       "Get a monitor information",
-		UsageText:   "openstatus monitors info [MonitorID]",
-		Description: "Fetch the monitor information. The monitor information includes details such as name, description, endpoint, method, frequency, locations, active status, public status, timeout, degraded after, and body. The body is truncated to 40 characters.",
+		Name:  "info",
+		Usage: "Get a monitor information",
+		UsageText: `openstatus monitors info <MonitorID>
+  openstatus monitors info 12345`,
+		Description: "Fetch the monitor information. The monitor information includes details such as name, description, endpoint, method, frequency, locations, active status, public status, timeout, degraded after, and body.",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			apiKey, err := auth.ResolveAccessToken(cmd)
+			if err != nil {
+				return cli.Exit(err.Error(), 1)
+			}
 			monitorId := cmd.Args().Get(0)
-			err := GetMonitorInfo(http.DefaultClient, cmd.String("access-token"), monitorId)
+			s := output.StartSpinner("Fetching monitor details...")
+			err = GetMonitorInfo(ctx, http.DefaultClient, apiKey, monitorId, s)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
@@ -130,11 +149,10 @@ func GetMonitorInfoCmd() *cli.Command {
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:     "access-token",
-				Usage:    "OpenStatus API Access Token",
-				Aliases:  []string{"t"},
-				Sources:  cli.EnvVars("OPENSTATUS_API_TOKEN"),
-				Required: true,
+				Name:    "access-token",
+				Usage:   "OpenStatus API Access Token",
+				Aliases: []string{"t"},
+				Sources: cli.EnvVars("OPENSTATUS_API_TOKEN"),
 			}},
 	}
 	return &monitorInfoCmd

@@ -2,6 +2,7 @@ package statusreport_test
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"testing"
@@ -28,7 +29,7 @@ func Test_GetStatusReportInfo(t *testing.T) {
 			},
 		}
 
-		err := statusreport.GetStatusReportInfoWithHTTPClient(interceptor.GetHTTPClient(), "test-token", "1")
+		err := statusreport.GetStatusReportInfoWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"test-token", "1")
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
@@ -50,7 +51,7 @@ func Test_GetStatusReportInfo(t *testing.T) {
 			},
 		}
 
-		err := statusreport.GetStatusReportInfoWithHTTPClient(interceptor.GetHTTPClient(), "test-token", "2")
+		err := statusreport.GetStatusReportInfoWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"test-token", "2")
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
@@ -68,7 +69,7 @@ func Test_GetStatusReportInfo(t *testing.T) {
 			},
 		}
 
-		err := statusreport.GetStatusReportInfoWithHTTPClient(interceptor.GetHTTPClient(), "test-token", "")
+		err := statusreport.GetStatusReportInfoWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"test-token", "")
 		if err == nil {
 			t.Error("Expected error for empty report ID, got nil")
 		}
@@ -93,7 +94,7 @@ func Test_GetStatusReportInfo(t *testing.T) {
 			},
 		}
 
-		err := statusreport.GetStatusReportInfoWithHTTPClient(interceptor.GetHTTPClient(), "test-token", "999")
+		err := statusreport.GetStatusReportInfoWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"test-token", "999")
 		if err == nil {
 			t.Error("Expected error, got nil")
 		}

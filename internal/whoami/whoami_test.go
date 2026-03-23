@@ -2,6 +2,7 @@ package whoami_test
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"log"
 	"net/http"
@@ -50,7 +51,7 @@ func Test_getWhoami(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := whoami.GetWhoamiCmd(interceptor.GetHTTPClient(), "")
+		err := whoami.GetWhoamiCmd(context.Background(), interceptor.GetHTTPClient(), "", nil)
 		if err != nil {
 			t.Error(err)
 			t.Errorf("Expected log output, got nothing")
@@ -72,7 +73,7 @@ func Test_getWhoami(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := whoami.GetWhoamiCmd(interceptor.GetHTTPClient(), "")
+		err := whoami.GetWhoamiCmd(context.Background(), interceptor.GetHTTPClient(), "", nil)
 		if err == nil {
 			t.Errorf("Expected log output, got nothing")
 		}

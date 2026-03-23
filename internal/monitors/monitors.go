@@ -500,7 +500,7 @@ func MonitorsCmd() *cli.Command {
 	monitorsCmd := cli.Command{
 		Name:  "monitors",
 		Usage: "Manage your monitors",
-
+		Aliases:   []string{"m"},
 		Commands: []*cli.Command{
 			GetMonitorsApplyCmd(),
 			GetMonitorCreateCmd(),

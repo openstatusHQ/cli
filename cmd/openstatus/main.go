@@ -1,16 +1,17 @@
 package main
 
 import (
-	"context"
 	cmd "github.com/openstatusHQ/cli/internal/cmd"
+	"github.com/joho/godotenv"
 	"log"
-	"os"
 )
 
 func main() {
+	_ = godotenv.Load()
+
 	app := cmd.NewApp()
 
-	if err := app.Run(context.Background(), os.Args); err != nil {
+	if err := cmd.RunApp(app); err != nil {
 		log.Fatal(err)
 	}
 }

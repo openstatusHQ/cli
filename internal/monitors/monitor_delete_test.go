@@ -2,6 +2,7 @@ package monitors_test
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"testing"
@@ -24,12 +25,12 @@ func Test_DeleteMonitor(t *testing.T) {
 			},
 		}
 
-		err := monitors.DeleteMonitorWithHTTPClient(interceptor.GetHTTPClient(), "test-api-key", "")
+		err := monitors.DeleteMonitorWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-api-key", "")
 		if err == nil {
 			t.Error("Expected error for empty monitor ID, got nil")
 		}
-		if err.Error() != "Monitor ID is required" {
-			t.Errorf("Expected 'Monitor ID is required' error, got %v", err)
+		if err.Error() != "monitor ID is required" {
+			t.Errorf("Expected 'monitor ID is required' error, got %v", err)
 		}
 	})
 
@@ -55,7 +56,7 @@ func Test_DeleteMonitor(t *testing.T) {
 			},
 		}
 
-		err := monitors.DeleteMonitorWithHTTPClient(interceptor.GetHTTPClient(), "test-api-key", "123")
+		err := monitors.DeleteMonitorWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-api-key", "123")
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
@@ -77,7 +78,7 @@ func Test_DeleteMonitor(t *testing.T) {
 			},
 		}
 
-		err := monitors.DeleteMonitorWithHTTPClient(interceptor.GetHTTPClient(), "test-api-key", "999")
+		err := monitors.DeleteMonitorWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-api-key", "999")
 		if err == nil {
 			t.Error("Expected error for non-200 status, got nil")
 		}

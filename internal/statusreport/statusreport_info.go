@@ -9,6 +9,8 @@ import (
 
 	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/status_report/v1/status_reportv1connect"
+	"github.com/openstatusHQ/cli/internal/auth"
+	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/logrusorgru/aurora/v4"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
@@ -16,19 +18,59 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func GetStatusReportInfo(client status_reportv1connect.StatusReportServiceClient, reportId string) error {
+type statusReportDetail struct {
+	ID         string               `json:"id"`
+	Title      string               `json:"title"`
+	Status     string               `json:"status"`
+	Components []string             `json:"components,omitempty"`
+	CreatedAt  string               `json:"created_at"`
+	UpdatedAt  string               `json:"updated_at"`
+	Updates    []statusReportUpdate `json:"updates,omitempty"`
+}
+
+type statusReportUpdate struct {
+	Date    string `json:"date"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, reportId string, s *output.Spinner) error {
 	if reportId == "" {
+		output.StopSpinner(s)
+		fmt.Fprintln(os.Stderr, "Usage: openstatus status-report info <report-id>")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "Example: openstatus status-report info 12345")
 		return fmt.Errorf("report ID is required")
 	}
 
-	resp, err := client.GetStatusReport(context.Background(), &status_reportv1.GetStatusReportRequest{
+	resp, err := client.GetStatusReport(ctx, &status_reportv1.GetStatusReportRequest{
 		Id: reportId,
 	})
+	output.StopSpinner(s)
 	if err != nil {
-		return fmt.Errorf("status report not found. Run 'openstatus status-report list' to see available reports")
+		return output.FormatError(err, "status-report", reportId)
 	}
 
 	report := resp.GetStatusReport()
+
+	if output.IsJSONOutput() {
+		detail := statusReportDetail{
+			ID:         report.GetId(),
+			Title:      report.GetTitle(),
+			Status:     statusToString(report.GetStatus()),
+			Components: report.GetPageComponentIds(),
+			CreatedAt:  report.GetCreatedAt(),
+			UpdatedAt:  report.GetUpdatedAt(),
+		}
+		for _, u := range report.GetUpdates() {
+			detail.Updates = append(detail.Updates, statusReportUpdate{
+				Date:    u.GetDate(),
+				Status:  statusToString(u.GetStatus()),
+				Message: u.GetMessage(),
+			})
+		}
+		return output.PrintJSON(detail)
+	}
 
 	fmt.Println(aurora.Bold("Status Report:"))
 	table := tablewriter.NewTable(os.Stdout,
@@ -90,29 +132,34 @@ func GetStatusReportInfo(client status_reportv1connect.StatusReportServiceClient
 	return nil
 }
 
-func GetStatusReportInfoWithHTTPClient(httpClient *http.Client, apiKey string, reportId string) error {
+func GetStatusReportInfoWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, reportId string) error {
 	client := NewStatusReportClientWithHTTPClient(httpClient, apiKey)
-	return GetStatusReportInfo(client, reportId)
+	return GetStatusReportInfo(ctx, client, reportId, nil)
 }
 
 func GetStatusReportInfoCmd() *cli.Command {
 	return &cli.Command{
-		Name:      "info",
-		Usage:     "Get status report details",
-		UsageText: "openstatus status-report info <ReportID>",
+		Name:  "info",
+		Usage: "Get status report details",
+		UsageText: `openstatus status-report info <ReportID>
+  openstatus status-report info 12345`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:     "access-token",
-				Usage:    "OpenStatus API Access Token",
-				Aliases:  []string{"t"},
-				Sources:  cli.EnvVars("OPENSTATUS_API_TOKEN"),
-				Required: true,
+				Name:    "access-token",
+				Usage:   "OpenStatus API Access Token",
+				Aliases: []string{"t"},
+				Sources: cli.EnvVars("OPENSTATUS_API_TOKEN"),
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			apiKey, err := auth.ResolveAccessToken(cmd)
+			if err != nil {
+				return cli.Exit(err.Error(), 1)
+			}
 			reportId := cmd.Args().Get(0)
-			client := NewStatusReportClient(cmd.String("access-token"))
-			err := GetStatusReportInfo(client, reportId)
+			s := output.StartSpinner("Fetching status report...")
+			client := NewStatusReportClient(apiKey)
+			err = GetStatusReportInfo(ctx, client, reportId, s)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}

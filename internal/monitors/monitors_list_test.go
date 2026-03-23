@@ -2,6 +2,7 @@ package monitors_test
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"log"
 	"net/http"
@@ -37,7 +38,7 @@ func Test_listMonitors(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.ListMonitorsWithHTTPClient(interceptor.GetHTTPClient(), "test-token")
+		err := monitors.ListMonitorsWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-token")
 		if err != nil {
 			t.Error(err)
 			t.Errorf("Expected log output, got nothing")
@@ -64,7 +65,7 @@ func Test_listMonitors(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.ListMonitorsWithHTTPClient(interceptor.GetHTTPClient(), "1")
+		err := monitors.ListMonitorsWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "1")
 		if err == nil {
 			t.Errorf("Expected error, got nothing")
 		}

@@ -32,8 +32,8 @@ func Test_NewApp(t *testing.T) {
 	t.Run("Has expected commands", func(t *testing.T) {
 		app := cmd.NewApp()
 
-		if len(app.Commands) != 4 {
-			t.Errorf("Expected 4 commands, got %d", len(app.Commands))
+		if len(app.Commands) != 6 {
+			t.Errorf("Expected 6 commands, got %d", len(app.Commands))
 		}
 
 		expectedCommands := map[string]bool{
@@ -41,6 +41,8 @@ func Test_NewApp(t *testing.T) {
 			"status-report": false,
 			"run":           false,
 			"whoami":        false,
+			"login":         false,
+			"logout":        false,
 		}
 
 		for _, subcmd := range app.Commands {
@@ -59,7 +61,7 @@ func Test_NewApp(t *testing.T) {
 	t.Run("Has correct usage text", func(t *testing.T) {
 		app := cmd.NewApp()
 
-		expectedUsage := "This is OpenStatus Command Line Interface, the OpenStatus.dev CLI"
+		expectedUsage := "Manage status pages, monitors, and incidents from the terminal"
 		if app.Usage != expectedUsage {
 			t.Errorf("Expected usage '%s', got '%s'", expectedUsage, app.Usage)
 		}

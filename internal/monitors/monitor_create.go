@@ -10,32 +10,33 @@ import (
 
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
-	confirmation "github.com/openstatusHQ/cli/internal/cli"
+	"github.com/openstatusHQ/cli/internal/auth"
+	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/config"
 	"github.com/urfave/cli/v3"
 )
 
 // CreateMonitor creates a monitor using the SDK, dispatching to the appropriate type
-func CreateMonitor(httpClient *http.Client, apiKey string, monitor config.Monitor) (Monitor, error) {
+func CreateMonitor(ctx context.Context, httpClient *http.Client, apiKey string, monitor config.Monitor) (Monitor, error) {
 	client := NewMonitorClientWithHTTPClient(httpClient, apiKey)
 
 	switch monitor.Kind {
 	case config.HTTP:
-		return CreateHTTPMonitor(client, monitor)
+		return CreateHTTPMonitor(ctx, client, monitor)
 	case config.TCP:
-		return CreateTCPMonitor(client, monitor)
+		return CreateTCPMonitor(ctx, client, monitor)
 	default:
 		return Monitor{}, fmt.Errorf("unsupported monitor kind: %s", monitor.Kind)
 	}
 }
 
 // CreateHTTPMonitor creates an HTTP monitor using the SDK
-func CreateHTTPMonitor(client monitorv1connect.MonitorServiceClient, monitor config.Monitor) (Monitor, error) {
+func CreateHTTPMonitor(ctx context.Context, client monitorv1connect.MonitorServiceClient, monitor config.Monitor) (Monitor, error) {
 	req := &monitorv1.CreateHTTPMonitorRequest{
 		Monitor: configToHTTPMonitor(monitor),
 	}
 
-	resp, err := client.CreateHTTPMonitor(context.Background(), req)
+	resp, err := client.CreateHTTPMonitor(ctx, req)
 	if err != nil {
 		return Monitor{}, fmt.Errorf("failed to create HTTP monitor: %w", err)
 	}
@@ -44,12 +45,12 @@ func CreateHTTPMonitor(client monitorv1connect.MonitorServiceClient, monitor con
 }
 
 // CreateTCPMonitor creates a TCP monitor using the SDK
-func CreateTCPMonitor(client monitorv1connect.MonitorServiceClient, monitor config.Monitor) (Monitor, error) {
+func CreateTCPMonitor(ctx context.Context, client monitorv1connect.MonitorServiceClient, monitor config.Monitor) (Monitor, error) {
 	req := &monitorv1.CreateTCPMonitorRequest{
 		Monitor: configToTCPMonitor(monitor),
 	}
 
-	resp, err := client.CreateTCPMonitor(context.Background(), req)
+	resp, err := client.CreateTCPMonitor(ctx, req)
 	if err != nil {
 		return Monitor{}, fmt.Errorf("failed to create TCP monitor: %w", err)
 	}
@@ -95,16 +96,21 @@ func tcpMonitorToLocal(m *monitorv1.TCPMonitor) Monitor {
 }
 
 func GetMonitorCreateCmd() *cli.Command {
-	monitorInfoCmd := cli.Command{
+	monitorCreateCmd := cli.Command{
 		Name:            "create",
-		Usage:           "Create monitors (beta)",
+		Usage:           "Create monitors",
 		Hidden:          true,
 		HideHelp:        true,
 		HideHelpCommand: true,
-		Description:     "Create the monitors defined in the openstatus.yaml file",
-		UsageText:       "openstatus monitors create [options]",
+		Description: "Create the monitors defined in the openstatus.yaml file",
+		UsageText: `openstatus monitors create
+  openstatus monitors create --config custom.yaml -y`,
 
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			apiKey, err := auth.ResolveAccessToken(cmd)
+			if err != nil {
+				return cli.Exit(err.Error(), 1)
+			}
 
 			path := cmd.String("config")
 
@@ -122,7 +128,7 @@ func GetMonitorCreateCmd() *cli.Command {
 			}
 
 			if !accept {
-				confirmed, err := confirmation.AskForConfirmation(fmt.Sprintf("You are about to create %d monitors do you want to continue", len(monitors)))
+				confirmed, err := output.AskForConfirmation(fmt.Sprintf("You are about to create %d monitors do you want to continue", len(monitors)))
 				if err != nil {
 					return cli.Exit(fmt.Sprintf("Failed to read input: %v", err), 1)
 				}
@@ -130,13 +136,17 @@ func GetMonitorCreateCmd() *cli.Command {
 					return nil
 				}
 			}
+			s := output.StartSpinner("Creating monitors...")
 			for _, value := range monitors {
-				_, err = CreateMonitor(http.DefaultClient, cmd.String("access-token"), value)
+				_, err = CreateMonitor(ctx, http.DefaultClient, apiKey, value)
 				if err != nil {
+					output.StopSpinner(s)
 					return cli.Exit("Unable to create monitor", 1)
 				}
 			}
+			output.StopSpinner(s)
 			fmt.Printf("%d monitors created successfully\n", len(monitors))
+			fmt.Println("Run 'openstatus monitors list' to see all monitors")
 			return nil
 		},
 		Flags: []cli.Flag{
@@ -148,11 +158,10 @@ func GetMonitorCreateCmd() *cli.Command {
 				Value:       "openstatus.yaml",
 			},
 			&cli.StringFlag{
-				Name:     "access-token",
-				Usage:    "OpenStatus API Access Token",
-				Aliases:  []string{"t"},
-				Sources:  cli.EnvVars("OPENSTATUS_API_TOKEN"),
-				Required: true,
+				Name:    "access-token",
+				Usage:   "OpenStatus API Access Token",
+				Aliases: []string{"t"},
+				Sources: cli.EnvVars("OPENSTATUS_API_TOKEN"),
 			},
 			&cli.BoolFlag{
 				Name:     "auto-accept",
@@ -162,5 +171,5 @@ func GetMonitorCreateCmd() *cli.Command {
 			},
 		},
 	}
-	return &monitorInfoCmd
+	return &monitorCreateCmd
 }

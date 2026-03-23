@@ -2,6 +2,7 @@ package monitors_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -43,7 +44,7 @@ func Test_UpdateMonitor(t *testing.T) {
 			},
 		}
 
-		result, err := monitors.UpdateMonitor(interceptor.GetHTTPClient(), "test-api-key", 123, monitor)
+		result, err := monitors.UpdateMonitor(context.Background(), interceptor.GetHTTPClient(), "test-api-key", 123, monitor)
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}
@@ -82,7 +83,7 @@ func Test_UpdateMonitor(t *testing.T) {
 			},
 		}
 
-		result, err := monitors.UpdateMonitor(interceptor.GetHTTPClient(), "test-api-key", 456, monitor)
+		result, err := monitors.UpdateMonitor(context.Background(), interceptor.GetHTTPClient(), "test-api-key", 456, monitor)
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}
@@ -114,7 +115,7 @@ func Test_UpdateMonitor(t *testing.T) {
 			Kind: config.HTTP,
 		}
 
-		_, err := monitors.UpdateMonitor(interceptor.GetHTTPClient(), "test-api-key", 999, monitor)
+		_, err := monitors.UpdateMonitor(context.Background(), interceptor.GetHTTPClient(), "test-api-key", 999, monitor)
 		if err == nil {
 			t.Error("Expected error for not found status, got nil")
 		}
@@ -136,7 +137,7 @@ func Test_UpdateMonitor(t *testing.T) {
 			Kind: "unsupported",
 		}
 
-		_, err := monitors.UpdateMonitor(interceptor.GetHTTPClient(), "test-api-key", 123, monitor)
+		_, err := monitors.UpdateMonitor(context.Background(), interceptor.GetHTTPClient(), "test-api-key", 123, monitor)
 		if err == nil {
 			t.Error("Expected error for unsupported monitor kind, got nil")
 		}
@@ -161,7 +162,7 @@ func Test_UpdateMonitor(t *testing.T) {
 			Kind: config.HTTP,
 		}
 
-		result, err := monitors.UpdateMonitor(interceptor.GetHTTPClient(), "test-api-key", 789, monitor)
+		result, err := monitors.UpdateMonitor(context.Background(), interceptor.GetHTTPClient(), "test-api-key", 789, monitor)
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}
@@ -235,7 +236,7 @@ func Test_UpdateMonitor_FollowRedirects(t *testing.T) {
 			},
 		}
 
-		_, err := monitors.UpdateMonitor(interceptor.GetHTTPClient(), "test-api-key", 123, monitor)
+		_, err := monitors.UpdateMonitor(context.Background(), interceptor.GetHTTPClient(), "test-api-key", 123, monitor)
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}
@@ -284,7 +285,7 @@ func Test_UpdateMonitor_FollowRedirects(t *testing.T) {
 			},
 		}
 
-		_, err := monitors.UpdateMonitor(interceptor.GetHTTPClient(), "test-api-key", 124, monitor)
+		_, err := monitors.UpdateMonitor(context.Background(), interceptor.GetHTTPClient(), "test-api-key", 124, monitor)
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}

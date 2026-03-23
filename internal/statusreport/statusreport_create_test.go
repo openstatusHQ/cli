@@ -2,6 +2,7 @@ package statusreport_test
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"testing"
@@ -32,7 +33,7 @@ func Test_CreateStatusReport(t *testing.T) {
 		}
 
 		id, err := statusreport.CreateStatusReportWithHTTPClient(
-			interceptor.GetHTTPClient(), "test-token",
+			context.Background(), interceptor.GetHTTPClient(),"test-token",
 			"API Outage", "investigating", "Investigating the issue",
 			"2026-03-20T10:00:00Z", "page-1", nil, false,
 		)
@@ -61,7 +62,7 @@ func Test_CreateStatusReport(t *testing.T) {
 		}
 
 		id, err := statusreport.CreateStatusReportWithHTTPClient(
-			interceptor.GetHTTPClient(), "test-token",
+			context.Background(), interceptor.GetHTTPClient(),"test-token",
 			"DB Issue", "investigating", "Looking into DB issues",
 			"2026-03-20T10:00:00Z", "page-1", []string{"c1", "c2"}, true,
 		)
@@ -86,7 +87,7 @@ func Test_CreateStatusReport(t *testing.T) {
 		}
 
 		_, err := statusreport.CreateStatusReportWithHTTPClient(
-			interceptor.GetHTTPClient(), "test-token",
+			context.Background(), interceptor.GetHTTPClient(),"test-token",
 			"Title", "invalid-status", "Message",
 			"2026-03-20T10:00:00Z", "page-1", nil, false,
 		)
@@ -112,7 +113,7 @@ func Test_CreateStatusReport(t *testing.T) {
 		}
 
 		_, err := statusreport.CreateStatusReportWithHTTPClient(
-			interceptor.GetHTTPClient(), "test-token",
+			context.Background(), interceptor.GetHTTPClient(),"test-token",
 			"Title", "investigating", "Message",
 			"2026-03-20T10:00:00Z", "page-1", nil, false,
 		)

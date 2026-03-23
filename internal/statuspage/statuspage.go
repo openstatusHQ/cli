@@ -65,6 +65,27 @@ func componentTypeToString(t status_pagev1.PageComponentType) string {
 	}
 }
 
+func localeToString(l status_pagev1.Locale) string {
+	switch l {
+	case status_pagev1.Locale_LOCALE_EN:
+		return "en"
+	case status_pagev1.Locale_LOCALE_FR:
+		return "fr"
+	case status_pagev1.Locale_LOCALE_DE:
+		return "de"
+	default:
+		return "unknown"
+	}
+}
+
+func localesToStrings(locales []status_pagev1.Locale) []string {
+	result := make([]string, 0, len(locales))
+	for _, l := range locales {
+		result = append(result, localeToString(l))
+	}
+	return result
+}
+
 func StatusPageCmd() *cli.Command {
 	return &cli.Command{
 		Name:    "status-page",

@@ -23,16 +23,18 @@ import (
 )
 
 type statusPageDetail struct {
-	ID          string                `json:"id"`
-	Title       string                `json:"title"`
-	Description string                `json:"description,omitempty"`
-	URL         string                `json:"url"`
-	Published   bool                  `json:"published"`
-	AccessType  string                `json:"access_type"`
-	Theme       string                `json:"theme"`
-	HomepageURL string                `json:"homepage_url,omitempty"`
-	ContactURL  string                `json:"contact_url,omitempty"`
-	Components  []statusPageComponent `json:"components,omitempty"`
+	ID            string                `json:"id"`
+	Title         string                `json:"title"`
+	Description   string                `json:"description,omitempty"`
+	URL           string                `json:"url"`
+	Published     bool                  `json:"published"`
+	AccessType    string                `json:"access_type"`
+	Theme         string                `json:"theme"`
+	DefaultLocale string                `json:"default_locale"`
+	Locales       []string              `json:"locales,omitempty"`
+	HomepageURL   string                `json:"homepage_url,omitempty"`
+	ContactURL    string                `json:"contact_url,omitempty"`
+	Components    []statusPageComponent `json:"components,omitempty"`
 }
 
 type statusPageComponent struct {
@@ -109,16 +111,18 @@ func GetStatusPageInfo(ctx context.Context, client status_pagev1connect.StatusPa
 
 	if output.IsJSONOutput() {
 		detail := statusPageDetail{
-			ID:          page.GetId(),
-			Title:       page.GetTitle(),
-			Description: page.GetDescription(),
-			URL:         pageURL,
-			Published:   page.GetPublished(),
-			AccessType:  accessTypeToString(page.GetAccessType()),
-			Theme:       themeToString(page.GetTheme()),
-			HomepageURL: page.GetHomepageUrl(),
-			ContactURL:  page.GetContactUrl(),
-			Components:  comps,
+			ID:            page.GetId(),
+			Title:         page.GetTitle(),
+			Description:   page.GetDescription(),
+			URL:           pageURL,
+			Published:     page.GetPublished(),
+			AccessType:    accessTypeToString(page.GetAccessType()),
+			Theme:         themeToString(page.GetTheme()),
+			DefaultLocale: localeToString(page.GetDefaultLocale()),
+			Locales:       localesToStrings(page.GetLocales()),
+			HomepageURL:   page.GetHomepageUrl(),
+			ContactURL:    page.GetContactUrl(),
+			Components:    comps,
 		}
 		return output.PrintJSON(detail)
 	}
@@ -162,6 +166,10 @@ func GetStatusPageInfo(ctx context.Context, client status_pagev1connect.StatusPa
 
 	data = append(data, []string{"Access Type", accessTypeToString(page.GetAccessType())})
 	data = append(data, []string{"Theme", themeToString(page.GetTheme())})
+	data = append(data, []string{"Default Locale", localeToString(page.GetDefaultLocale())})
+	if locales := page.GetLocales(); len(locales) > 0 {
+		data = append(data, []string{"Locales", strings.Join(localesToStrings(locales), ", ")})
+	}
 
 	if page.GetHomepageUrl() != "" {
 		data = append(data, []string{"Homepage URL", page.GetHomepageUrl()})

@@ -16,7 +16,7 @@ import (
 
 func NewMonitorClient(apiKey string) monitorv1connect.MonitorServiceClient {
 	return monitorv1connect.NewMonitorServiceClient(
-		http.DefaultClient,
+		api.DefaultHTTPClient,
 		api.ConnectBaseURL,
 		connect.WithInterceptors(api.NewAuthInterceptor(apiKey)),
 		connect.WithProtoJSON(),
@@ -121,21 +121,27 @@ func regionToString(r monitorv1.Region) string {
 	case monitorv1.Region_REGION_FLY_YYZ:
 		return "yyz"
 	// Koyeb regions
-	case monitorv1.Region_REGION_KOYEB_SFO:
-		return "sfo"
-	case monitorv1.Region_REGION_KOYEB_WAS:
-		return "was"
 	case monitorv1.Region_REGION_KOYEB_FRA:
-		return "fra"
+		return string(config.KoyebFra)
 	case monitorv1.Region_REGION_KOYEB_PAR:
-		return "par"
+		return string(config.KoyebPar)
+	case monitorv1.Region_REGION_KOYEB_SFO:
+		return string(config.KoyebSfo)
 	case monitorv1.Region_REGION_KOYEB_SIN:
-		return "sin"
+		return string(config.KoyebSin)
 	case monitorv1.Region_REGION_KOYEB_TYO:
-		return "tyo"
+		return string(config.KoyebTyo)
+	case monitorv1.Region_REGION_KOYEB_WAS:
+		return string(config.KoyebWas)
 	// Railway regions
 	case monitorv1.Region_REGION_RAILWAY_US_WEST2:
-		return "us-west2"
+		return string(config.RailwayUsWest2)
+	case monitorv1.Region_REGION_RAILWAY_US_EAST4:
+		return string(config.RailwayUsEast4)
+	case monitorv1.Region_REGION_RAILWAY_EUROPE_WEST4:
+		return string(config.RailwayEuropeWest4)
+	case monitorv1.Region_REGION_RAILWAY_ASIA_SOUTHEAST1:
+		return string(config.RailwayAsiaSoutheast1)
 	default:
 		return r.String()
 	}
@@ -254,6 +260,28 @@ func stringToRegion(r config.Region) monitorv1.Region {
 		return monitorv1.Region_REGION_FLY_SYD
 	case config.Yyz:
 		return monitorv1.Region_REGION_FLY_YYZ
+	// Koyeb regions
+	case config.KoyebFra:
+		return monitorv1.Region_REGION_KOYEB_FRA
+	case config.KoyebPar:
+		return monitorv1.Region_REGION_KOYEB_PAR
+	case config.KoyebSfo:
+		return monitorv1.Region_REGION_KOYEB_SFO
+	case config.KoyebSin:
+		return monitorv1.Region_REGION_KOYEB_SIN
+	case config.KoyebTyo:
+		return monitorv1.Region_REGION_KOYEB_TYO
+	case config.KoyebWas:
+		return monitorv1.Region_REGION_KOYEB_WAS
+	// Railway regions
+	case config.RailwayUsWest2:
+		return monitorv1.Region_REGION_RAILWAY_US_WEST2
+	case config.RailwayUsEast4:
+		return monitorv1.Region_REGION_RAILWAY_US_EAST4
+	case config.RailwayEuropeWest4:
+		return monitorv1.Region_REGION_RAILWAY_EUROPE_WEST4
+	case config.RailwayAsiaSoutheast1:
+		return monitorv1.Region_REGION_RAILWAY_ASIA_SOUTHEAST1
 	default:
 		return monitorv1.Region_REGION_UNSPECIFIED
 	}
@@ -393,7 +421,14 @@ func configToHTTPMonitor(m config.Monitor) *monitorv1.HTTPMonitor {
 }
 
 // configToTCPMonitor converts config.Monitor to SDK TCPMonitor
-func configToTCPMonitor(m config.Monitor) *monitorv1.TCPMonitor {
+func configToTCPMonitor(m config.Monitor) (*monitorv1.TCPMonitor, error) {
+	if m.Request.Host == "" {
+		return nil, fmt.Errorf("TCP monitor %q: host is required", m.Name)
+	}
+	if m.Request.Port <= 0 || m.Request.Port > 65535 {
+		return nil, fmt.Errorf("TCP monitor %q: port must be between 1 and 65535, got %d", m.Name, m.Request.Port)
+	}
+
 	monitor := &monitorv1.TCPMonitor{
 		Name:        m.Name,
 		Description: m.Description,
@@ -410,7 +445,7 @@ func configToTCPMonitor(m config.Monitor) *monitorv1.TCPMonitor {
 		monitor.DegradedAt = &m.DegradedAfter
 	}
 
-	return monitor
+	return monitor, nil
 }
 
 type Monitor struct {

@@ -25,6 +25,7 @@ func AddStatusReportUpdate(ctx context.Context, client status_reportv1connect.St
 
 	sdkStatus, err := statusToSDK(status)
 	if err != nil {
+		output.StopSpinner(s)
 		return err
 	}
 

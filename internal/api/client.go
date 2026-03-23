@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -13,6 +14,10 @@ import (
 const APIBaseURL = "https://api.openstatus.dev/v1"
 
 const ConnectBaseURL = "https://api.openstatus.dev/rpc"
+
+var DefaultHTTPClient = &http.Client{
+	Timeout: 30 * time.Second,
+}
 
 func NewAuthInterceptor(apiKey string) connect.UnaryInterceptorFunc {
 	return func(next connect.UnaryFunc) connect.UnaryFunc {

@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/config"
@@ -34,18 +34,23 @@ func countChanges(lock config.MonitorsLock, configData config.Monitors) (created
 }
 
 // ApplyChanges applies the changes between the lock file and the config data, making API calls.
+// It works on a copy of the lock map so that partial failures leave the caller's map untouched.
 func ApplyChanges(ctx context.Context, apiKey string, lock config.MonitorsLock, configData config.Monitors) (config.MonitorsLock, error) {
+	working := make(config.MonitorsLock, len(lock))
+	for k, v := range lock {
+		working[k] = v
+	}
+
 	var created, updated, deleted int
 
 	for v, configValue := range configData {
-		value, exist := lock[v]
-
+		value, exist := working[v]
 		if !exist {
-			result, err := CreateMonitor(ctx, http.DefaultClient, apiKey, configValue)
+			result, err := CreateMonitor(ctx, api.DefaultHTTPClient, apiKey, configValue)
 			if err != nil {
 				return nil, err
 			}
-			lock[v] = config.Lock{
+			working[v] = config.Lock{
 				ID:      result.ID,
 				Monitor: configValue,
 			}
@@ -53,28 +58,31 @@ func ApplyChanges(ctx context.Context, apiKey string, lock config.MonitorsLock, 
 			continue
 		}
 		if !cmp.Equal(configValue, value.Monitor) {
-			result, err := UpdateMonitor(ctx, http.DefaultClient, apiKey, value.ID, configValue)
+			result, err := UpdateMonitor(ctx, api.DefaultHTTPClient, apiKey, value.ID, configValue)
 			if err != nil {
 				return nil, err
 			}
-			lock[v] = config.Lock{
+			working[v] = config.Lock{
 				ID:      result.ID,
 				Monitor: configValue,
 			}
 			updated++
-			continue
 		}
 	}
 
-	for v, value := range lock {
+	var toDelete []string
+	for v := range working {
 		if _, exist := configData[v]; !exist {
-			err := DeleteMonitorWithHTTPClient(ctx, http.DefaultClient, apiKey, fmt.Sprintf("%d", value.ID))
-			if err != nil {
-				return nil, fmt.Errorf("failed to delete monitor %d: %w", value.ID, err)
-			}
-			delete(lock, v)
-			deleted++
+			toDelete = append(toDelete, v)
 		}
+	}
+	for _, v := range toDelete {
+		err := DeleteMonitorWithHTTPClient(ctx, api.DefaultHTTPClient, apiKey, fmt.Sprintf("%d", working[v].ID))
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete monitor %d: %w", working[v].ID, err)
+		}
+		delete(working, v)
+		deleted++
 	}
 
 	if created == 0 && updated == 0 && deleted == 0 {
@@ -91,7 +99,7 @@ func ApplyChanges(ctx context.Context, apiKey string, lock config.MonitorsLock, 
 	if deleted > 0 {
 		fmt.Println("  Deleted:", deleted)
 	}
-	return lock, nil
+	return working, nil
 }
 
 func GetMonitorsApplyCmd() *cli.Command {

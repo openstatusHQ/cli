@@ -14,7 +14,7 @@ import (
 
 func NewStatusReportClient(apiKey string) status_reportv1connect.StatusReportServiceClient {
 	return status_reportv1connect.NewStatusReportServiceClient(
-		http.DefaultClient,
+		api.DefaultHTTPClient,
 		api.ConnectBaseURL,
 		connect.WithInterceptors(api.NewAuthInterceptor(apiKey)),
 		connect.WithProtoJSON(),

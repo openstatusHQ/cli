@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"strings"
 
+	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	"github.com/openstatusHQ/cli/internal/whoami"
 	"github.com/urfave/cli/v3"
@@ -52,7 +52,7 @@ Get your API token from the OpenStatus dashboard.`,
 			}
 
 			fmt.Fprintln(os.Stderr, "Verifying token...")
-			err := whoami.GetWhoamiCmd(ctx, http.DefaultClient, token, nil)
+			err := whoami.GetWhoamiCmd(ctx, api.DefaultHTTPClient, token, nil)
 			if err != nil {
 				return cli.Exit("Invalid token. Could not authenticate with OpenStatus API", 1)
 			}

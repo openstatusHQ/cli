@@ -61,6 +61,10 @@ func GetStatusReportDeleteCmd() *cli.Command {
 				return cli.Exit(err.Error(), 1)
 			}
 			reportId := cmd.Args().Get(0)
+			if reportId == "" {
+				fmt.Fprintln(os.Stderr, "Usage: openstatus status-report delete <report-id>")
+				return cli.Exit("report ID is required", 1)
+			}
 
 			if !cmd.Bool("auto-accept") {
 				confirmed, err := output.AskForConfirmation(fmt.Sprintf("You are about to delete status report: %s, do you want to continue", reportId))

@@ -10,6 +10,7 @@ import (
 	"github.com/openstatusHQ/cli/internal/login"
 	"github.com/openstatusHQ/cli/internal/monitors"
 	"github.com/openstatusHQ/cli/internal/run"
+	"github.com/openstatusHQ/cli/internal/statuspage"
 	"github.com/openstatusHQ/cli/internal/statusreport"
 	"github.com/openstatusHQ/cli/internal/whoami"
 	"github.com/urfave/cli/v3"
@@ -64,6 +65,7 @@ https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
 		Commands: []*cli.Command{
 			monitors.MonitorsCmd(),
 			statusreport.StatusReportCmd(),
+			statuspage.StatusPageCmd(),
 			run.RunCmd(),
 			whoami.WhoamiCmd(),
 			login.LoginCmd(),

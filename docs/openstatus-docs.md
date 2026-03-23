@@ -2,17 +2,26 @@
 
 ## CLI interface - openstatus
 
-OpenStatus is a command line interface for managing your monitors and triggering your synthetics tests.   Please report any issues at https://github.com/openstatusHQ/cli/issues/new.
+OpenStatus CLI lets you manage your status pages and uptime monitors from the command line. Report and track incidents, define monitors as code, and run on-demand checks.  Get started:   openstatus login                Save your API token   openstatus status-report create Report an incident   openstatus status-report list   View active incidents   openstatus monitors apply       Sync monitors from config   openstatus monitors list        List your monitors   openstatus run                  Run synthetic tests  https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new.
 
-This is OpenStatus Command Line Interface, the OpenStatus.dev CLI.
+Manage status pages, monitors, and incidents from the terminal.
 
 Usage:
 
 ```bash
-$ openstatus [COMMAND] [COMMAND FLAGS] [ARGUMENTS...]
+$ openstatus [GLOBAL FLAGS] [COMMAND] [COMMAND FLAGS] [ARGUMENTS...]
 ```
 
-### `monitors` command
+Global flags:
+
+| Name             | Description               | Default value | Environment variables |
+|------------------|---------------------------|:-------------:|:---------------------:|
+| `--json`         | Output results as JSON    |    `false`    |        *none*         |
+| `--no-color`     | Disable colored output    |    `false`    |        *none*         |
+| `--quiet` (`-q`) | Suppress non-error output |    `false`    |        *none*         |
+| `--debug`        | Enable debug output       |    `false`    |        *none*         |
+
+### `monitors` command (aliases: `m`)
 
 Manage your monitors.
 
@@ -26,9 +35,11 @@ $ openstatus [GLOBAL FLAGS] monitors [ARGUMENTS...]
 
 Create or update monitors.
 
-> openstatus monitors apply [options]
+> openstatus monitors apply
+>   openstatus monitors apply --config custom.yaml -y
+>   openstatus monitors apply --dry-run
 
-Creates or updates monitors according to the OpenStatus configuration file.
+Creates or updates monitors according to the OpenStatus configuration file. Compares your openstatus.yaml with the current state and applies changes.
 
 Usage:
 
@@ -43,12 +54,14 @@ The following flags are supported:
 | `--config="…"` (`-c`)       | The configuration file containing monitor information | `openstatus.yaml` |         *none*         |
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token                           |                   | `OPENSTATUS_API_TOKEN` |
 | `--auto-accept` (`-y`)      | Automatically accept the prompt                       |      `false`      |         *none*         |
+| `--dry-run` (`-n`)          | Show what would be changed without applying           |      `false`      |         *none*         |
 
 ### `monitors create` subcommand
 
-Create monitors (beta).
+Create monitors.
 
-> openstatus monitors create [options]
+> openstatus monitors create
+>   openstatus monitors create --config custom.yaml -y
 
 Create the monitors defined in the openstatus.yaml file.
 
@@ -70,7 +83,8 @@ The following flags are supported:
 
 Delete a monitor.
 
-> openstatus monitors delete [MonitorID] [options]
+> openstatus monitors delete <MonitorID>
+>   openstatus monitors delete 12345 -y
 
 Usage:
 
@@ -89,7 +103,8 @@ The following flags are supported:
 
 Import all your monitors.
 
-> openstatus monitors import [options]
+> openstatus monitors import
+>   openstatus monitors import --output monitors.yaml
 
 Import all your monitors from your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.
 
@@ -110,9 +125,10 @@ The following flags are supported:
 
 Get a monitor information.
 
-> openstatus monitors info [MonitorID]
+> openstatus monitors info <MonitorID>
+>   openstatus monitors info 12345
 
-Fetch the monitor information. The monitor information includes details such as name, description, endpoint, method, frequency, locations, active status, public status, timeout, degraded after, and body. The body is truncated to 40 characters.
+Fetch the monitor information. The monitor information includes details such as name, description, endpoint, method, frequency, locations, active status, public status, timeout, degraded after, and body.
 
 Usage:
 
@@ -130,9 +146,10 @@ The following flags are supported:
 
 List all monitors.
 
-> openstatus monitors list [options]
+> openstatus monitors list
+>   openstatus monitors list --all
 
-List all monitors. The list shows all your monitors attached to your workspace. It displays the ID, name, and URL of each monitor.
+List all monitors. The list shows all your monitors attached to your workspace. It displays the ID, name, URL, and kind of each monitor.
 
 Usage:
 
@@ -151,7 +168,8 @@ The following flags are supported:
 
 Trigger a monitor execution.
 
-> openstatus monitors trigger [MonitorId] [options]
+> openstatus monitors trigger <MonitorID>
+>   openstatus monitors trigger 12345
 
 Trigger a monitor execution on demand. This command allows you to launch your tests on demand.
 
@@ -181,7 +199,8 @@ $ openstatus [GLOBAL FLAGS] status-report [ARGUMENTS...]
 
 List all status reports.
 
-> openstatus status-report list [options]
+> openstatus status-report list
+>   openstatus status-report list --status investigating --limit 10
 
 Usage:
 
@@ -202,6 +221,7 @@ The following flags are supported:
 Get status report details.
 
 > openstatus status-report info <ReportID>
+>   openstatus status-report info 12345
 
 Usage:
 
@@ -265,6 +285,7 @@ The following flags are supported:
 Delete a status report.
 
 > openstatus status-report delete <ReportID>
+>   openstatus status-report delete 12345 -y
 
 Usage:
 
@@ -301,13 +322,63 @@ The following flags are supported:
 | `--date="…"`                | Date for the update (RFC 3339 format, defaults to now)       |               |         *none*         |
 | `--notify`                  | Notify subscribers about this update                         |    `false`    |         *none*         |
 
+### `status-page` command (aliases: `sp`)
+
+Manage status pages.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] status-page [ARGUMENTS...]
+```
+
+### `status-page list` subcommand
+
+List all status pages.
+
+> openstatus status-page list
+>   openstatus status-page list --limit 10
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] status-page list [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                               | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token               |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of pages to return (1-100) |      `0`      |         *none*         |
+
+### `status-page info` subcommand
+
+Get status page details.
+
+> openstatus status-page info <PageID>
+>   openstatus status-page info 12345
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] status-page info [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Default value |  Environment variables |
+|-----------------------------|-----------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+
 ### `run` command (aliases: `r`)
 
-Run your synthetics tests.
+Run your uptime tests.
 
-> openstatus run [options]
+> openstatus run
+>   openstatus run --config custom-config.yaml
 
-Run the synthetic tests defined in the config.openstatus.yaml. The config file should be in the following format:  tests:   ids:      - monitor-id-1      - monitor-id-2.
+Run the uptime tests defined in the config.openstatus.yaml. The config file should be in the following format:  tests:   ids:      - monitor-id-1      - monitor-id-2.
 
 Usage:
 
@@ -326,9 +397,9 @@ The following flags are supported:
 
 Get your workspace information.
 
-> openstatus whoami [options]
+> openstatus whoami
 
-Get your current workspace information, display the workspace name, slug, and plan.
+Get your current workspace information. Displays the workspace name, slug, and plan.
 
 Usage:
 
@@ -341,3 +412,29 @@ The following flags are supported:
 | Name                        | Description                 | Default value |  Environment variables |
 |-----------------------------|-----------------------------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+
+### `login` command
+
+Save your API token.
+
+> openstatus login
+
+Saves your OpenStatus API token for use in subsequent commands. Get your API token from the OpenStatus dashboard.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] login [ARGUMENTS...]
+```
+
+### `logout` command
+
+Remove saved API token.
+
+> openstatus logout
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] logout [ARGUMENTS...]
+```

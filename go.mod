@@ -5,8 +5,8 @@ go 1.24.0
 require github.com/urfave/cli/v3 v3.0.0-alpha9.2 // direct
 
 require (
-	buf.build/gen/go/openstatus/api/connectrpc/gosimple v1.19.1-20260202165838-5bd92a1e5d53.2
-	buf.build/gen/go/openstatus/api/protocolbuffers/go v1.36.11-20260202165838-5bd92a1e5d53.1
+	buf.build/gen/go/openstatus/api/connectrpc/gosimple v1.19.1-20260323160652-4be687fa490b.2
+	buf.build/gen/go/openstatus/api/protocolbuffers/go v1.36.11-20260323160652-4be687fa490b.1
 	connectrpc.com/connect v1.19.1
 	github.com/briandowns/spinner v1.23.2
 	github.com/fatih/color v1.18.0
@@ -26,6 +26,7 @@ require (
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20251209175733-2a1774d88802.1 // indirect
+	buf.build/gen/go/gnostic/gnostic/protocolbuffers/go v1.36.11-20230414000709-087bc8072ce4.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect

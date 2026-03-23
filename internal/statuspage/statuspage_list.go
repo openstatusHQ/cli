@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	status_pagev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_page/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/status_page/v1/status_pagev1connect"
@@ -42,7 +43,7 @@ func ListStatusPages(ctx context.Context, client status_pagev1connect.StatusPage
 			entries = append(entries, statusPageListEntry{
 				ID:    p.GetId(),
 				Title: p.GetTitle(),
-				URL:   "https://" + p.GetSlug() + ".openstatus.dev",
+				URL:   statusPageURL(p),
 			})
 		}
 		return output.PrintJSON(entries)
@@ -65,12 +66,20 @@ func ListStatusPages(ctx context.Context, client status_pagev1connect.StatusPage
 		tbl.AddRow(
 			p.GetId(),
 			p.GetTitle(),
-			"https://"+p.GetSlug()+".openstatus.dev",
+			statusPageURL(p),
 		)
 	}
 
 	tbl.Print()
 	return nil
+}
+
+func statusPageURL(p *status_pagev1.StatusPageSummary) string {
+	if d := p.GetCustomDomain(); d != "" {
+		d = strings.TrimPrefix(strings.TrimPrefix(d, "https://"), "http://")
+		return "https://" + d
+	}
+	return "https://" + p.GetSlug() + ".openstatus.dev"
 }
 
 func ListStatusPagesWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, limit int) error {

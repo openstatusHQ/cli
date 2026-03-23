@@ -8,6 +8,9 @@ import (
 )
 
 func Test_AskForConfirmation(t *testing.T) {
+	restore := cli.SetInteractiveStdin(func() bool { return true })
+	t.Cleanup(restore)
+
 	t.Run("Returns true for 'y' input", func(t *testing.T) {
 		// Create a pipe to simulate stdin
 		r, w, err := os.Pipe()

@@ -142,6 +142,18 @@ const (
 	Waw     Region = "waw"
 	Yul     Region = "yul"
 	Yyz     Region = "yyz"
+	// Koyeb regions (disambiguated from Fly.io regions with same airport code)
+	KoyebFra Region = "koyeb_fra"
+	KoyebPar Region = "koyeb_par"
+	KoyebSfo Region = "koyeb_sfo"
+	KoyebSin Region = "koyeb_sin"
+	KoyebTyo Region = "koyeb_tyo"
+	KoyebWas Region = "koyeb_was"
+	// Railway regions
+	RailwayUsWest2        Region = "railway_us-west2"
+	RailwayUsEast4        Region = "railway_us-east4-eqdc4a"
+	RailwayEuropeWest4    Region = "railway_europe-west4-drams3a"
+	RailwayAsiaSoutheast1 Region = "railway_asia-southeast1-eqsg3a"
 )
 
 type Method string

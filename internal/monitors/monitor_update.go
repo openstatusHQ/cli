@@ -40,12 +40,15 @@ func UpdateHTTPMonitor(ctx context.Context, client monitorv1connect.MonitorServi
 		return Monitor{}, fmt.Errorf("failed to update HTTP monitor: %w", err)
 	}
 
-	return httpMonitorToLocal(resp.GetMonitor()), nil
+	return httpMonitorToLocal(resp.GetMonitor())
 }
 
 // UpdateTCPMonitor updates a TCP monitor using the SDK
 func UpdateTCPMonitor(ctx context.Context, client monitorv1connect.MonitorServiceClient, id int, monitor config.Monitor) (Monitor, error) {
-	tcpMonitor := configToTCPMonitor(monitor)
+	tcpMonitor, err := configToTCPMonitor(monitor)
+	if err != nil {
+		return Monitor{}, err
+	}
 	tcpMonitor.Id = strconv.Itoa(id)
 
 	req := &monitorv1.UpdateTCPMonitorRequest{
@@ -58,5 +61,5 @@ func UpdateTCPMonitor(ctx context.Context, client monitorv1connect.MonitorServic
 		return Monitor{}, fmt.Errorf("failed to update TCP monitor: %w", err)
 	}
 
-	return tcpMonitorToLocal(resp.GetMonitor()), nil
+	return tcpMonitorToLocal(resp.GetMonitor())
 }

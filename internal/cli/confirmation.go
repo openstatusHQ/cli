@@ -5,11 +5,20 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/mattn/go-isatty"
 )
 
+var isInteractiveStdin = func() bool {
+	return isatty.IsTerminal(os.Stdin.Fd()) || isatty.IsCygwinTerminal(os.Stdin.Fd())
+}
+
 func AskForConfirmation(s string) (bool, error) {
+	if !isInteractiveStdin() {
+		return false, fmt.Errorf("confirmation required but stdin is not a terminal (use --auto-accept / -y to skip)")
+	}
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Printf("%s [y/N]: ", s)
+	fmt.Fprintf(os.Stderr, "%s [y/N]: ", s)
 	response, err := reader.ReadString('\n')
 	if err != nil {
 		return false, fmt.Errorf("failed to read user input: %w", err)

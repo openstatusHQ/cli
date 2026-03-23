@@ -31,6 +31,9 @@ func TriggerMonitor(ctx context.Context, client monitorv1connect.MonitorServiceC
 		return output.FormatError(err, "monitor", monitorId)
 	}
 
+	if output.IsJSONOutput() {
+		return output.PrintJSON(map[string]string{"status": "triggered", "monitor_id": monitorId})
+	}
 	fmt.Printf("Check triggered successfully\n")
 	return nil
 }

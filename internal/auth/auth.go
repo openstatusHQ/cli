@@ -27,6 +27,8 @@ func ResolveToken(flagValue string) (string, error) {
 			if token != "" {
 				return token, nil
 			}
+		} else if !os.IsNotExist(readErr) {
+			return "", fmt.Errorf("failed to read token file %s: %w", tokenPath, readErr)
 		}
 	}
 

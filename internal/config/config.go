@@ -3,11 +3,8 @@ package config
 import (
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
-
 	"github.com/knadh/koanf/v2"
 )
-
-var k = koanf.New(".")
 
 type TestsConfig struct {
 	Ids []int `koanf:"ids"`
@@ -18,22 +15,17 @@ type Config struct {
 }
 
 func ReadConfig(path string) (*Config, error) {
+	k := koanf.New(".")
 
-	file := file.Provider(path)
-
-	err := k.Load(file, yaml.Parser())
-
-	if err != nil {
+	f := file.Provider(path)
+	if err := k.Load(f, yaml.Parser()); err != nil {
 		return nil, err
 	}
 
 	var out Config
-
-	err = k.Unmarshal("", &out)
-	if err != nil {
+	if err := k.Unmarshal("", &out); err != nil {
 		return nil, err
 	}
 
 	return &out, nil
-
 }

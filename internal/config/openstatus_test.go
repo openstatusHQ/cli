@@ -2,6 +2,7 @@ package config_test
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/openstatusHQ/cli/internal/config"
@@ -31,11 +32,10 @@ var openstatusConfig = `
 
 func Test_ReadOpenStatus(t *testing.T) {
 	t.Run("Read valid openstatus config", func(t *testing.T) {
-		f, err := os.CreateTemp(".", "openstatus*.yaml")
+		f, err := os.CreateTemp(t.TempDir(), "openstatus*.yaml")
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer os.Remove(f.Name())
 
 		if _, err := f.Write([]byte(openstatusConfig)); err != nil {
 			t.Fatal(err)
@@ -49,9 +49,6 @@ func Test_ReadOpenStatus(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// Check that the monitor was read correctly
-		// Note: We check for the specific monitor because the global koanf instance
-		// may have accumulated state from previous tests
 		monitor, exists := out["test-monitor"]
 		if !exists {
 			t.Fatal("Expected 'test-monitor' to exist in output")
@@ -112,11 +109,10 @@ func Test_ReadOpenStatus_FollowRedirects(t *testing.T) {
     url: https://example.com
     followRedirects: false
 `
-		f, err := os.CreateTemp(".", "openstatus*.yaml")
+		f, err := os.CreateTemp(t.TempDir(), "openstatus*.yaml")
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer os.Remove(f.Name())
 
 		if _, err := f.Write([]byte(yaml)); err != nil {
 			t.Fatal(err)
@@ -156,11 +152,10 @@ func Test_ReadOpenStatus_FollowRedirects(t *testing.T) {
     method: GET
     url: https://example.com
 `
-		f, err := os.CreateTemp(".", "openstatus*.yaml")
+		f, err := os.CreateTemp(t.TempDir(), "openstatus*.yaml")
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer os.Remove(f.Name())
 
 		if _, err := f.Write([]byte(yaml)); err != nil {
 			t.Fatal(err)
@@ -260,4 +255,65 @@ func Test_ParseConfigMonitorsToMonitor(t *testing.T) {
 			t.Errorf("Expected target to be converted to int 200, got %v", result[0].Assertions[0].Target)
 		}
 	})
+}
+
+func Test_ReadOpenStatus_NoStatePollution(t *testing.T) {
+	dir := t.TempDir()
+
+	file1 := filepath.Join(dir, "config1.yaml")
+	if err := os.WriteFile(file1, []byte(`
+"monitor-a":
+  active: true
+  frequency: 10m
+  kind: http
+  name: Monitor A
+  regions:
+    - iad
+  request:
+    method: GET
+    url: https://a.example.com
+`), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	file2 := filepath.Join(dir, "config2.yaml")
+	if err := os.WriteFile(file2, []byte(`
+"monitor-b":
+  active: true
+  frequency: 5m
+  kind: http
+  name: Monitor B
+  regions:
+    - ams
+  request:
+    method: POST
+    url: https://b.example.com
+`), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	out1, err := config.ReadOpenStatus(file1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, exists := out1["monitor-a"]; !exists {
+		t.Error("First read: expected 'monitor-a' to exist")
+	}
+	if len(out1) != 1 {
+		t.Errorf("First read: expected 1 monitor, got %d", len(out1))
+	}
+
+	out2, err := config.ReadOpenStatus(file2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, exists := out2["monitor-b"]; !exists {
+		t.Error("Second read: expected 'monitor-b' to exist")
+	}
+	if _, exists := out2["monitor-a"]; exists {
+		t.Error("Second read: 'monitor-a' should not be present (state pollution)")
+	}
+	if len(out2) != 1 {
+		t.Errorf("Second read: expected 1 monitor, got %d", len(out2))
+	}
 }

@@ -10,6 +10,7 @@ import (
 
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
+	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/config"
@@ -41,13 +42,17 @@ func CreateHTTPMonitor(ctx context.Context, client monitorv1connect.MonitorServi
 		return Monitor{}, fmt.Errorf("failed to create HTTP monitor: %w", err)
 	}
 
-	return httpMonitorToLocal(resp.GetMonitor()), nil
+	return httpMonitorToLocal(resp.GetMonitor())
 }
 
 // CreateTCPMonitor creates a TCP monitor using the SDK
 func CreateTCPMonitor(ctx context.Context, client monitorv1connect.MonitorServiceClient, monitor config.Monitor) (Monitor, error) {
+	tcpMonitor, err := configToTCPMonitor(monitor)
+	if err != nil {
+		return Monitor{}, err
+	}
 	req := &monitorv1.CreateTCPMonitorRequest{
-		Monitor: configToTCPMonitor(monitor),
+		Monitor: tcpMonitor,
 	}
 
 	resp, err := client.CreateTCPMonitor(ctx, req)
@@ -55,12 +60,14 @@ func CreateTCPMonitor(ctx context.Context, client monitorv1connect.MonitorServic
 		return Monitor{}, fmt.Errorf("failed to create TCP monitor: %w", err)
 	}
 
-	return tcpMonitorToLocal(resp.GetMonitor()), nil
+	return tcpMonitorToLocal(resp.GetMonitor())
 }
 
-// httpMonitorToLocal converts SDK HTTPMonitor to local Monitor type
-func httpMonitorToLocal(m *monitorv1.HTTPMonitor) Monitor {
-	id, _ := strconv.Atoi(m.GetId())
+func httpMonitorToLocal(m *monitorv1.HTTPMonitor) (Monitor, error) {
+	id, err := strconv.Atoi(m.GetId())
+	if err != nil {
+		return Monitor{}, fmt.Errorf("invalid monitor ID %q: %w", m.GetId(), err)
+	}
 	return Monitor{
 		ID:          id,
 		Name:        m.GetName(),
@@ -74,12 +81,14 @@ func httpMonitorToLocal(m *monitorv1.HTTPMonitor) Monitor {
 		Timeout:     int(m.GetTimeout()),
 		Retry:       int(m.GetRetry()),
 		JobType:     "http",
-	}
+	}, nil
 }
 
-// tcpMonitorToLocal converts SDK TCPMonitor to local Monitor type
-func tcpMonitorToLocal(m *monitorv1.TCPMonitor) Monitor {
-	id, _ := strconv.Atoi(m.GetId())
+func tcpMonitorToLocal(m *monitorv1.TCPMonitor) (Monitor, error) {
+	id, err := strconv.Atoi(m.GetId())
+	if err != nil {
+		return Monitor{}, fmt.Errorf("invalid monitor ID %q: %w", m.GetId(), err)
+	}
 	return Monitor{
 		ID:          id,
 		Name:        m.GetName(),
@@ -92,7 +101,7 @@ func tcpMonitorToLocal(m *monitorv1.TCPMonitor) Monitor {
 		Timeout:     int(m.GetTimeout()),
 		Retry:       int(m.GetRetry()),
 		JobType:     "tcp",
-	}
+	}, nil
 }
 
 func GetMonitorCreateCmd() *cli.Command {
@@ -138,7 +147,7 @@ func GetMonitorCreateCmd() *cli.Command {
 			}
 			s := output.StartSpinner("Creating monitors...")
 			for _, value := range monitors {
-				_, err = CreateMonitor(ctx, http.DefaultClient, apiKey, value)
+				_, err = CreateMonitor(ctx, api.DefaultHTTPClient, apiKey, value)
 				if err != nil {
 					output.StopSpinner(s)
 					return cli.Exit("Unable to create monitor", 1)

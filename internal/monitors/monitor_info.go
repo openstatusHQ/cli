@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
+	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/logrusorgru/aurora/v4"
@@ -44,13 +45,22 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 	var regions []monitorv1.Region
 	switch {
 	case monitorConfig.HasHttp():
-		monitor = httpMonitorToLocal(monitorConfig.GetHttp())
+		monitor, err = httpMonitorToLocal(monitorConfig.GetHttp())
+		if err != nil {
+			return err
+		}
 		regions = monitorConfig.GetHttp().GetRegions()
 	case monitorConfig.HasTcp():
-		monitor = tcpMonitorToLocal(monitorConfig.GetTcp())
+		monitor, err = tcpMonitorToLocal(monitorConfig.GetTcp())
+		if err != nil {
+			return err
+		}
 		regions = monitorConfig.GetTcp().GetRegions()
 	default:
-		return fmt.Errorf("unknown monitor type")
+		if monitorConfig.HasDns() {
+			return fmt.Errorf("DNS monitors are not yet supported in the CLI. Monitor ID: %s", monitorId)
+		}
+		return fmt.Errorf("unknown monitor type for monitor ID: %s", monitorId)
 	}
 
 	if output.IsJSONOutput() {
@@ -141,7 +151,7 @@ func GetMonitorInfoCmd() *cli.Command {
 			}
 			monitorId := cmd.Args().Get(0)
 			s := output.StartSpinner("Fetching monitor details...")
-			err = GetMonitorInfo(ctx, http.DefaultClient, apiKey, monitorId, s)
+			err = GetMonitorInfo(ctx, api.DefaultHTTPClient, apiKey, monitorId, s)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}

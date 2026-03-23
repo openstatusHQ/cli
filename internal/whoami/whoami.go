@@ -75,7 +75,7 @@ Displays the workspace name, slug, and plan.`,
 				fmt.Println("Your current workspace information")
 			}
 			s := output.StartSpinner("Fetching workspace info...")
-			err = GetWhoamiCmd(ctx, http.DefaultClient, apiKey, s)
+			err = GetWhoamiCmd(ctx, api.DefaultHTTPClient, apiKey, s)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}

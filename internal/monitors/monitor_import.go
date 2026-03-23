@@ -25,7 +25,36 @@ func ExportMonitor(ctx context.Context, client monitorv1connect.MonitorServiceCl
 	}
 
 	t := map[string]config.Monitor{}
-	lock := make(map[string]config.Lock)
+
+	for _, monitor := range resp.GetHttpMonitors() {
+		t[monitor.GetId()] = convertHTTPMonitorToConfig(monitor)
+	}
+
+	for _, monitor := range resp.GetTcpMonitors() {
+		t[monitor.GetId()] = convertTCPMonitorToConfig(monitor)
+	}
+
+	configYAML, err := yaml.Marshal(&t)
+	if err != nil {
+		return err
+	}
+
+	lock := make(map[string]config.Lock, len(t))
+	for id, monitor := range t {
+		i, err := strconv.Atoi(id)
+		if err != nil {
+			return fmt.Errorf("invalid monitor ID %q: %w", id, err)
+		}
+		lock[id] = config.Lock{
+			ID:      i,
+			Monitor: monitor,
+		}
+	}
+
+	lockYAML, err := yaml.Marshal(&lock)
+	if err != nil {
+		return fmt.Errorf("failed to marshal lock file: %w", err)
+	}
 
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
@@ -33,44 +62,11 @@ func ExportMonitor(ctx context.Context, client monitorv1connect.MonitorServiceCl
 	}
 	defer file.Close()
 
-	// Process HTTP monitors
-	for _, monitor := range resp.GetHttpMonitors() {
-		configMonitor := convertHTTPMonitorToConfig(monitor)
-		id := monitor.GetId()
-		t[id] = configMonitor
-	}
-
-	// Process TCP monitors
-	for _, monitor := range resp.GetTcpMonitors() {
-		configMonitor := convertTCPMonitorToConfig(monitor)
-		id := monitor.GetId()
-		t[id] = configMonitor
-	}
-
-	// Process DNS monitors (skip for now as config.Monitor doesn't support DNS)
-	// DNS monitors would need config.Kind = "dns" support
-
-	y, err := yaml.Marshal(&t)
-	if err != nil {
+	if _, err := file.WriteString("# yaml-language-server: $schema=https://www.openstatus.dev/schema.json\n\n"); err != nil {
 		return err
 	}
-
-	_, err = file.WriteString("# yaml-language-server: $schema=https://www.openstatus.dev/schema.json\n\n")
-	if err != nil {
+	if _, err := file.Write(configYAML); err != nil {
 		return err
-	}
-	_, err = file.Write(y)
-	if err != nil {
-		return err
-	}
-
-	// Build lock file
-	for id, monitor := range t {
-		i, _ := strconv.Atoi(id)
-		lock[id] = config.Lock{
-			ID:      i,
-			Monitor: monitor,
-		}
 	}
 
 	lockFile, err := os.OpenFile("openstatus.lock", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
@@ -79,13 +75,7 @@ func ExportMonitor(ctx context.Context, client monitorv1connect.MonitorServiceCl
 	}
 	defer lockFile.Close()
 
-	y, err = yaml.Marshal(&lock)
-	if err != nil {
-		return fmt.Errorf("failed to marshal lock file: %w", err)
-	}
-
-	_, err = lockFile.Write(y)
-	if err != nil {
+	if _, err := lockFile.Write(lockYAML); err != nil {
 		return fmt.Errorf("failed to write lock file: %w", err)
 	}
 

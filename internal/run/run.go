@@ -110,7 +110,8 @@ func MonitorTrigger(ctx context.Context, httpClient *http.Client, apiKey string,
 				entry.Error = httpResult.Error
 			}
 		default:
-			return runMonitorResult{}, fmt.Errorf("unknown job type")
+			entry.Status = "unknown"
+			entry.Error = fmt.Sprintf("unknown job type: %s", rr.JobType)
 		}
 
 		regionResults = append(regionResults, entry)

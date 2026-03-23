@@ -31,11 +31,12 @@ func ListStatusReports(ctx context.Context, client status_reportv1connect.Status
 	}
 
 	if statusFilter != "" {
-		s, err := statusToSDK(statusFilter)
+		sdkStatus, err := statusToSDK(statusFilter)
 		if err != nil {
+			output.StopSpinner(s)
 			return err
 		}
-		req.SetStatuses([]status_reportv1.StatusReportStatus{s})
+		req.SetStatuses([]status_reportv1.StatusReportStatus{sdkStatus})
 	}
 
 	resp, err := client.ListStatusReports(ctx, req)

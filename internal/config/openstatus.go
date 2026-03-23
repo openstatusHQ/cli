@@ -3,24 +3,21 @@ package config
 import (
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
 )
 
 type Monitors map[string]Monitor
 
 func ReadOpenStatus(path string) (Monitors, error) {
+	k := koanf.New(".")
+
 	f := file.Provider(path)
-
-	err := k.Load(f, yaml.Parser())
-
-	if err != nil {
+	if err := k.Load(f, yaml.Parser()); err != nil {
 		return nil, err
 	}
 
 	var out Monitors
-
-	err = k.Unmarshal("", &out)
-
-	if err != nil {
+	if err := k.Unmarshal("", &out); err != nil {
 		return nil, err
 	}
 

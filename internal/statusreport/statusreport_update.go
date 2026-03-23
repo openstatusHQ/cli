@@ -80,7 +80,7 @@ func GetStatusReportUpdateCmd() *cli.Command {
 			reportId := cmd.Args().Get(0)
 
 			hasTitle := cmd.IsSet("title")
-			hasComponents := cmd.IsSet("component-ids")
+			hasComponents := cmd.IsSet("component-ids") && cmd.String("component-ids") != ""
 
 			var componentIds []string
 			if ids := cmd.String("component-ids"); ids != "" {

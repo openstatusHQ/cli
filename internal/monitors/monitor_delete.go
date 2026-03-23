@@ -68,6 +68,10 @@ func GetMonitorDeleteCmd() *cli.Command {
 				return cli.Exit(err.Error(), 1)
 			}
 			monitorId := cmd.Args().Get(0)
+			if monitorId == "" {
+				fmt.Fprintln(os.Stderr, "Usage: openstatus monitors delete <monitor-id>")
+				return cli.Exit("monitor ID is required", 1)
+			}
 
 			if !cmd.Bool("auto-accept") {
 				confirmed, err := output.AskForConfirmation(fmt.Sprintf("You are about to delete monitor: %s, do you want to continue", monitorId))

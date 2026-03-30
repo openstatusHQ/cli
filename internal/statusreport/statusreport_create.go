@@ -62,24 +62,20 @@ func GetStatusReportCreateCmd() *cli.Command {
 				Sources: cli.EnvVars("OPENSTATUS_API_TOKEN"),
 			},
 			&cli.StringFlag{
-				Name:     "title",
-				Usage:    "Title of the status report",
-				Required: true,
+				Name:  "title",
+				Usage: "Title of the status report",
 			},
 			&cli.StringFlag{
-				Name:     "status",
-				Usage:    "Initial status (investigating, identified, monitoring, resolved)",
-				Required: true,
+				Name:  "status",
+				Usage: "Initial status (investigating, identified, monitoring, resolved)",
 			},
 			&cli.StringFlag{
-				Name:     "message",
-				Usage:    "Initial message describing the incident",
-				Required: true,
+				Name:  "message",
+				Usage: "Initial message describing the incident",
 			},
 			&cli.StringFlag{
-				Name:     "page-id",
-				Usage:    "Status page ID to associate with this report",
-				Required: true,
+				Name:  "page-id",
+				Usage: "Status page ID to associate with this report",
 			},
 			&cli.StringFlag{
 				Name:  "component-ids",
@@ -99,14 +95,47 @@ func GetStatusReportCreateCmd() *cli.Command {
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
+
+			inputs := &createInputs{
+				PageID:  cmd.String("page-id"),
+				Title:   cmd.String("title"),
+				Status:  cmd.String("status"),
+				Message: cmd.String("message"),
+				Notify:  cmd.Bool("notify"),
+			}
+			if ids := cmd.String("component-ids"); ids != "" {
+				inputs.ComponentIDs = strings.Split(ids, ",")
+			}
+
+			needsWizard := inputs.Title == "" || inputs.Status == "" ||
+				inputs.Message == "" || inputs.PageID == ""
+
+			if needsWizard {
+				if output.IsJSONOutput() || !output.IsStdinTerminal() {
+					var missing []string
+					if inputs.Title == "" {
+						missing = append(missing, "--title")
+					}
+					if inputs.Status == "" {
+						missing = append(missing, "--status")
+					}
+					if inputs.Message == "" {
+						missing = append(missing, "--message")
+					}
+					if inputs.PageID == "" {
+						missing = append(missing, "--page-id")
+					}
+					return cli.Exit(fmt.Sprintf("missing required flags: %s", strings.Join(missing, ", ")), 1)
+				}
+				inputs, err = runCreateWizard(ctx, apiKey, inputs)
+				if err != nil {
+					return cli.Exit(err.Error(), 1)
+				}
+			}
+
 			date := cmd.String("date")
 			if date == "" {
 				date = time.Now().UTC().Format(time.RFC3339)
-			}
-
-			var componentIds []string
-			if ids := cmd.String("component-ids"); ids != "" {
-				componentIds = strings.Split(ids, ",")
 			}
 
 			client := NewStatusReportClient(apiKey)
@@ -114,13 +143,13 @@ func GetStatusReportCreateCmd() *cli.Command {
 			id, err := CreateStatusReport(
 				ctx,
 				client,
-				cmd.String("title"),
-				cmd.String("status"),
-				cmd.String("message"),
+				inputs.Title,
+				inputs.Status,
+				inputs.Message,
 				date,
-				cmd.String("page-id"),
-				componentIds,
-				cmd.Bool("notify"),
+				inputs.PageID,
+				inputs.ComponentIDs,
+				inputs.Notify,
 			)
 			output.StopSpinner(s)
 			if err != nil {

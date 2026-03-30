@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/mattn/go-isatty"
 )
 
 var isInteractiveStdin = func() bool {
-	return isatty.IsTerminal(os.Stdin.Fd()) || isatty.IsCygwinTerminal(os.Stdin.Fd())
+	return IsStdinTerminal()
 }
 
 func AskForConfirmation(s string) (bool, error) {

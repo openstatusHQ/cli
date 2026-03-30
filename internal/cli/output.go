@@ -22,7 +22,10 @@ func SetDebugMode(v bool)   { debugMode.Store(v) }
 func IsJSONOutput() bool    { return jsonOutput.Load() }
 func IsQuiet() bool         { return quietMode.Load() }
 func IsDebug() bool         { return debugMode.Load() }
-func IsTerminal() bool      { return isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd()) }
+func IsTerminal() bool { return isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd()) }
+func IsStdinTerminal() bool {
+	return isatty.IsTerminal(os.Stdin.Fd()) || isatty.IsCygwinTerminal(os.Stdin.Fd())
+}
 func IsStderrTerminal() bool {
 	return isatty.IsTerminal(os.Stderr.Fd()) || isatty.IsCygwinTerminal(os.Stderr.Fd())
 }

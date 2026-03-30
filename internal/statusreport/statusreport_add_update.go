@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
@@ -77,14 +78,12 @@ func GetStatusReportAddUpdateCmd() *cli.Command {
 				Sources: cli.EnvVars("OPENSTATUS_API_TOKEN"),
 			},
 			&cli.StringFlag{
-				Name:     "status",
-				Usage:    "New status (investigating, identified, monitoring, resolved)",
-				Required: true,
+				Name:  "status",
+				Usage: "New status (investigating, identified, monitoring, resolved)",
 			},
 			&cli.StringFlag{
-				Name:     "message",
-				Usage:    "Message describing what changed",
-				Required: true,
+				Name:  "message",
+				Usage: "Message describing what changed",
 			},
 			&cli.StringFlag{
 				Name:  "date",
@@ -100,7 +99,36 @@ func GetStatusReportAddUpdateCmd() *cli.Command {
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
-			reportId := cmd.Args().Get(0)
+
+			inputs := &addUpdateInputs{
+				ReportID: cmd.Args().Get(0),
+				Status:   cmd.String("status"),
+				Message:  cmd.String("message"),
+				Notify:   cmd.Bool("notify"),
+			}
+
+			needsWizard := inputs.ReportID == "" || inputs.Status == "" ||
+				inputs.Message == ""
+
+			if needsWizard {
+				if output.IsJSONOutput() || !output.IsStdinTerminal() {
+					var missing []string
+					if inputs.ReportID == "" {
+						missing = append(missing, "<report-id>")
+					}
+					if inputs.Status == "" {
+						missing = append(missing, "--status")
+					}
+					if inputs.Message == "" {
+						missing = append(missing, "--message")
+					}
+					return cli.Exit(fmt.Sprintf("missing required arguments: %s", strings.Join(missing, ", ")), 1)
+				}
+				inputs, err = runAddUpdateWizard(ctx, apiKey, inputs)
+				if err != nil {
+					return cli.Exit(err.Error(), 1)
+				}
+			}
 
 			date := cmd.String("date")
 			if date == "" {
@@ -112,11 +140,11 @@ func GetStatusReportAddUpdateCmd() *cli.Command {
 			err = AddStatusReportUpdate(
 				ctx,
 				client,
-				reportId,
-				cmd.String("status"),
-				cmd.String("message"),
+				inputs.ReportID,
+				inputs.Status,
+				inputs.Message,
 				date,
-				cmd.Bool("notify"),
+				inputs.Notify,
 				s,
 			)
 			if err != nil {

@@ -35,7 +35,7 @@ Get started:
   openstatus run                  Run synthetic tests
 
 https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
-		Version:     "v1.0.2",
+		Version:     "v1.0.3",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "json",

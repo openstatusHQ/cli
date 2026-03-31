@@ -43,7 +43,7 @@ func ListStatusPages(ctx context.Context, client status_pagev1connect.StatusPage
 			entries = append(entries, statusPageListEntry{
 				ID:    p.GetId(),
 				Title: p.GetTitle(),
-				URL:   statusPageURL(p),
+				URL:   StatusPageURL(p),
 			})
 		}
 		return output.PrintJSON(entries)
@@ -66,7 +66,7 @@ func ListStatusPages(ctx context.Context, client status_pagev1connect.StatusPage
 		tbl.AddRow(
 			p.GetId(),
 			p.GetTitle(),
-			statusPageURL(p),
+			StatusPageURL(p),
 		)
 	}
 
@@ -74,7 +74,7 @@ func ListStatusPages(ctx context.Context, client status_pagev1connect.StatusPage
 	return nil
 }
 
-func statusPageURL(p *status_pagev1.StatusPageSummary) string {
+func StatusPageURL(p *status_pagev1.StatusPageSummary) string {
 	if d := p.GetCustomDomain(); d != "" {
 		d = strings.TrimPrefix(strings.TrimPrefix(d, "https://"), "http://")
 		return "https://" + d

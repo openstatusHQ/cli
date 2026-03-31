@@ -8,6 +8,7 @@ import (
 
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/login"
+	"github.com/openstatusHQ/cli/internal/maintenance"
 	"github.com/openstatusHQ/cli/internal/monitors"
 	"github.com/openstatusHQ/cli/internal/run"
 	"github.com/openstatusHQ/cli/internal/statuspage"
@@ -30,6 +31,8 @@ Get started:
   openstatus login                Save your API token
   openstatus status-report create Report an incident
   openstatus status-report list   View active incidents
+  openstatus maintenance create   Schedule a maintenance window
+  openstatus maintenance list     View maintenance windows
   openstatus monitors apply       Sync monitors from config
   openstatus monitors list        List your monitors
   openstatus run                  Run synthetic tests
@@ -65,6 +68,7 @@ https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
 		Commands: []*cli.Command{
 			monitors.MonitorsCmd(),
 			statusreport.StatusReportCmd(),
+			maintenance.MaintenanceCmd(),
 			statuspage.StatusPageCmd(),
 			run.RunCmd(),
 			whoami.WhoamiCmd(),

@@ -2,18 +2,15 @@ package statusreport
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
 
-	status_pagev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_page/v1"
-	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/status_page/v1/status_pagev1connect"
 	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
-	"connectrpc.com/connect"
 	"github.com/charmbracelet/huh"
-	"github.com/openstatusHQ/cli/internal/api"
 	output "github.com/openstatusHQ/cli/internal/cli"
+	"github.com/openstatusHQ/cli/internal/statuspage"
+	"github.com/openstatusHQ/cli/internal/wizard"
 )
 
 type createInputs struct {
@@ -23,7 +20,7 @@ type createInputs struct {
 	Status         string
 	Message        string
 	ComponentIDs   []string
-	componentNames map[string]string // component ID -> display name, for summary
+	componentNames map[string]string
 	Notify         bool
 	Confirmed      bool
 }
@@ -37,23 +34,6 @@ type addUpdateInputs struct {
 	Confirmed  bool
 }
 
-func notEmpty(fieldName string) func(string) error {
-	return func(s string) error {
-		if strings.TrimSpace(s) == "" {
-			return fmt.Errorf("%s cannot be empty", fieldName)
-		}
-		return nil
-	}
-}
-
-func handleFormError(err error) error {
-	if errors.Is(err, huh.ErrUserAborted) {
-		fmt.Fprintln(os.Stderr, "Aborted.")
-		os.Exit(130)
-	}
-	return err
-}
-
 func statusSelectOptions() []huh.Option[string] {
 	return []huh.Option[string]{
 		huh.NewOption("Investigating", "investigating"),
@@ -63,50 +43,9 @@ func statusSelectOptions() []huh.Option[string] {
 	}
 }
 
-func buildSummary(lines [][2]string) string {
-	var sb strings.Builder
-	for _, line := range lines {
-		sb.WriteString(fmt.Sprintf("  %s: %s\n", line[0], line[1]))
-	}
-	return sb.String()
-}
-
-// Data-fetching functions
-
-func fetchStatusPages(ctx context.Context, apiKey string) ([]*status_pagev1.StatusPageSummary, error) {
-	client := status_pagev1connect.NewStatusPageServiceClient(
-		api.DefaultHTTPClient,
-		api.ConnectBaseURL,
-		connect.WithInterceptors(api.NewAuthInterceptor(apiKey)),
-		connect.WithProtoJSON(),
-	)
-	resp, err := client.ListStatusPages(ctx, &status_pagev1.ListStatusPagesRequest{})
-	if err != nil {
-		return nil, output.FormatError(err, "status-page", "")
-	}
-	return resp.GetStatusPages(), nil
-}
-
-func fetchPageComponents(ctx context.Context, apiKey string, pageID string) ([]*status_pagev1.PageComponent, []*status_pagev1.PageComponentGroup, error) {
-	client := status_pagev1connect.NewStatusPageServiceClient(
-		api.DefaultHTTPClient,
-		api.ConnectBaseURL,
-		connect.WithInterceptors(api.NewAuthInterceptor(apiKey)),
-		connect.WithProtoJSON(),
-	)
-	req := &status_pagev1.GetStatusPageContentRequest{}
-	req.SetId(pageID)
-	resp, err := client.GetStatusPageContent(ctx, req)
-	if err != nil {
-		return nil, nil, output.FormatError(err, "status-page", pageID)
-	}
-	return resp.GetComponents(), resp.GetGroups(), nil
-}
-
 func fetchStatusReports(ctx context.Context, apiKey string) ([]*status_reportv1.StatusReportSummary, error) {
 	client := NewStatusReportClient(apiKey)
 
-	// Try unresolved reports first
 	req := &status_reportv1.ListStatusReportsRequest{}
 	l := int32(20)
 	req.SetLimit(l)
@@ -126,7 +65,6 @@ func fetchStatusReports(ctx context.Context, apiKey string) ([]*status_reportv1.
 		return reports, nil
 	}
 
-	// Fall back to all recent reports
 	reqAll := &status_reportv1.ListStatusReportsRequest{}
 	reqAll.SetLimit(l)
 	resp, err = client.ListStatusReports(ctx, reqAll)
@@ -141,9 +79,8 @@ func fetchStatusReports(ctx context.Context, apiKey string) ([]*status_reportv1.
 func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs) (*createInputs, error) {
 	inputs := *prefilled
 
-	// Fetch status pages
 	s := output.StartSpinner("Fetching status pages...")
-	pages, err := fetchStatusPages(ctx, apiKey)
+	pages, err := wizard.FetchStatusPages(ctx, apiKey)
 	output.StopSpinner(s)
 	if err != nil {
 		return nil, err
@@ -152,11 +89,10 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 		return nil, fmt.Errorf("no status pages found. Create one at https://www.openstatus.dev first, then run this command again")
 	}
 
-	// Form 1: page select (if needed)
 	if inputs.PageID == "" {
 		pageOptions := make([]huh.Option[string], 0, len(pages))
 		for _, p := range pages {
-			label := p.GetTitle() + " (" + statusPageURL(p) + ")"
+			label := p.GetTitle() + " (" + statuspage.StatusPageURL(p) + ")"
 			pageOptions = append(pageOptions, huh.NewOption(label, p.GetId()))
 		}
 
@@ -170,11 +106,10 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 		).WithTheme(huh.ThemeBase())
 
 		if err := form1.Run(); err != nil {
-			return nil, handleFormError(err)
+			return nil, wizard.HandleFormError(err)
 		}
 	}
 
-	// Resolve page name for summary
 	for _, p := range pages {
 		if p.GetId() == inputs.PageID {
 			inputs.PageName = p.GetTitle()
@@ -182,18 +117,15 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 		}
 	}
 
-	// Fetch components for selected page
 	s = output.StartSpinner("Fetching page components...")
-	components, groups, err := fetchPageComponents(ctx, apiKey, inputs.PageID)
+	components, groups, err := wizard.FetchPageComponents(ctx, apiKey, inputs.PageID)
 	output.StopSpinner(s)
 	if err != nil {
 		return nil, err
 	}
 
-	// Build Form 2 fields dynamically
 	var fields []huh.Field
 
-	// Build component name map for summary display
 	if len(components) > 0 {
 		groupMap := make(map[string]string, len(groups))
 		for _, g := range groups {
@@ -213,7 +145,6 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 			compOptions = append(compOptions, huh.NewOption(label, c.GetId()))
 		}
 
-		// Component multi-select (only if not prefilled)
 		if len(prefilled.ComponentIDs) == 0 {
 			fields = append(fields, huh.NewMultiSelect[string]().
 				Title("Components").
@@ -225,7 +156,7 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 	if inputs.Title == "" {
 		fields = append(fields, huh.NewInput().
 			Title("Title").
-			Validate(notEmpty("title")).
+			Validate(wizard.NotEmpty("title")).
 			Value(&inputs.Title))
 	}
 
@@ -239,7 +170,7 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 	if inputs.Message == "" {
 		fields = append(fields, huh.NewText().
 			Title("Message").
-			Validate(notEmpty("message")).
+			Validate(wizard.NotEmpty("message")).
 			Value(&inputs.Message))
 	}
 
@@ -247,7 +178,6 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 		Title("Notify subscribers?").
 		Value(&inputs.Notify))
 
-	// Summary + confirm group
 	summaryNote := huh.NewNote().
 		Title("Summary").
 		DescriptionFunc(func() string {
@@ -275,7 +205,7 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 				notifyStr = "yes"
 			}
 			lines = append(lines, [2]string{"Notify", notifyStr})
-			return buildSummary(lines)
+			return wizard.BuildSummary(lines)
 		}, &inputs)
 
 	form2 := huh.NewForm(
@@ -289,7 +219,7 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 	).WithTheme(huh.ThemeBase())
 
 	if err := form2.Run(); err != nil {
-		return nil, handleFormError(err)
+		return nil, wizard.HandleFormError(err)
 	}
 
 	if !inputs.Confirmed {
@@ -305,7 +235,6 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 func runAddUpdateWizard(ctx context.Context, apiKey string, prefilled *addUpdateInputs) (*addUpdateInputs, error) {
 	inputs := *prefilled
 
-	// Fetch reports for selection or name resolution
 	s := output.StartSpinner("Fetching status reports...")
 	reports, err := fetchStatusReports(ctx, apiKey)
 	output.StopSpinner(s)
@@ -314,7 +243,6 @@ func runAddUpdateWizard(ctx context.Context, apiKey string, prefilled *addUpdate
 	}
 
 	if inputs.ReportID == "" {
-		// Form 1: report select
 		if len(reports) == 0 {
 			return nil, fmt.Errorf("no status reports found")
 		}
@@ -335,11 +263,10 @@ func runAddUpdateWizard(ctx context.Context, apiKey string, prefilled *addUpdate
 		).WithTheme(huh.ThemeBase())
 
 		if err := form1.Run(); err != nil {
-			return nil, handleFormError(err)
+			return nil, wizard.HandleFormError(err)
 		}
 	}
 
-	// Resolve report name for summary
 	for _, r := range reports {
 		if r.GetId() == inputs.ReportID {
 			inputs.ReportName = r.GetTitle()
@@ -350,7 +277,6 @@ func runAddUpdateWizard(ctx context.Context, apiKey string, prefilled *addUpdate
 		inputs.ReportName = inputs.ReportID
 	}
 
-	// Build Form 2 fields dynamically
 	var fields []huh.Field
 
 	if inputs.Status == "" {
@@ -363,7 +289,7 @@ func runAddUpdateWizard(ctx context.Context, apiKey string, prefilled *addUpdate
 	if inputs.Message == "" {
 		fields = append(fields, huh.NewInput().
 			Title("Message").
-			Validate(notEmpty("message")).
+			Validate(wizard.NotEmpty("message")).
 			Value(&inputs.Message))
 	}
 
@@ -384,7 +310,7 @@ func runAddUpdateWizard(ctx context.Context, apiKey string, prefilled *addUpdate
 				notifyStr = "yes"
 			}
 			lines = append(lines, [2]string{"Notify", notifyStr})
-			return buildSummary(lines)
+			return wizard.BuildSummary(lines)
 		}, &inputs)
 
 	form2 := huh.NewForm(
@@ -398,7 +324,7 @@ func runAddUpdateWizard(ctx context.Context, apiKey string, prefilled *addUpdate
 	).WithTheme(huh.ThemeBase())
 
 	if err := form2.Run(); err != nil {
-		return nil, handleFormError(err)
+		return nil, wizard.HandleFormError(err)
 	}
 
 	if !inputs.Confirmed {
@@ -409,10 +335,3 @@ func runAddUpdateWizard(ctx context.Context, apiKey string, prefilled *addUpdate
 	return &inputs, nil
 }
 
-func statusPageURL(p *status_pagev1.StatusPageSummary) string {
-	if d := p.GetCustomDomain(); d != "" {
-		d = strings.TrimPrefix(strings.TrimPrefix(d, "https://"), "http://")
-		return "https://" + d
-	}
-	return "https://" + p.GetSlug() + ".openstatus.dev"
-}

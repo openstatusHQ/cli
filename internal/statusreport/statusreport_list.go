@@ -77,8 +77,8 @@ func ListStatusReports(ctx context.Context, client status_reportv1connect.Status
 			r.GetId(),
 			r.GetTitle(),
 			statusColor(statusToString(r.GetStatus())),
-			r.GetCreatedAt(),
-			r.GetUpdatedAt(),
+			output.FormatTimestamp(r.GetCreatedAt()),
+			output.FormatTimestamp(r.GetUpdatedAt()),
 		)
 	}
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sync/atomic"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
@@ -37,6 +38,14 @@ func PrintJSON(v any) error {
 	}
 	fmt.Println(string(data))
 	return nil
+}
+
+func FormatTimestamp(rfc3339 string) string {
+	t, err := time.Parse(time.RFC3339, rfc3339)
+	if err != nil {
+		return rfc3339
+	}
+	return t.UTC().Format("2006-01-02 15:04 UTC")
 }
 
 func InitColorSettings(noColorFlag bool) {

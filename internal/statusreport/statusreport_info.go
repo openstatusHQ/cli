@@ -108,8 +108,8 @@ func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.Stat
 		data = append(data, []string{"Components", strings.Join(report.GetPageComponentIds(), ", ")})
 	}
 
-	data = append(data, []string{"Created", report.GetCreatedAt()})
-	data = append(data, []string{"Updated", report.GetUpdatedAt()})
+	data = append(data, []string{"Created", output.FormatTimestamp(report.GetCreatedAt())})
+	data = append(data, []string{"Updated", output.FormatTimestamp(report.GetUpdatedAt())})
 
 	table.Bulk(data)
 	table.Render()
@@ -123,7 +123,7 @@ func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.Stat
 	fmt.Println(aurora.Bold("\nUpdate Timeline:"))
 	for _, u := range updates {
 		fmt.Printf("  %s  [%s]  %s\n",
-			u.GetDate(),
+			output.FormatTimestamp(u.GetDate()),
 			statusColor(statusToString(u.GetStatus())),
 			u.GetMessage(),
 		)

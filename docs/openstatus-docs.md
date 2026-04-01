@@ -2,7 +2,7 @@
 
 ## CLI interface - openstatus
 
-OpenStatus CLI lets you manage your status pages and uptime monitors from the command line. Report and track incidents, define monitors as code, and run on-demand checks.  Get started:   openstatus login                Save your API token   openstatus status-report create Report an incident   openstatus status-report list   View active incidents   openstatus monitors apply       Sync monitors from config   openstatus monitors list        List your monitors   openstatus run                  Run synthetic tests  https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new.
+OpenStatus CLI lets you manage your status pages and uptime monitors from the command line. Report and track incidents, define monitors as code, and run on-demand checks.  Get started:   openstatus login                Save your API token   openstatus status-report create Report an incident   openstatus status-report list   View active incidents   openstatus maintenance create   Schedule a maintenance window   openstatus maintenance list     View maintenance windows   openstatus monitors apply       Sync monitors from config   openstatus monitors list        List your monitors   openstatus run                  Run synthetic tests  https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new.
 
 Manage status pages, monitors, and incidents from the terminal.
 
@@ -127,8 +127,9 @@ Get a monitor information.
 
 > openstatus monitors info <MonitorID>
 >   openstatus monitors info 12345
+>   openstatus monitors info 12345 --time-range 7d
 
-Fetch the monitor information. The monitor information includes details such as name, description, endpoint, method, frequency, locations, active status, public status, timeout, degraded after, and body.
+Fetch the monitor information including configuration, live status per region, and summary metrics.
 
 Usage:
 
@@ -138,9 +139,10 @@ $ openstatus [GLOBAL FLAGS] monitors info [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                 | Default value |  Environment variables |
-|-----------------------------|-----------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+| Name                        | Description                                  | Default value |  Environment variables |
+|-----------------------------|----------------------------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                  |               | `OPENSTATUS_API_TOKEN` |
+| `--time-range="…"`          | Time range for summary metrics (1d, 7d, 14d) |     `1d`      |         *none*         |
 
 ### `monitors list` subcommand
 
@@ -321,6 +323,124 @@ The following flags are supported:
 | `--message="…"`             | Message describing what changed                              |               |         *none*         |
 | `--date="…"`                | Date for the update (RFC 3339 format, defaults to now)       |               |         *none*         |
 | `--notify`                  | Notify subscribers about this update                         |    `false`    |         *none*         |
+
+### `maintenance` command (aliases: `mt`)
+
+Manage maintenance windows.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] maintenance [ARGUMENTS...]
+```
+
+### `maintenance list` subcommand
+
+List all maintenance windows.
+
+> openstatus maintenance list
+>   openstatus maintenance list --page-id abc --limit 10
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] maintenance list [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                      | Default value |  Environment variables |
+|-----------------------------|--------------------------------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                      |               | `OPENSTATUS_API_TOKEN` |
+| `--page-id="…"`             | Filter by status page ID                         |               |         *none*         |
+| `--limit="…"`               | Maximum number of maintenances to return (1-100) |      `0`      |         *none*         |
+
+### `maintenance info` subcommand
+
+Get maintenance window details.
+
+> openstatus maintenance info <MaintenanceID>
+>   openstatus maintenance info 12345
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] maintenance info [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Default value |  Environment variables |
+|-----------------------------|-----------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+
+### `maintenance create` subcommand
+
+Create a maintenance window.
+
+> openstatus maintenance create --title "DB Migration" --message "Upgrading database" --from 2026-04-01T10:00:00Z --to 2026-04-01T12:00:00Z --page-id 123
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] maintenance create [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                            | Default value |  Environment variables |
+|-----------------------------|--------------------------------------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                            |               | `OPENSTATUS_API_TOKEN` |
+| `--title="…"`               | Title of the maintenance                               |               |         *none*         |
+| `--message="…"`             | Message describing the maintenance                     |               |         *none*         |
+| `--from="…"`                | Start time of the maintenance window (RFC 3339 format) |               |         *none*         |
+| `--to="…"`                  | End time of the maintenance window (RFC 3339 format)   |               |         *none*         |
+| `--page-id="…"`             | Status page ID to associate with this maintenance      |               |         *none*         |
+| `--component-ids="…"`       | Comma-separated page component IDs                     |               |         *none*         |
+| `--notify`                  | Notify subscribers about this maintenance              |    `false`    |         *none*         |
+
+### `maintenance update` subcommand
+
+Update a maintenance window.
+
+> openstatus maintenance update <MaintenanceID> [--title "New title"] [--message "New message"] [--from ...] [--to ...]
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] maintenance update [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                                 | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                 |               | `OPENSTATUS_API_TOKEN` |
+| `--title="…"`               | New title for the maintenance                               |               |         *none*         |
+| `--message="…"`             | New message for the maintenance                             |               |         *none*         |
+| `--from="…"`                | New start time (RFC 3339 format)                            |               |         *none*         |
+| `--to="…"`                  | New end time (RFC 3339 format)                              |               |         *none*         |
+| `--component-ids="…"`       | Comma-separated page component IDs (replaces existing list) |               |         *none*         |
+
+### `maintenance delete` subcommand
+
+Delete a maintenance window.
+
+> openstatus maintenance delete <MaintenanceID>
+>   openstatus maintenance delete 12345 -y
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] maintenance delete [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                     | Default value |  Environment variables |
+|-----------------------------|---------------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token     |               | `OPENSTATUS_API_TOKEN` |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt |    `false`    |         *none*         |
 
 ### `status-page` command (aliases: `sp`)
 

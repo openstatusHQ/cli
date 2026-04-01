@@ -32,8 +32,8 @@ func Test_NewApp(t *testing.T) {
 	t.Run("Has expected commands", func(t *testing.T) {
 		app := cmd.NewApp()
 
-		if len(app.Commands) != 8 {
-			t.Errorf("Expected 8 commands, got %d", len(app.Commands))
+		if len(app.Commands) != 9 {
+			t.Errorf("Expected 9 commands, got %d", len(app.Commands))
 		}
 
 		expectedCommands := map[string]bool{
@@ -45,6 +45,7 @@ func Test_NewApp(t *testing.T) {
 			"whoami":        false,
 			"login":         false,
 			"logout":        false,
+			"terraform":     false,
 		}
 
 		for _, subcmd := range app.Commands {

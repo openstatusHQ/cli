@@ -558,3 +558,32 @@ Usage:
 ```bash
 $ openstatus [GLOBAL FLAGS] logout [ARGUMENTS...]
 ```
+
+### `terraform` command (aliases: `tf`)
+
+Generate Terraform configuration.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] terraform [ARGUMENTS...]
+```
+
+### `terraform generate` subcommand (aliases: `gen`)
+
+Generate Terraform configuration from workspace resources.
+
+> openstatus terraform generate [--output-dir ./openstatus-terraform/]
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] terraform generate [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                             |       Default value       |  Environment variables |
+|-----------------------------|-----------------------------------------|:-------------------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token             |                           | `OPENSTATUS_API_TOKEN` |
+| `--output-dir="…"` (`-o`)   | Directory to write Terraform files into | `./openstatus-terraform/` |         *none*         |

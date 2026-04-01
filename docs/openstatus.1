@@ -1346,3 +1346,57 @@ Usage:
 .EX
 $ openstatus [GLOBAL FLAGS] logout [ARGUMENTS...]
 .EE
+.SS \f[CR]terraform\f[R] command (aliases: \f[CR]tf\f[R])
+Generate Terraform configuration.
+.PP
+Usage:
+.IP
+.EX
+$ openstatus [GLOBAL FLAGS] terraform [ARGUMENTS...]
+.EE
+.SS \f[CR]terraform generate\f[R] subcommand (aliases: \f[CR]gen\f[R])
+Generate Terraform configuration from workspace resources.
+.RS
+.PP
+openstatus terraform generate [\(enoutput\-dir ./openstatus\-terraform/]
+.RE
+.PP
+Usage:
+.IP
+.EX
+$ openstatus [GLOBAL FLAGS] terraform generate [COMMAND FLAGS] [ARGUMENTS...]
+.EE
+.PP
+The following flags are supported:
+.PP
+.TS
+tab(@);
+lw(16.8n) lw(23.7n) cw(15.6n) cw(13.9n).
+T{
+Name
+T}@T{
+Description
+T}@T{
+Default value
+T}@T{
+Environment variables
+T}
+_
+T{
+\f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
+T}@T{
+OpenStatus API Access Token
+T}@T{
+T}@T{
+\f[CR]OPENSTATUS_API_TOKEN\f[R]
+T}
+T{
+\f[CR]\-\-output\-dir=\(dq\&...\(dq\f[R] (\f[CR]\-o\f[R])
+T}@T{
+Directory to write Terraform files into
+T}@T{
+\f[CR]./openstatus\-terraform/\f[R]
+T}@T{
+\f[I]none\f[R]
+T}
+.TE

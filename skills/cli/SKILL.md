@@ -1,14 +1,14 @@
 ---
 name: openstatus-cli
 description: |
-  OpenStatus CLI for managing uptime monitors, incident reports, status pages, maintenance windows, and synthetic tests. Use this skill whenever the user wants to monitor a website or API, set up uptime checks, create or manage monitors, report an incident, update a status page, schedule maintenance, run synthetic tests, check latency or availability, define monitors as code, generate Terraform configuration, export to Terraform, or use the openstatus command. Also trigger when the user says "is my site up", "check my endpoint", "create a status report", "monitor this URL", "run uptime tests", "set up monitoring", "our API is down", "schedule maintenance", "maintenance window", "planned downtime", "terraform", "generate terraform", "export to terraform", "infrastructure as code", or mentions openstatus in any context. This skill knows the full CLI — commands, flags, config format, and workflows — so Claude can act without guessing.
+  OpenStatus CLI for managing uptime monitors, incident reports, status pages, notifications, maintenance windows, and synthetic tests. Use this skill whenever the user wants to monitor a website or API, set up uptime checks, create or manage monitors, report an incident, update a status page, view notifications, schedule maintenance, run synthetic tests, check latency or availability, define monitors as code, generate Terraform configuration, export to Terraform, or use the openstatus command. Also trigger when the user says "is my site up", "check my endpoint", "create a status report", "monitor this URL", "run uptime tests", "set up monitoring", "our API is down", "schedule maintenance", "maintenance window", "planned downtime", "terraform", "generate terraform", "export to terraform", "infrastructure as code", "list notifications", "notification channels", or mentions openstatus in any context. This skill knows the full CLI — commands, flags, config format, and workflows — so Claude can act without guessing.
 allowed-tools:
   - Bash(openstatus *)
 ---
 
 # OpenStatus CLI
 
-Manage uptime monitors, incident reports, status pages, and maintenance windows from the terminal. The CLI supports monitors-as-code via YAML config files.
+Manage uptime monitors, incident reports, status pages, notifications, and maintenance windows from the terminal. The CLI supports monitors-as-code via YAML config files.
 
 Run `openstatus --help` or `openstatus <command> --help` for full option details.
 
@@ -45,6 +45,8 @@ Token resolution order:
 | Delete incident | `status-report delete <ID>` | Remove a status report |
 | List status pages | `status-page list` | See all your status pages |
 | Get status page details | `status-page info <ID>` | View page config, components, theme |
+| List notifications | `notification list` | See all notification channels in the workspace |
+| Get notification details | `notification info <ID>` | View provider config, linked monitors |
 | Create a maintenance window | `maintenance create` | Plan a maintenance window for a status page |
 | List maintenance windows | `maintenance list` | See scheduled/active/completed maintenance |
 | Get maintenance details | `maintenance info <ID>` | View full details of a maintenance window |
@@ -54,7 +56,7 @@ Token resolution order:
 | Generate Terraform config | `terraform generate` | Export workspace resources to Terraform HCL files |
 | Check workspace | `whoami` | Verify auth and workspace info |
 
-Command aliases: `monitors` = `m`, `status-report` = `sr`, `status-page` = `sp`, `maintenance` = `mt`, `terraform` = `tf`, `run` = `r`, `whoami` = `w`.
+Command aliases: `monitors` = `m`, `status-report` = `sr`, `status-page` = `sp`, `notification` = `n`, `maintenance` = `mt`, `terraform` = `tf`, `run` = `r`, `whoami` = `w`.
 
 ## Workflows
 
@@ -289,6 +291,15 @@ openstatus maintenance info <ID>
 ```bash
 openstatus status-page info <ID>
 ```
+
+**Notification channels:**
+```bash
+openstatus notification list                    # all notification channels
+openstatus notification list --limit 10         # limit results
+openstatus notification info <ID>               # provider config, linked monitors
+```
+
+Supported providers: discord, email, google_chat, grafana_oncall, ntfy, pagerduty, opsgenie, slack, sms, telegram, webhook, whatsapp.
 
 ### Terraform export
 

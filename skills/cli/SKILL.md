@@ -1,7 +1,7 @@
 ---
 name: openstatus-cli
 description: |
-  OpenStatus CLI for managing uptime monitors, incident reports, status pages, maintenance windows, and synthetic tests. Use this skill whenever the user wants to monitor a website or API, set up uptime checks, create or manage monitors, report an incident, update a status page, schedule maintenance, run synthetic tests, check latency or availability, define monitors as code, or use the openstatus command. Also trigger when the user says "is my site up", "check my endpoint", "create a status report", "monitor this URL", "run uptime tests", "set up monitoring", "our API is down", "schedule maintenance", "maintenance window", "planned downtime", or mentions openstatus in any context. This skill knows the full CLI — commands, flags, config format, and workflows — so Claude can act without guessing.
+  OpenStatus CLI for managing uptime monitors, incident reports, status pages, maintenance windows, and synthetic tests. Use this skill whenever the user wants to monitor a website or API, set up uptime checks, create or manage monitors, report an incident, update a status page, schedule maintenance, run synthetic tests, check latency or availability, define monitors as code, generate Terraform configuration, export to Terraform, or use the openstatus command. Also trigger when the user says "is my site up", "check my endpoint", "create a status report", "monitor this URL", "run uptime tests", "set up monitoring", "our API is down", "schedule maintenance", "maintenance window", "planned downtime", "terraform", "generate terraform", "export to terraform", "infrastructure as code", or mentions openstatus in any context. This skill knows the full CLI — commands, flags, config format, and workflows — so Claude can act without guessing.
 allowed-tools:
   - Bash(openstatus *)
 ---
@@ -51,9 +51,10 @@ Token resolution order:
 | Update a maintenance window | `maintenance update <ID>` | Change title, message, or time window |
 | Delete a maintenance window | `maintenance delete <ID>` | Remove a maintenance window |
 | Run synthetic tests | `run` | Execute on-demand tests for specific monitors |
+| Generate Terraform config | `terraform generate` | Export workspace resources to Terraform HCL files |
 | Check workspace | `whoami` | Verify auth and workspace info |
 
-Command aliases: `monitors` = `m`, `status-report` = `sr`, `status-page` = `sp`, `maintenance` = `mt`, `run` = `r`, `whoami` = `w`.
+Command aliases: `monitors` = `m`, `status-report` = `sr`, `status-page` = `sp`, `maintenance` = `mt`, `terraform` = `tf`, `run` = `r`, `whoami` = `w`.
 
 ## Workflows
 
@@ -288,6 +289,35 @@ openstatus maintenance info <ID>
 ```bash
 openstatus status-page info <ID>
 ```
+
+### Terraform export
+
+Generate Terraform HCL configuration from all workspace resources. This creates ready-to-use `.tf` files with import blocks for adopting Terraform on an existing OpenStatus setup.
+
+```bash
+openstatus terraform generate
+```
+
+This creates an `openstatus-terraform/` directory with:
+- `provider.tf` — Terraform provider configuration
+- `monitors.tf` — all HTTP, TCP, and DNS monitors
+- `notifications.tf` — all notification channels with provider-specific blocks
+- `status_pages.tf` — status pages, components, and component groups
+- `imports.tf` — Terraform 1.5+ import blocks for all resources
+
+**Custom output directory:**
+```bash
+openstatus terraform generate --output-dir ./infra/openstatus/
+```
+
+**After generating:**
+```bash
+cd openstatus-terraform
+terraform init
+terraform plan
+```
+
+Sensitive values (passwords, API keys) are emitted as `"REPLACE_ME"` with a TODO comment — update them before running `terraform apply`.
 
 ## Global Flags
 

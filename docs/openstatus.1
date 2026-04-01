@@ -1229,6 +1229,97 @@ T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
 .TE
+.SS \f[CR]notification\f[R] command (aliases: \f[CR]n\f[R])
+Manage notifications.
+.PP
+Usage:
+.IP
+.EX
+$ openstatus [GLOBAL FLAGS] notification [ARGUMENTS...]
+.EE
+.SS \f[CR]notification list\f[R] subcommand
+List all notifications.
+.RS
+.PP
+openstatus notification list openstatus notification list \(enlimit 10
+.RE
+.PP
+Usage:
+.IP
+.EX
+$ openstatus [GLOBAL FLAGS] notification list [COMMAND FLAGS] [ARGUMENTS...]
+.EE
+.PP
+The following flags are supported:
+.PP
+.TS
+tab(@);
+lw(17.1n) lw(30.0n) cw(8.8n) cw(14.1n).
+T{
+Name
+T}@T{
+Description
+T}@T{
+Default value
+T}@T{
+Environment variables
+T}
+_
+T{
+\f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
+T}@T{
+OpenStatus API Access Token
+T}@T{
+T}@T{
+\f[CR]OPENSTATUS_API_TOKEN\f[R]
+T}
+T{
+\f[CR]\-\-limit=\(dq\&...\(dq\f[R]
+T}@T{
+Maximum number of notifications to return (1\-100)
+T}@T{
+\f[CR]0\f[R]
+T}@T{
+\f[I]none\f[R]
+T}
+.TE
+.SS \f[CR]notification info\f[R] subcommand
+Get notification details.
+.RS
+.PP
+openstatus notification info  openstatus notification info 12345
+.RE
+.PP
+Usage:
+.IP
+.EX
+$ openstatus [GLOBAL FLAGS] notification info [COMMAND FLAGS] [ARGUMENTS...]
+.EE
+.PP
+The following flags are supported:
+.PP
+.TS
+tab(@);
+lw(20.9n) lw(20.9n) cw(10.8n) cw(17.3n).
+T{
+Name
+T}@T{
+Description
+T}@T{
+Default value
+T}@T{
+Environment variables
+T}
+_
+T{
+\f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
+T}@T{
+OpenStatus API Access Token
+T}@T{
+T}@T{
+\f[CR]OPENSTATUS_API_TOKEN\f[R]
+T}
+.TE
 .SS \f[CR]run\f[R] command (aliases: \f[CR]r\f[R])
 Run your uptime tests.
 .RS

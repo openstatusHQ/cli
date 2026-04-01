@@ -10,6 +10,7 @@ import (
 	"github.com/openstatusHQ/cli/internal/login"
 	"github.com/openstatusHQ/cli/internal/maintenance"
 	"github.com/openstatusHQ/cli/internal/monitors"
+	"github.com/openstatusHQ/cli/internal/notification"
 	"github.com/openstatusHQ/cli/internal/run"
 	"github.com/openstatusHQ/cli/internal/statuspage"
 	"github.com/openstatusHQ/cli/internal/statusreport"
@@ -71,6 +72,7 @@ https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
 			statusreport.StatusReportCmd(),
 			maintenance.MaintenanceCmd(),
 			statuspage.StatusPageCmd(),
+			notification.NotificationCmd(),
 			run.RunCmd(),
 			whoami.WhoamiCmd(),
 			login.LoginCmd(),

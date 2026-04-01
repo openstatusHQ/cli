@@ -491,6 +491,55 @@ The following flags are supported:
 |-----------------------------|-----------------------------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
 
+### `notification` command (aliases: `n`)
+
+Manage notifications.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] notification [ARGUMENTS...]
+```
+
+### `notification list` subcommand
+
+List all notifications.
+
+> openstatus notification list
+>   openstatus notification list --limit 10
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] notification list [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                       | Default value |  Environment variables |
+|-----------------------------|---------------------------------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                       |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of notifications to return (1-100) |      `0`      |         *none*         |
+
+### `notification info` subcommand
+
+Get notification details.
+
+> openstatus notification info <NotificationID>
+>   openstatus notification info 12345
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] notification info [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Default value |  Environment variables |
+|-----------------------------|-----------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+
 ### `run` command (aliases: `r`)
 
 Run your uptime tests.

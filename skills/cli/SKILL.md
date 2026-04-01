@@ -1,14 +1,14 @@
 ---
 name: openstatus-cli
 description: |
-  OpenStatus CLI for managing uptime monitors, incident reports, status pages, and synthetic tests. Use this skill whenever the user wants to monitor a website or API, set up uptime checks, create or manage monitors, report an incident, update a status page, run synthetic tests, check latency or availability, define monitors as code, or use the openstatus command. Also trigger when the user says "is my site up", "check my endpoint", "create a status report", "monitor this URL", "run uptime tests", "set up monitoring", "our API is down", or mentions openstatus in any context. This skill knows the full CLI — commands, flags, config format, and workflows — so Claude can act without guessing.
+  OpenStatus CLI for managing uptime monitors, incident reports, status pages, maintenance windows, and synthetic tests. Use this skill whenever the user wants to monitor a website or API, set up uptime checks, create or manage monitors, report an incident, update a status page, schedule maintenance, run synthetic tests, check latency or availability, define monitors as code, or use the openstatus command. Also trigger when the user says "is my site up", "check my endpoint", "create a status report", "monitor this URL", "run uptime tests", "set up monitoring", "our API is down", "schedule maintenance", "maintenance window", "planned downtime", or mentions openstatus in any context. This skill knows the full CLI — commands, flags, config format, and workflows — so Claude can act without guessing.
 allowed-tools:
   - Bash(openstatus *)
 ---
 
 # OpenStatus CLI
 
-Manage uptime monitors, incident reports, and status pages from the terminal. The CLI supports monitors-as-code via YAML config files.
+Manage uptime monitors, incident reports, status pages, and maintenance windows from the terminal. The CLI supports monitors-as-code via YAML config files.
 
 Run `openstatus --help` or `openstatus <command> --help` for full option details.
 
@@ -45,10 +45,15 @@ Token resolution order:
 | Delete incident | `status-report delete <ID>` | Remove a status report |
 | List status pages | `status-page list` | See all your status pages |
 | Get status page details | `status-page info <ID>` | View page config, components, theme |
+| Create a maintenance window | `maintenance create` | Plan a maintenance window for a status page |
+| List maintenance windows | `maintenance list` | See scheduled/active/completed maintenance |
+| Get maintenance details | `maintenance info <ID>` | View full details of a maintenance window |
+| Update a maintenance window | `maintenance update <ID>` | Change title, message, or time window |
+| Delete a maintenance window | `maintenance delete <ID>` | Remove a maintenance window |
 | Run synthetic tests | `run` | Execute on-demand tests for specific monitors |
 | Check workspace | `whoami` | Verify auth and workspace info |
 
-Command aliases: `monitors` = `m`, `status-report` = `sr`, `status-page` = `sp`, `run` = `r`, `whoami` = `w`.
+Command aliases: `monitors` = `m`, `status-report` = `sr`, `status-page` = `sp`, `maintenance` = `mt`, `run` = `r`, `whoami` = `w`.
 
 ## Workflows
 
@@ -70,6 +75,8 @@ This is the primary way to manage monitors. Write a YAML config, then let the CL
 **The apply workflow** compares your `openstatus.yaml` against the lock file and the API, then creates, updates, or deletes monitors to match. Use `--dry-run` to preview, `-y` to skip the confirmation prompt.
 
 ### Incident lifecycle
+
+Use status reports for **unplanned** outages and incidents.
 
 Status reports follow a progression: `investigating` -> `identified` -> `monitoring` -> `resolved`. These are the only valid status values — the CLI rejects anything else.
 
@@ -164,6 +171,75 @@ openstatus status-report delete 456        # prompts for confirmation
 openstatus status-report delete 456 -y     # skip confirmation
 ```
 
+### Scheduling maintenance
+
+Use maintenance for **planned** downtime windows.
+
+**1. Find your status page ID and component IDs first:**
+```bash
+openstatus status-page list
+openstatus status-page info <PAGE_ID>   # shows components grouped by section
+```
+
+**2. Create a maintenance window:**
+```bash
+openstatus maintenance create \
+  --title "Database Migration" \
+  --message "Scheduled database migration to improve performance" \
+  --from "2026-04-05T02:00:00Z" \
+  --to "2026-04-05T04:00:00Z" \
+  --page-id 123 \
+  --component-ids "comp-1,comp-2" \
+  --notify
+```
+
+On success, the CLI prints the maintenance ID and suggests the next command:
+```
+Maintenance created successfully (ID: 789)
+Run 'openstatus maintenance info 789' to see details
+```
+
+**`create` flags:**
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--title` | yes | Maintenance title |
+| `--message` | yes | Description of the maintenance |
+| `--from` | yes | Start time in RFC 3339 format (e.g. `2026-04-05T02:00:00Z`) |
+| `--to` | yes | End time in RFC 3339 format |
+| `--page-id` | yes | Status page ID (get it from `status-page list`) |
+| `--component-ids` | no | Comma-separated component IDs in a single string: `"id1,id2"` |
+| `--notify` | no | Notify status page subscribers |
+
+Status is computed automatically: `scheduled` (before `--from`), `in_progress` (between `--from` and `--to`), `completed` (after `--to`). There is no `--status` flag.
+
+**3. Update a maintenance window:**
+```bash
+openstatus maintenance update <ID> \
+  --title "Extended Maintenance" \
+  --to "2026-04-05T06:00:00Z"
+```
+
+Only provided flags are updated. At least one of `--title`, `--message`, `--from`, `--to`, or `--component-ids` must be set. `--component-ids` replaces the entire list.
+
+**4. List and filter:**
+```bash
+openstatus maintenance list                        # all maintenance windows
+openstatus maintenance list --page-id 123          # filter by page
+openstatus maintenance list --limit 10             # limit results
+```
+
+**5. View details:**
+```bash
+openstatus maintenance info <ID>
+```
+
+**6. Delete:**
+```bash
+openstatus maintenance delete <ID>       # prompts for confirmation
+openstatus maintenance delete <ID> -y    # skip confirmation
+```
+
 ### On-demand testing
 
 Run specific monitors immediately across all their configured regions.
@@ -201,6 +277,11 @@ openstatus monitors list --all
 **Incident timeline:**
 ```bash
 openstatus status-report info <ID>
+```
+
+**Maintenance details:**
+```bash
+openstatus maintenance info <ID>
 ```
 
 **Status page components and config:**

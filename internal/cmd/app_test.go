@@ -20,8 +20,8 @@ func Test_NewApp(t *testing.T) {
 			t.Errorf("Expected app name 'openstatus', got %s", app.Name)
 		}
 
-		if app.Version != "v1.0.3" {
-			t.Errorf("Expected version 'v1.0.3', got %s", app.Version)
+		if app.Version != "v1.0.4" {
+			t.Errorf("Expected version 'v1.0.4', got %s", app.Version)
 		}
 
 		if !app.Suggest {

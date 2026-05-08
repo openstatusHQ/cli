@@ -543,6 +543,8 @@ func MonitorsCmd() *cli.Command {
 			GetMonitorImportCmd(),
 			GetMonitorInfoCmd(),
 			GetMonitorsListCmd(),
+			GetMonitorLogsCmd(),
+			GetMonitorLogInfoCmd(),
 			GetMonitorsTriggerCmd(),
 		},
 	}

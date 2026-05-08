@@ -166,6 +166,55 @@ The following flags are supported:
 | `--all`                     | List all monitors including inactive ones |    `false`    |         *none*         |
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token               |               | `OPENSTATUS_API_TOKEN` |
 
+### `monitors logs` subcommand
+
+List HTTP response logs for a monitor.
+
+> openstatus monitors logs <MonitorID>
+>   openstatus monitors logs 12345
+>   openstatus monitors logs 12345 --limit 10
+>   openstatus monitors logs 12345 --limit 5 --offset 5
+>   openstatus monitors logs 12345 --from 2026-05-06T00:00:00Z --to 2026-05-07T00:00:00Z
+
+List HTTP response logs for a monitor from the 14-day retention window. Supports pagination and time filtering.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] monitors logs [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                              | Default value |  Environment variables |
+|-----------------------------|------------------------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token              |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of logs to return (1-100) |      `0`      |         *none*         |
+| `--offset="…"`              | Number of logs to skip for pagination    |      `0`      |         *none*         |
+| `--from="…"`                | Start of time window (RFC 3339 format)   |               |         *none*         |
+| `--to="…"`                  | End of time window (RFC 3339 format)     |               |         *none*         |
+
+### `monitors log-info` subcommand
+
+Get detailed HTTP response log for a monitor.
+
+> openstatus monitors log-info <MonitorID> <LogID>
+>   openstatus monitors log-info 12345 abc-def-ghi
+
+Fetch a single HTTP response log with full details including timing phases, response headers, and assertion results.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] monitors log-info [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Default value |  Environment variables |
+|-----------------------------|-----------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+
 ### `monitors trigger` subcommand
 
 Trigger a monitor execution.

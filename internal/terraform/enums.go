@@ -172,7 +172,35 @@ func pageAccessTypeToString(t status_pagev1.PageAccessType) string {
 		return "password"
 	case status_pagev1.PageAccessType_PAGE_ACCESS_TYPE_AUTHENTICATED:
 		return "email-domain"
+	case status_pagev1.PageAccessType_PAGE_ACCESS_TYPE_IP_RESTRICTED:
+		return "ip"
 	default:
 		return "public"
+	}
+}
+
+func pageThemeToString(t status_pagev1.PageTheme) string {
+	switch t {
+	case status_pagev1.PageTheme_PAGE_THEME_SYSTEM:
+		return "system"
+	case status_pagev1.PageTheme_PAGE_THEME_LIGHT:
+		return "light"
+	case status_pagev1.PageTheme_PAGE_THEME_DARK:
+		return "dark"
+	default:
+		return ""
+	}
+}
+
+func localeToString(l status_pagev1.Locale) string {
+	switch l {
+	case status_pagev1.Locale_LOCALE_EN:
+		return "en"
+	case status_pagev1.Locale_LOCALE_FR:
+		return "fr"
+	case status_pagev1.Locale_LOCALE_DE:
+		return "de"
+	default:
+		return ""
 	}
 }

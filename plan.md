@@ -450,21 +450,21 @@ Each phase is one commit. Phases are ordered so that earlier work doesn't confli
 - [x] `internal/terraform/generate_test.go` — update `TestGenerateProviderFile` assertion to `~> 0.2`.
 - [x] `go test ./internal/terraform/...` green.
 
-### Phase 2 — Status page correctness pack (commit 2: `fix(terraform): emit access_type=ip + auth_email_domains/allowed_ip_ranges; add theme/locale/allow_index`)
+### Phase 2 — Status page correctness pack (commit 2: `fix(terraform): emit access_type=ip + auth_email_domains/allowed_ip_ranges; add theme/locale/allow_index`) ✅
 
 Order matters within this phase: add helpers first, then call them.
 
-- [ ] `internal/terraform/enums.go` — extend `pageAccessTypeToString` with `case status_pagev1.PageAccessType_PAGE_ACCESS_TYPE_IP_RESTRICTED: return "ip"`.
-- [ ] `internal/terraform/enums.go` — add `pageThemeToString(t status_pagev1.PageTheme) string` (returns `""` for UNSPECIFIED, `"system"|"light"|"dark"` otherwise).
-- [ ] `internal/terraform/enums.go` — add `localeToString(l status_pagev1.Locale) string` (returns `""` for UNSPECIFIED, `"en"|"fr"|"de"` otherwise).
-- [ ] `internal/terraform/hcl.go` — `GenerateStatusPagesFile`: replace the current `accessType != "public"` block with the four-case switch (`public` omits / `password` keeps current TODO+REPLACE_ME / `email-domain` emits `auth_email_domains` sorted via `sort.Strings` or TODO+REPLACE_ME / `ip` emits `allowed_ip_ranges` or TODO+REPLACE_ME).
-- [ ] `internal/terraform/hcl.go` — `GenerateStatusPagesFile`: after the access-type block, emit `theme` (when not `system`), `default_locale` (when not `en`), `locales` (sorted, when non-empty), `allow_index` (when `true`), using skip-default rules from Q1.
-- [ ] `internal/terraform/generate_test.go` — `TestGenerateStatusPagesFile_IPAccess` with non-empty `AllowedIpRanges`.
-- [ ] `internal/terraform/generate_test.go` — `TestGenerateStatusPagesFile_IPAccessEmptyFallback`: IP_RESTRICTED + empty `allowed_ip_ranges` → asserts `# TODO:` comment and `REPLACE_ME` value.
-- [ ] `internal/terraform/generate_test.go` — `TestGenerateStatusPagesFile_EmailDomainAccess` with non-empty domains.
-- [ ] `internal/terraform/generate_test.go` — `TestGenerateStatusPagesFile_EmailDomainEmptyFallback`.
-- [ ] `internal/terraform/generate_test.go` — `TestGenerateStatusPagesFile_ThemeLocaleAllowIndex`: dark + fr default_locale + locales=[en,fr] + allow_index=true → all four emitted; default page → none emitted.
-- [ ] `go test ./internal/terraform/...` green.
+- [x] `internal/terraform/enums.go` — extend `pageAccessTypeToString` with `case status_pagev1.PageAccessType_PAGE_ACCESS_TYPE_IP_RESTRICTED: return "ip"`.
+- [x] `internal/terraform/enums.go` — add `pageThemeToString(t status_pagev1.PageTheme) string` (returns `""` for UNSPECIFIED, `"system"|"light"|"dark"` otherwise).
+- [x] `internal/terraform/enums.go` — add `localeToString(l status_pagev1.Locale) string` (returns `""` for UNSPECIFIED, `"en"|"fr"|"de"` otherwise).
+- [x] `internal/terraform/hcl.go` — `GenerateStatusPagesFile`: replace the current `accessType != "public"` block with the four-case switch (`public` omits / `password` keeps current TODO+REPLACE_ME / `email-domain` emits `auth_email_domains` sorted via `sort.Strings` or TODO+REPLACE_ME / `ip` emits `allowed_ip_ranges` or TODO+REPLACE_ME).
+- [x] `internal/terraform/hcl.go` — `GenerateStatusPagesFile`: after the access-type block, emit `theme` (when not `system`), `default_locale` (when not `en`), `locales` (sorted, when non-empty), `allow_index` (when `true`), using skip-default rules from Q1.
+- [x] `internal/terraform/generate_test.go` — `TestGenerateStatusPagesFile_IPAccess` with non-empty `AllowedIpRanges`.
+- [x] `internal/terraform/generate_test.go` — `TestGenerateStatusPagesFile_IPAccessEmptyFallback`: IP_RESTRICTED + empty `allowed_ip_ranges` → asserts `# TODO:` comment and `REPLACE_ME` value.
+- [x] `internal/terraform/generate_test.go` — `TestGenerateStatusPagesFile_EmailDomainAccess` with non-empty domains.
+- [x] `internal/terraform/generate_test.go` — `TestGenerateStatusPagesFile_EmailDomainEmptyFallback`.
+- [x] `internal/terraform/generate_test.go` — `TestGenerateStatusPagesFile_ThemeLocaleAllowIndex`: dark + fr default_locale + locales=[en,fr] + allow_index=true → all four emitted; default page → none emitted.
+- [x] `go test ./internal/terraform/...` green.
 
 ### Phase 3 — Component group `default_open` (commit 3: `feat(terraform): emit default_open on status page component groups`)
 

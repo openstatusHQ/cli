@@ -2,6 +2,7 @@ package terraform
 
 import (
 	"fmt"
+	"sort"
 
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	notificationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/notification/v1"
@@ -23,13 +24,13 @@ type Generator struct {
 	pageRefs    map[string]resourceRef
 	groupRefs   map[string]resourceRef
 
-	httpMonitorNames  map[string]string
-	tcpMonitorNames   map[string]string
-	dnsMonitorNames   map[string]string
-	notifNames        map[string]string
-	pageNames         map[string]string
-	componentNames    map[string]string
-	groupNames        map[string]string
+	httpMonitorNames map[string]string
+	tcpMonitorNames  map[string]string
+	dnsMonitorNames  map[string]string
+	notifNames       map[string]string
+	pageNames        map[string]string
+	componentNames   map[string]string
+	groupNames       map[string]string
 }
 
 func NewGenerator(data *WorkspaceData) *Generator {
@@ -333,13 +334,59 @@ func (g *Generator) GenerateStatusPagesFile() *hclwrite.File {
 			b.SetAttributeValue("custom_domain", cty.StringVal(page.GetCustomDomain()))
 		}
 
-		accessType := pageAccessTypeToString(page.GetAccessType())
-		if accessType != "public" {
-			b.SetAttributeValue("access_type", cty.StringVal(accessType))
-			if accessType == "password" {
+		switch pageAccessTypeToString(page.GetAccessType()) {
+		case "password":
+			b.SetAttributeValue("access_type", cty.StringVal("password"))
+			appendTODOComment(b)
+			b.SetAttributeValue("password", cty.StringVal("REPLACE_ME"))
+		case "email-domain":
+			b.SetAttributeValue("access_type", cty.StringVal("email-domain"))
+			domains := append([]string(nil), page.GetAuthEmailDomains()...)
+			sort.Strings(domains)
+			if len(domains) > 0 {
+				vals := make([]cty.Value, len(domains))
+				for i, d := range domains {
+					vals[i] = cty.StringVal(d)
+				}
+				b.SetAttributeValue("auth_email_domains", cty.ListVal(vals))
+			} else {
 				appendTODOComment(b)
-				b.SetAttributeValue("password", cty.StringVal("REPLACE_ME"))
+				b.SetAttributeValue("auth_email_domains", cty.ListVal([]cty.Value{cty.StringVal("REPLACE_ME")}))
 			}
+		case "ip":
+			b.SetAttributeValue("access_type", cty.StringVal("ip"))
+			if r := page.GetAllowedIpRanges(); r != "" {
+				b.SetAttributeValue("allowed_ip_ranges", cty.StringVal(r))
+			} else {
+				appendTODOComment(b)
+				b.SetAttributeValue("allowed_ip_ranges", cty.StringVal("REPLACE_ME"))
+			}
+		}
+
+		if theme := pageThemeToString(page.GetTheme()); theme != "" && theme != "system" {
+			b.SetAttributeValue("theme", cty.StringVal(theme))
+		}
+		if dl := localeToString(page.GetDefaultLocale()); dl != "" && dl != "en" {
+			b.SetAttributeValue("default_locale", cty.StringVal(dl))
+		}
+		if locs := page.GetLocales(); len(locs) > 0 {
+			strs := make([]string, 0, len(locs))
+			for _, l := range locs {
+				if s := localeToString(l); s != "" {
+					strs = append(strs, s)
+				}
+			}
+			if len(strs) > 0 {
+				sort.Strings(strs)
+				vals := make([]cty.Value, len(strs))
+				for i, s := range strs {
+					vals[i] = cty.StringVal(s)
+				}
+				b.SetAttributeValue("locales", cty.ListVal(vals))
+			}
+		}
+		if page.GetAllowIndex() {
+			b.SetAttributeValue("allow_index", cty.BoolVal(true))
 		}
 
 		body.AppendNewline()

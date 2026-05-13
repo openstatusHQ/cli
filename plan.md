@@ -512,15 +512,15 @@ This is the largest phase. Land in one commit (per Q7) but write it incrementall
 - [x] `internal/terraform/cli_test.go` — `TestPrintSummary_IncludesInitUpgradeHint` (captures stdout).
 - [x] `go test ./internal/terraform/...` green.
 
-### Phase 7 — Opt-in smoke test (commit 7: `test(terraform): add terraform-validate smoke test behind build tag`)
+### Phase 7 — Opt-in smoke test (commit 7: `test(terraform): add terraform-validate smoke test behind build tag`) ✅
 
-- [ ] New file `internal/terraform/smoke_test.go` with `//go:build smoke` build tag at top.
-- [ ] In the file: build a representative `WorkspaceData` covering one of each emitted resource type (HTTP/TCP/DNS monitor with OTEL; one notification of each type incl. ms_teams + webhook with headers; status page with `ip` access + `theme="dark"` + `default_open=true` group + monitor component).
-- [ ] Write all generated files to `t.TempDir()`. Skip the test (`t.Skipf`) if `terraform` is not on `PATH`.
-- [ ] Exec `terraform init -upgrade` then `terraform validate` against the temp dir; fail the test on non-zero exit.
-- [ ] Document at the top of the file: `// Run with: go test -tags=smoke ./internal/terraform/`.
-- [ ] `go test ./internal/terraform/...` (no tag) still green and does NOT invoke terraform.
-- [ ] Manually verify: `go test -tags=smoke ./internal/terraform/` passes on this machine (terraform must be on PATH).
+- [x] New file `internal/terraform/smoke_test.go` with `//go:build smoke` build tag at top.
+- [x] In the file: build a representative `WorkspaceData` covering HTTP/TCP/DNS monitors (HTTP includes OTEL + assertions); slack + ms_teams + webhook-with-headers notifications; status page with theme/locales/allow_index + default_open group + monitor component; second status page with IP access.
+- [x] Write all generated files to `t.TempDir()`. Skip the test (`t.Skipf`) if `terraform` is not on `PATH`.
+- [x] Exec `terraform init -upgrade` then `terraform validate` against the temp dir; fail the test on non-zero exit.
+- [x] Document at the top of the file: `// Run with: go test -tags=smoke ./internal/terraform/`.
+- [x] `go test ./internal/terraform/...` (no tag) still green and does NOT invoke terraform.
+- [x] Manually verified: `go test -tags=smoke ./internal/terraform/` passes locally.
 
 ### Phase 8 — Version + docs (commit 8: `chore: bump cli to v1.1.0 and regenerate docs`)
 

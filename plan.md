@@ -444,11 +444,11 @@ Each phase is one commit. Phases are ordered so that earlier work doesn't confli
 - [x] Confirm working tree is clean (`git status`); dep refresh already landed in a previous commit.
 - [x] `go build ./...` and `go test ./...` green from baseline.
 
-### Phase 1 — Bump generated provider version (commit 1: `chore(terraform): pin generated provider to ~> 0.2`)
+### Phase 1 — Bump generated provider version (commit 1: `chore(terraform): pin generated provider to ~> 0.2`) ✅
 
-- [ ] `internal/terraform/hcl.go` — `GenerateProviderFile`: change `version = "~> 0.1.0"` → `version = "~> 0.2"`.
-- [ ] `internal/terraform/generate_test.go` — update `TestGenerateProviderFile` assertion to `~> 0.2`.
-- [ ] `go test ./internal/terraform/...` green.
+- [x] `internal/terraform/hcl.go` — `GenerateProviderFile`: change `version = "~> 0.1.0"` → `version = "~> 0.2"`.
+- [x] `internal/terraform/generate_test.go` — update `TestGenerateProviderFile` assertion to `~> 0.2`.
+- [x] `go test ./internal/terraform/...` green.
 
 ### Phase 2 — Status page correctness pack (commit 2: `fix(terraform): emit access_type=ip + auth_email_domains/allowed_ip_ranges; add theme/locale/allow_index`)
 

@@ -92,7 +92,7 @@ func GenerateProviderFile() []byte {
   required_providers {
     openstatus = {
       source  = "openstatusHQ/openstatus"
-      version = "~> 0.1.0"
+      version = "~> 0.2"
     }
   }
 }

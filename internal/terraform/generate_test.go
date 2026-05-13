@@ -213,6 +213,108 @@ func TestCrossReferenceFallbackToString(t *testing.T) {
 	mustContain(t, content, `monitor_id = "nonexistent-id"`)
 }
 
+func TestGenerateNotificationsFile_MsTeams(t *testing.T) {
+	n := &notificationv1.Notification{}
+	n.SetId("1")
+	n.SetName("Teams Alerts")
+
+	nd := &notificationv1.NotificationData{}
+	td := &notificationv1.MsTeamsData{}
+	td.SetWebhookUrl("https://prod.example.com/webhook")
+	nd.SetMsTeams(td)
+	n.SetData(nd)
+
+	data := &WorkspaceData{Notifications: []*notificationv1.Notification{n}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateNotificationsFile().Bytes())
+
+	mustContain(t, content, `resource "openstatus_notification" "teams_alerts"`)
+	mustContain(t, content, `provider_type = "ms_teams"`)
+	mustContain(t, content, "ms_teams {")
+	mustContain(t, content, `webhook_url = "https://prod.example.com/webhook"`)
+}
+
+func TestGenerateNotificationsFile_WebhookHeaders(t *testing.T) {
+	n := &notificationv1.Notification{}
+	n.SetId("1")
+	n.SetName("Webhook")
+
+	nd := &notificationv1.NotificationData{}
+	wd := &notificationv1.WebhookData{}
+	wd.SetEndpoint("https://example.com/hook")
+	h1 := &notificationv1.WebhookHeader{}
+	h1.SetKey("Authorization")
+	h1.SetValue("Bearer xyz")
+	h2 := &notificationv1.WebhookHeader{}
+	h2.SetKey("X-Source")
+	h2.SetValue("openstatus")
+	wd.SetHeaders([]*notificationv1.WebhookHeader{h1, h2})
+	nd.SetWebhook(wd)
+	n.SetData(nd)
+
+	data := &WorkspaceData{Notifications: []*notificationv1.Notification{n}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateNotificationsFile().Bytes())
+
+	mustContain(t, content, `headers = [`)
+	mustContain(t, content, `key   = "Authorization"`)
+	mustContain(t, content, `value = "Bearer xyz"`)
+	mustContain(t, content, `key   = "X-Source"`)
+	mustNotContain(t, content, "headers {")
+}
+
+func TestGenerateNotificationsFile_MonitorIdsTraversal(t *testing.T) {
+	m := &monitorv1.HTTPMonitor{}
+	m.SetId("mon-known")
+	m.SetName("API")
+
+	n := &notificationv1.Notification{}
+	n.SetId("n1")
+	n.SetName("Slack")
+	n.SetMonitorIds([]string{"mon-unknown", "mon-known"})
+
+	nd := &notificationv1.NotificationData{}
+	sd := &notificationv1.SlackData{}
+	sd.SetWebhookUrl("https://hooks.example.com/xxx")
+	nd.SetSlack(sd)
+	n.SetData(nd)
+
+	data := &WorkspaceData{
+		HTTPMonitors:  []*monitorv1.HTTPMonitor{m},
+		Notifications: []*notificationv1.Notification{n},
+	}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateNotificationsFile().Bytes())
+
+	mustContain(t, content, "openstatus_http_monitor.api.id")
+	mustContain(t, content, `"mon-unknown"`)
+	idx := strings.Index(content, "monitor_ids")
+	if idx == -1 {
+		t.Fatalf("monitor_ids not found in output:\n%s", content)
+	}
+	line := content[idx : strings.Index(content[idx:], "\n")+idx]
+	if strings.Index(line, "openstatus_http_monitor.api.id") > strings.Index(line, `"mon-unknown"`) {
+		t.Errorf("expected sorted order (mon-known first, mon-unknown second), got: %s", line)
+	}
+}
+
+func TestGenerateNotificationsFile_UnknownProviderSkipped(t *testing.T) {
+	n := &notificationv1.Notification{}
+	n.SetId("n1")
+	n.SetName("Mystery")
+
+	data := &WorkspaceData{Notifications: []*notificationv1.Notification{n}}
+	gen := NewGenerator(data)
+	nContent := string(gen.GenerateNotificationsFile().Bytes())
+	importsContent := string(gen.GenerateImportsFile().Bytes())
+
+	if nContent != "" {
+		t.Errorf("expected empty notifications file for skipped resource, got:\n%s", nContent)
+	}
+	mustNotContain(t, importsContent, "openstatus_notification.mystery")
+	mustNotContain(t, importsContent, `id = "n1"`)
+}
+
 func TestGenerateMonitorsFile_HTTP_OpenTelemetry(t *testing.T) {
 	ot := &monitorv1.OpenTelemetryConfig{}
 	ot.SetEndpoint("https://otel.example.com/v1/metrics")

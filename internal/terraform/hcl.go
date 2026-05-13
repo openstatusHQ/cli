@@ -2,6 +2,7 @@ package terraform
 
 import (
 	"fmt"
+	"os"
 	"sort"
 
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
@@ -24,29 +25,31 @@ type Generator struct {
 	pageRefs    map[string]resourceRef
 	groupRefs   map[string]resourceRef
 
-	httpMonitorNames map[string]string
-	tcpMonitorNames  map[string]string
-	dnsMonitorNames  map[string]string
-	notifNames       map[string]string
-	pageNames        map[string]string
-	componentNames   map[string]string
-	groupNames       map[string]string
+	httpMonitorNames     map[string]string
+	tcpMonitorNames      map[string]string
+	dnsMonitorNames      map[string]string
+	notifNames           map[string]string
+	pageNames            map[string]string
+	componentNames       map[string]string
+	groupNames           map[string]string
+	skippedNotifications map[string]bool
 }
 
 func NewGenerator(data *WorkspaceData) *Generator {
 	g := &Generator{
-		data:             data,
-		registry:         NewNameRegistry(),
-		monitorRefs:      make(map[string]resourceRef),
-		pageRefs:         make(map[string]resourceRef),
-		groupRefs:        make(map[string]resourceRef),
-		httpMonitorNames: make(map[string]string),
-		tcpMonitorNames:  make(map[string]string),
-		dnsMonitorNames:  make(map[string]string),
-		notifNames:       make(map[string]string),
-		pageNames:        make(map[string]string),
-		componentNames:   make(map[string]string),
-		groupNames:       make(map[string]string),
+		data:                 data,
+		registry:             NewNameRegistry(),
+		monitorRefs:          make(map[string]resourceRef),
+		pageRefs:             make(map[string]resourceRef),
+		groupRefs:            make(map[string]resourceRef),
+		httpMonitorNames:     make(map[string]string),
+		tcpMonitorNames:      make(map[string]string),
+		dnsMonitorNames:      make(map[string]string),
+		notifNames:           make(map[string]string),
+		pageNames:            make(map[string]string),
+		componentNames:       make(map[string]string),
+		groupNames:           make(map[string]string),
+		skippedNotifications: make(map[string]bool),
 	}
 
 	for _, m := range data.HTTPMonitors {
@@ -65,6 +68,11 @@ func NewGenerator(data *WorkspaceData) *Generator {
 		g.monitorRefs[m.GetId()] = resourceRef{"openstatus_dns_monitor", name}
 	}
 	for _, n := range data.Notifications {
+		if _, ok := renderableNotification(n); !ok {
+			g.skippedNotifications[n.GetId()] = true
+			fmt.Fprintf(os.Stderr, "warning: skipping notification %q — unknown provider type (CLI may be outdated)\n", n.GetName())
+			continue
+		}
 		name := g.registry.Name("openstatus_notification", n.GetName())
 		g.notifNames[n.GetId()] = name
 	}
@@ -225,27 +233,101 @@ func (g *Generator) GenerateNotificationsFile() *hclwrite.File {
 	body := f.Body()
 
 	for _, n := range g.data.Notifications {
+		if g.skippedNotifications[n.GetId()] {
+			continue
+		}
+		providerType, ok := renderableNotification(n)
+		if !ok {
+			continue
+		}
 		name := g.notifNames[n.GetId()]
 		block := body.AppendNewBlock("resource", []string{"openstatus_notification", name})
 		b := block.Body()
 
 		b.SetAttributeValue("name", cty.StringVal(n.GetName()))
-		b.SetAttributeValue("provider_type", cty.StringVal(notificationProviderToString(n.GetProvider())))
+		b.SetAttributeValue("provider_type", cty.StringVal(providerType))
 
-		if ids := n.GetMonitorIds(); len(ids) > 0 {
-			vals := make([]cty.Value, len(ids))
-			for i, id := range ids {
-				vals[i] = cty.StringVal(id)
-			}
-			b.SetAttributeValue("monitor_ids", cty.SetVal(vals))
-		}
-
+		g.writeMonitorIds(b, n.GetMonitorIds())
 		g.writeNotificationProvider(b, n)
 
 		body.AppendNewline()
 	}
 
 	return f
+}
+
+func (g *Generator) writeMonitorIds(b *hclwrite.Body, ids []string) {
+	if len(ids) == 0 {
+		return
+	}
+	sorted := append([]string(nil), ids...)
+	sort.Strings(sorted)
+
+	tokens := hclwrite.Tokens{
+		{Type: hclsyntax.TokenOBrack, Bytes: []byte("[")},
+	}
+	for i, id := range sorted {
+		if i > 0 {
+			tokens = append(tokens,
+				&hclwrite.Token{Type: hclsyntax.TokenComma, Bytes: []byte(",")},
+				&hclwrite.Token{Type: hclsyntax.TokenIdent, Bytes: []byte(" ")},
+			)
+		}
+		if ref, found := g.monitorRefs[id]; found {
+			tokens = append(tokens, traversalTokensInline(ref.ResourceType, ref.Name, "id")...)
+		} else {
+			tokens = append(tokens, stringLitTokens(id)...)
+		}
+	}
+	tokens = append(tokens,
+		&hclwrite.Token{Type: hclsyntax.TokenCBrack, Bytes: []byte("]")},
+		&hclwrite.Token{Type: hclsyntax.TokenNewline, Bytes: []byte("\n")},
+	)
+	b.SetAttributeRaw("monitor_ids", tokens)
+}
+
+func stringLitTokens(s string) hclwrite.Tokens {
+	return hclwrite.Tokens{
+		{Type: hclsyntax.TokenOQuote, Bytes: []byte(`"`)},
+		{Type: hclsyntax.TokenQuotedLit, Bytes: []byte(s)},
+		{Type: hclsyntax.TokenCQuote, Bytes: []byte(`"`)},
+	}
+}
+
+func renderableNotification(n *notificationv1.Notification) (string, bool) {
+	data := n.GetData()
+	if data == nil {
+		return "", false
+	}
+	switch data.Data.(type) {
+	case *notificationv1.NotificationData_Discord:
+		return "discord", true
+	case *notificationv1.NotificationData_Email:
+		return "email", true
+	case *notificationv1.NotificationData_Slack:
+		return "slack", true
+	case *notificationv1.NotificationData_Pagerduty:
+		return "pagerduty", true
+	case *notificationv1.NotificationData_Opsgenie:
+		return "opsgenie", true
+	case *notificationv1.NotificationData_Webhook:
+		return "webhook", true
+	case *notificationv1.NotificationData_Telegram:
+		return "telegram", true
+	case *notificationv1.NotificationData_Sms:
+		return "sms", true
+	case *notificationv1.NotificationData_Whatsapp:
+		return "whatsapp", true
+	case *notificationv1.NotificationData_GoogleChat:
+		return "google_chat", true
+	case *notificationv1.NotificationData_GrafanaOncall:
+		return "grafana_oncall", true
+	case *notificationv1.NotificationData_Ntfy:
+		return "ntfy", true
+	case *notificationv1.NotificationData_MsTeams:
+		return "ms_teams", true
+	}
+	return "", false
 }
 
 func (g *Generator) writeNotificationProvider(b *hclwrite.Body, n *notificationv1.Notification) {
@@ -276,10 +358,18 @@ func (g *Generator) writeNotificationProvider(b *hclwrite.Body, n *notificationv
 	case *notificationv1.NotificationData_Webhook:
 		pb := b.AppendNewBlock("webhook", nil).Body()
 		pb.SetAttributeValue("endpoint", cty.StringVal(d.Webhook.GetEndpoint()))
+		vals := make([]cty.Value, 0, len(d.Webhook.GetHeaders()))
 		for _, h := range d.Webhook.GetHeaders() {
-			hb := pb.AppendNewBlock("headers", nil).Body()
-			hb.SetAttributeValue("key", cty.StringVal(h.GetKey()))
-			hb.SetAttributeValue("value", cty.StringVal(h.GetValue()))
+			if h.GetKey() == "" {
+				continue
+			}
+			vals = append(vals, cty.ObjectVal(map[string]cty.Value{
+				"key":   cty.StringVal(h.GetKey()),
+				"value": cty.StringVal(h.GetValue()),
+			}))
+		}
+		if len(vals) > 0 {
+			pb.SetAttributeValue("headers", cty.ListVal(vals))
 		}
 	case *notificationv1.NotificationData_Telegram:
 		pb := b.AppendNewBlock("telegram", nil).Body()
@@ -306,6 +396,9 @@ func (g *Generator) writeNotificationProvider(b *hclwrite.Body, n *notificationv
 			appendTODOComment(pb)
 			pb.SetAttributeValue("token", cty.StringVal("REPLACE_ME"))
 		}
+	case *notificationv1.NotificationData_MsTeams:
+		pb := b.AppendNewBlock("ms_teams", nil).Body()
+		pb.SetAttributeValue("webhook_url", cty.StringVal(d.MsTeams.GetWebhookUrl()))
 	}
 }
 
@@ -450,6 +543,9 @@ func (g *Generator) GenerateImportsFile() *hclwrite.File {
 		writeImportBlock(body, "openstatus_dns_monitor", g.dnsMonitorNames[m.GetId()], m.GetId())
 	}
 	for _, n := range g.data.Notifications {
+		if g.skippedNotifications[n.GetId()] {
+			continue
+		}
 		writeImportBlock(body, "openstatus_notification", g.notifNames[n.GetId()], n.GetId())
 	}
 	for _, sp := range g.data.StatusPages {
@@ -580,6 +676,15 @@ func setTraversalOrString(b *hclwrite.Body, attr string, refs map[string]resourc
 }
 
 func traversalTokens(parts ...string) hclwrite.Tokens {
+	tokens := traversalTokensInline(parts...)
+	tokens = append(tokens, &hclwrite.Token{
+		Type:  hclsyntax.TokenNewline,
+		Bytes: []byte("\n"),
+	})
+	return tokens
+}
+
+func traversalTokensInline(parts ...string) hclwrite.Tokens {
 	tokens := hclwrite.Tokens{}
 	for i, part := range parts {
 		if i > 0 {
@@ -593,10 +698,6 @@ func traversalTokens(parts ...string) hclwrite.Tokens {
 			Bytes: []byte(part),
 		})
 	}
-	tokens = append(tokens, &hclwrite.Token{
-		Type:  hclsyntax.TokenNewline,
-		Bytes: []byte("\n"),
-	})
 	return tokens
 }
 

@@ -111,37 +111,6 @@ func recordComparatorToString(c monitorv1.RecordComparator) string {
 	}
 }
 
-func notificationProviderToString(p notificationv1.NotificationProvider) string {
-	switch p {
-	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_DISCORD:
-		return "discord"
-	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_EMAIL:
-		return "email"
-	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_GOOGLE_CHAT:
-		return "google_chat"
-	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_GRAFANA_ONCALL:
-		return "grafana_oncall"
-	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_NTFY:
-		return "ntfy"
-	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_PAGERDUTY:
-		return "pagerduty"
-	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_OPSGENIE:
-		return "opsgenie"
-	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_SLACK:
-		return "slack"
-	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_SMS:
-		return "sms"
-	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_TELEGRAM:
-		return "telegram"
-	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_WEBHOOK:
-		return "webhook"
-	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_WHATSAPP:
-		return "whatsapp"
-	default:
-		return "unknown"
-	}
-}
-
 func opsgenieRegionToString(r notificationv1.OpsgenieRegion) string {
 	switch r {
 	case notificationv1.OpsgenieRegion_OPSGENIE_REGION_US:

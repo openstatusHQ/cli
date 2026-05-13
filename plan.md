@@ -483,26 +483,25 @@ Order matters within this phase: add helpers first, then call them.
 - [x] `internal/terraform/generate_test.go` — `TestGenerateMonitorsFile_OpenTelemetry_SkippedWhenEmpty`: `OpenTelemetryConfig{Endpoint:"", Headers:nil}` → no block.
 - [x] `go test ./internal/terraform/...` green.
 
-### Phase 5 — Notification refactor + fixes (commit 5: `fix(terraform): notification provider type from data oneof; ms_teams; webhook headers attribute; monitor_ids traversals`)
+### Phase 5 — Notification refactor + fixes (commit 5: `fix(terraform): notification provider type from data oneof; ms_teams; webhook headers attribute; monitor_ids traversals`) ✅
 
 This is the largest phase. Land in one commit (per Q7) but write it incrementally.
 
-- [ ] `internal/terraform/hcl.go` — change `writeNotificationProvider` signature to `func writeNotificationProvider(b *hclwrite.Body, n *notificationv1.Notification) (providerType string, ok bool)`; each oneof case returns its tf-string + `true`; nil data or unknown oneof returns `"", false`.
-- [ ] `internal/terraform/hcl.go` — add the `*notificationv1.NotificationData_MsTeams` case emitting `ms_teams { webhook_url = … }`.
-- [ ] `internal/terraform/hcl.go` — rewrite the `*notificationv1.NotificationData_Webhook` case so `headers` is emitted as a `cty.ListVal([]cty.Value{cty.ObjectVal({key,value})})` set via `SetAttributeValue("headers", …)`, not as nested `headers { … }` blocks.
-- [ ] `internal/terraform/hcl.go` — replace the current `monitor_ids` plain-string emission with a token-list builder. **Sort ids via `sort.Strings` first** (set semantics, deterministic output). Walk sorted ids, traversal-token for ids in `monitorRefs`, string-literal-token otherwise, joined with commas and bracketed; set via `SetAttributeRaw("monitor_ids", tokens)`. Helper-extract a small `commaToken()`, `stringLitToken(s)` for legibility.
-- [ ] `internal/terraform/hcl.go` — note: the existing `traversalTokens` helper appends a trailing newline (suited for the `to = openstatus_x.foo.id` line in `import` blocks). For inline list usage in `monitor_ids`, add `traversalTokensInline(parts ...string) hclwrite.Tokens` that emits identical tokens **without** the trailing newline, and refactor `traversalTokens` to call it + append the newline.
-- [ ] `internal/terraform/hcl.go` — add `renderableNotification(n *notificationv1.Notification) (providerType string, ok bool)`: a single switch over `n.GetData().Data` that returns `("discord", true)` / `("ms_teams", true)` / etc. for each known oneof case, and `("", false)` for nil data or unknown oneof.
-- [ ] `internal/terraform/hcl.go` — `Generator` struct: add `skippedNotifications map[string]bool` field; initialize in `NewGenerator`.
-- [ ] `internal/terraform/hcl.go` — in `NewGenerator`'s notifications loop: call `renderableNotification(n)`. If `!ok`, set `g.skippedNotifications[n.GetId()] = true` and `fmt.Fprintf(os.Stderr, "warning: skipping notification %q — unknown provider type (CLI may be outdated)\n", n.GetName())`. If `ok`, register the name as today.
-- [ ] `internal/terraform/hcl.go` — `GenerateNotificationsFile`: at the top of the per-notification loop, `if g.skippedNotifications[n.GetId()] { continue }`. Use `writeNotificationProvider` for the inner block (the same switch as `renderableNotification` but emitting tokens — slight duplication accepted).
-- [ ] `internal/terraform/hcl.go` — `GenerateImportsFile`: same `if g.skippedNotifications[n.GetId()] { continue }` guard before emitting the notification import block.
-- [ ] `internal/terraform/enums.go` — remove `notificationProviderToString` (now unused), OR keep it for reference but mark unused. Recommend remove.
-- [ ] `internal/terraform/generate_test.go` — `TestGenerateNotificationsFile_MsTeams`: oneof set to MsTeamsData → `provider_type = "ms_teams"`, `ms_teams { webhook_url = … }`.
-- [ ] `internal/terraform/generate_test.go` — `TestGenerateNotificationsFile_WebhookHeaders`: webhook with two headers → assert `headers = [` literal substring, no `headers {` block.
-- [ ] `internal/terraform/generate_test.go` — `TestGenerateNotificationsFile_MonitorIdsTraversal`: workspace with one HTTP monitor `mon-1` named `"API"` + a notification referencing `mon-1` and `mon-unknown` → assert `monitor_ids = [openstatus_http_monitor.api.id, "mon-unknown"]`.
-- [ ] `internal/terraform/generate_test.go` — `TestGenerateNotificationsFile_UnknownProviderSkipped`: notification with nil/UNSPECIFIED data → no resource block emitted; `GenerateImportsFile` does not include its id.
-- [ ] `go test ./internal/terraform/...` green.
+- [x] `internal/terraform/hcl.go` — add the `*notificationv1.NotificationData_MsTeams` case emitting `ms_teams { webhook_url = … }`.
+- [x] `internal/terraform/hcl.go` — rewrite the `*notificationv1.NotificationData_Webhook` case so `headers` is emitted as a `cty.ListVal([]cty.Value{cty.ObjectVal({key,value})})` set via `SetAttributeValue("headers", …)`, not as nested `headers { … }` blocks.
+- [x] `internal/terraform/hcl.go` — replace the current `monitor_ids` plain-string emission with a token-list builder (`writeMonitorIds`). Sort via `sort.Strings` first; traversal tokens for known refs, string-literal tokens otherwise.
+- [x] `internal/terraform/hcl.go` — add `traversalTokensInline(parts ...string)` (no trailing newline) and refactor `traversalTokens` to call it + append newline. Add `stringLitTokens(s)` helper.
+- [x] `internal/terraform/hcl.go` — add `renderableNotification(n) (providerType string, ok bool)` switch returning the tf-string per oneof case.
+- [x] `internal/terraform/hcl.go` — `Generator` struct: add `skippedNotifications map[string]bool` field; initialize in `NewGenerator`.
+- [x] `internal/terraform/hcl.go` — `NewGenerator` notifications loop: skip + warn on `!ok` via `renderableNotification`.
+- [x] `internal/terraform/hcl.go` — `GenerateNotificationsFile`: skip when `g.skippedNotifications[n.GetId()]`; provider_type comes from `renderableNotification`.
+- [x] `internal/terraform/hcl.go` — `GenerateImportsFile`: same skip guard for the notification import block.
+- [x] `internal/terraform/enums.go` — remove `notificationProviderToString` (now unused).
+- [x] `internal/terraform/generate_test.go` — `TestGenerateNotificationsFile_MsTeams`.
+- [x] `internal/terraform/generate_test.go` — `TestGenerateNotificationsFile_WebhookHeaders`.
+- [x] `internal/terraform/generate_test.go` — `TestGenerateNotificationsFile_MonitorIdsTraversal`.
+- [x] `internal/terraform/generate_test.go` — `TestGenerateNotificationsFile_UnknownProviderSkipped`.
+- [x] `go test ./internal/terraform/...` green.
 
 ### Phase 6 — CLI ergonomics (commit 6: `feat(terraform): --force flag and terraform init -upgrade hint`)
 

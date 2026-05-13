@@ -1,7 +1,7 @@
 ---
 name: openstatus-cli
 description: |
-  OpenStatus CLI for managing uptime monitors, incident reports, status pages, notifications, maintenance windows, and synthetic tests. Use this skill whenever the user wants to monitor a website or API, set up uptime checks, create or manage monitors, report an incident, update a status page, view notifications, schedule maintenance, run synthetic tests, check latency or availability, define monitors as code, generate Terraform configuration, export to Terraform, or use the openstatus command. Also trigger when the user says "is my site up", "check my endpoint", "create a status report", "monitor this URL", "run uptime tests", "set up monitoring", "our API is down", "schedule maintenance", "maintenance window", "planned downtime", "terraform", "generate terraform", "export to terraform", "infrastructure as code", "list notifications", "notification channels", or mentions openstatus in any context. This skill knows the full CLI — commands, flags, config format, and workflows — so Claude can act without guessing.
+  OpenStatus CLI for managing uptime monitors, incident reports, status pages, notifications, maintenance windows, synthetic tests, and ad-hoc global HTTP checks. Use this skill whenever the user wants to monitor a website or API, set up uptime checks, create or manage monitors, report an incident, update a status page, view notifications, schedule maintenance, run synthetic tests, check latency or availability from around the world, run an ad-hoc speed check, define monitors as code, generate Terraform configuration, export to Terraform, or use the openstatus command. Also trigger when the user says "is my site up", "check my endpoint", "speed check", "global latency", "latency from regions", "ad-hoc check", "test from multiple regions", "create a status report", "monitor this URL", "run uptime tests", "set up monitoring", "our API is down", "schedule maintenance", "maintenance window", "planned downtime", "terraform", "generate terraform", "export to terraform", "infrastructure as code", "list notifications", "notification channels", or mentions openstatus in any context. This skill knows the full CLI — commands, flags, config format, and workflows — so Claude can act without guessing.
 allowed-tools:
   - Bash(openstatus *)
 ---
@@ -14,7 +14,7 @@ Run `openstatus --help` or `openstatus <command> --help` for full option details
 
 ## Prerequisites
 
-Must be authenticated. Verify with:
+Most commands require authentication. Verify with:
 
 ```bash
 openstatus whoami
@@ -27,10 +27,13 @@ Token resolution order:
 2. `OPENSTATUS_API_TOKEN` environment variable
 3. Saved token at `~/.config/openstatus/token`
 
+**Exception:** `openstatus check <URL>` is **unauthenticated** — it uses the public global speed checker. Reach for it when the user wants an ad-hoc multi-region check without setting up a saved monitor.
+
 ## Command Overview
 
 | Task | Command | When to use |
 |------|---------|-------------|
+| Ad-hoc global speed check (no auth) | `check <URL>` | One-shot HTTP check from 28 regions — no saved monitor needed |
 | Sync monitors from config | `monitors apply` | You have an `openstatus.yaml` and want to create/update/delete monitors |
 | List all monitors | `monitors list` | See what monitors exist in the workspace |
 | Get monitor details + metrics | `monitors info <ID>` | Check latency, status, and config for a specific monitor |
@@ -56,9 +59,44 @@ Token resolution order:
 | Generate Terraform config | `terraform generate` | Export workspace resources to Terraform HCL files |
 | Check workspace | `whoami` | Verify auth and workspace info |
 
-Command aliases: `monitors` = `m`, `status-report` = `sr`, `status-page` = `sp`, `notification` = `n`, `maintenance` = `mt`, `terraform` = `tf`, `run` = `r`, `whoami` = `w`.
+Command aliases: `check` = `c`, `monitors` = `m`, `status-report` = `sr`, `status-page` = `sp`, `notification` = `n`, `maintenance` = `mt`, `terraform` = `tf`, `run` = `r`, `whoami` = `w`.
 
 ## Workflows
+
+### Ad-hoc global speed check (no auth)
+
+When the user wants to test how an HTTP endpoint performs from around the world without setting up a saved monitor, reach for `check`. It hits the public OpenStatus speed checker and streams per-region latency live.
+
+```bash
+openstatus check https://openstat.us                                              # GET, no auth, 28 regions
+openstatus check https://openstat.us -X POST -H 'Authorization: Bearer …' -d '{"ping":true}'
+openstatus check https://openstat.us -d @payload.json
+openstatus check https://openstat.us --timing                                     # DNS / Conn / TLS / TTFB / Transfer
+openstatus check https://openstat.us --json | jq '.summary'
+```
+
+**Flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--method` / `-X` | HTTP method (default `GET`; not auto-promoted to POST when `-d` is set — explicit) |
+| `--header` / `-H` | Header in `"Key: Value"` form (repeatable, curl-style) |
+| `--body` / `-d` | Inline string, `@/path/to/file`, or `@-` for stdin |
+| `--timing` | Show DNS/Connection/TLS/TTFB/Transfer phase columns |
+
+**Output behavior:**
+
+- Human mode streams one row per region as it arrives (no client-side sort), then prints a summary (fastest, slowest, mean latency, success rate) and a `View:` shareable link.
+- `--json` buffers and emits a single object with `url`, `check_id`, `share_url`, `results[]`, and `summary{}`.
+- `--quiet` silences stdout (errors still print on stderr).
+- Failure rows show `—` for missing latency/status and the server's `message` (e.g. `url not reachable`) in the State column.
+
+**Rate limit:** 3 requests per 60 seconds. On 429 the CLI prints "Rate limited. Retry after Xs." and exits 1 — do not auto-retry in scripts; loop in shell if needed.
+
+**When NOT to use `check`:**
+
+- Recurring uptime monitoring → use `monitors apply` with an `openstatus.yaml`.
+- Tests that need to run from monitor-configured regions (or with saved assertions) → use `monitors trigger <ID>` or `run`.
 
 ### Setting up monitors (monitors-as-code)
 
@@ -345,6 +383,7 @@ Use `--json` when you need to parse output programmatically or pipe it to `jq`.
 
 ## Best Practices
 
+- **Reach for `check` for one-off probes** — if the user just wants to know "how fast is this URL from around the world?", `openstatus check <URL>` is the right tool. No auth, no setup, 28 regions, done in 2–5s. Don't create a throwaway monitor for this.
 - **Use `apply`, not `create`** — `monitors apply` is the declarative, idempotent way to manage monitors. `monitors create` exists but `apply` handles creates, updates, and deletes in one command.
 - **Always `--dry-run` first** — preview what `apply` will change before committing.
 - **Get the page ID before creating reports** — `status-report create` requires `--page-id`. Run `status-page list` first. Then use `status-page info <ID>` to find component IDs if you need `--component-ids`.

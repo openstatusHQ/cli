@@ -213,6 +213,113 @@ func TestCrossReferenceFallbackToString(t *testing.T) {
 	mustContain(t, content, `monitor_id = "nonexistent-id"`)
 }
 
+func TestGenerateStatusPagesFile_IPAccess(t *testing.T) {
+	page := &status_pagev1.StatusPage{}
+	page.SetId("p1")
+	page.SetTitle("Internal")
+	page.SetSlug("internal")
+	page.SetAccessType(status_pagev1.PageAccessType_PAGE_ACCESS_TYPE_IP_RESTRICTED)
+	page.SetAllowedIpRanges("10.0.0.0/8,192.168.0.0/16")
+
+	data := &WorkspaceData{StatusPages: []StatusPageData{{Page: page}}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateStatusPagesFile().Bytes())
+
+	mustContain(t, content, `access_type       = "ip"`)
+	mustContain(t, content, `allowed_ip_ranges = "10.0.0.0/8,192.168.0.0/16"`)
+	mustNotContain(t, content, "REPLACE_ME")
+}
+
+func TestGenerateStatusPagesFile_IPAccessEmptyFallback(t *testing.T) {
+	page := &status_pagev1.StatusPage{}
+	page.SetId("p1")
+	page.SetTitle("Internal")
+	page.SetSlug("internal")
+	page.SetAccessType(status_pagev1.PageAccessType_PAGE_ACCESS_TYPE_IP_RESTRICTED)
+
+	data := &WorkspaceData{StatusPages: []StatusPageData{{Page: page}}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateStatusPagesFile().Bytes())
+
+	mustContain(t, content, `access_type = "ip"`)
+	mustContain(t, content, `allowed_ip_ranges = "REPLACE_ME"`)
+	mustContain(t, content, "# TODO:")
+}
+
+func TestGenerateStatusPagesFile_EmailDomainAccess(t *testing.T) {
+	page := &status_pagev1.StatusPage{}
+	page.SetId("p1")
+	page.SetTitle("Internal")
+	page.SetSlug("internal")
+	page.SetAccessType(status_pagev1.PageAccessType_PAGE_ACCESS_TYPE_AUTHENTICATED)
+	page.SetAuthEmailDomains([]string{"example.com", "acme.com"})
+
+	data := &WorkspaceData{StatusPages: []StatusPageData{{Page: page}}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateStatusPagesFile().Bytes())
+
+	mustContain(t, content, `access_type        = "email-domain"`)
+	mustContain(t, content, `auth_email_domains = ["acme.com", "example.com"]`)
+	mustNotContain(t, content, "REPLACE_ME")
+}
+
+func TestGenerateStatusPagesFile_EmailDomainEmptyFallback(t *testing.T) {
+	page := &status_pagev1.StatusPage{}
+	page.SetId("p1")
+	page.SetTitle("Internal")
+	page.SetSlug("internal")
+	page.SetAccessType(status_pagev1.PageAccessType_PAGE_ACCESS_TYPE_AUTHENTICATED)
+
+	data := &WorkspaceData{StatusPages: []StatusPageData{{Page: page}}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateStatusPagesFile().Bytes())
+
+	mustContain(t, content, `access_type = "email-domain"`)
+	mustContain(t, content, `auth_email_domains = ["REPLACE_ME"]`)
+	mustContain(t, content, "# TODO:")
+}
+
+func TestGenerateStatusPagesFile_ThemeLocaleAllowIndex(t *testing.T) {
+	page := &status_pagev1.StatusPage{}
+	page.SetId("p1")
+	page.SetTitle("Themed")
+	page.SetSlug("themed")
+	page.SetTheme(status_pagev1.PageTheme_PAGE_THEME_DARK)
+	page.SetDefaultLocale(status_pagev1.Locale_LOCALE_FR)
+	page.SetLocales([]status_pagev1.Locale{
+		status_pagev1.Locale_LOCALE_FR,
+		status_pagev1.Locale_LOCALE_EN,
+	})
+	page.SetAllowIndex(true)
+
+	data := &WorkspaceData{StatusPages: []StatusPageData{{Page: page}}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateStatusPagesFile().Bytes())
+
+	mustContain(t, content, `theme          = "dark"`)
+	mustContain(t, content, `default_locale = "fr"`)
+	mustContain(t, content, `locales        = ["en", "fr"]`)
+	mustContain(t, content, `allow_index    = true`)
+}
+
+func TestGenerateStatusPagesFile_DefaultsOmitted(t *testing.T) {
+	page := &status_pagev1.StatusPage{}
+	page.SetId("p1")
+	page.SetTitle("Plain")
+	page.SetSlug("plain")
+	page.SetTheme(status_pagev1.PageTheme_PAGE_THEME_SYSTEM)
+	page.SetDefaultLocale(status_pagev1.Locale_LOCALE_EN)
+
+	data := &WorkspaceData{StatusPages: []StatusPageData{{Page: page}}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateStatusPagesFile().Bytes())
+
+	mustNotContain(t, content, "theme")
+	mustNotContain(t, content, "default_locale")
+	mustNotContain(t, content, "locales")
+	mustNotContain(t, content, "allow_index")
+}
+
 func mustContain(t *testing.T, content, substr string) {
 	t.Helper()
 	if !strings.Contains(content, substr) {

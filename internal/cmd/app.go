@@ -60,12 +60,12 @@ https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
 				Usage: "Enable debug output",
 			},
 		},
-		Before: func(ctx context.Context, cmd *cli.Command) error {
+		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
 			output.SetJSONOutput(cmd.Bool("json"))
 			output.SetQuietMode(cmd.Bool("quiet"))
 			output.SetDebugMode(cmd.Bool("debug"))
 			output.InitColorSettings(cmd.Bool("no-color"))
-			return nil
+			return ctx, nil
 		},
 		Commands: []*cli.Command{
 			monitors.MonitorsCmd(),

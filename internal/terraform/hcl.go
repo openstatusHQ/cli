@@ -145,6 +145,7 @@ func (g *Generator) GenerateMonitorsFile() *hclwrite.File {
 		writeStatusCodeAssertions(b, m.GetStatusCodeAssertions())
 		writeBodyAssertions(b, m.GetBodyAssertions())
 		writeHeaderAssertions(b, m.GetHeaderAssertions())
+		writeOpenTelemetry(b, m.GetOpenTelemetry())
 
 		body.AppendNewline()
 	}
@@ -174,6 +175,7 @@ func (g *Generator) GenerateMonitorsFile() *hclwrite.File {
 		}
 
 		writeRegions(b, m.GetRegions())
+		writeOpenTelemetry(b, m.GetOpenTelemetry())
 
 		body.AppendNewline()
 	}
@@ -210,6 +212,7 @@ func (g *Generator) GenerateMonitorsFile() *hclwrite.File {
 			ab.SetAttributeValue("target", cty.StringVal(a.GetTarget()))
 			ab.SetAttributeValue("comparator", cty.StringVal(recordComparatorToString(a.GetComparator())))
 		}
+		writeOpenTelemetry(b, m.GetOpenTelemetry())
 
 		body.AppendNewline()
 	}
@@ -489,11 +492,39 @@ func writeRegions(b *hclwrite.Body, regions []monitorv1.Region) {
 	if len(regions) == 0 {
 		return
 	}
-	vals := make([]cty.Value, len(regions))
+	strs := make([]string, len(regions))
 	for i, r := range regions {
-		vals[i] = cty.StringVal(regionToTerraform(r))
+		strs[i] = regionToTerraform(r)
+	}
+	sort.Strings(strs)
+	vals := make([]cty.Value, len(strs))
+	for i, s := range strs {
+		vals[i] = cty.StringVal(s)
 	}
 	b.SetAttributeValue("regions", cty.ListVal(vals))
+}
+
+func writeOpenTelemetry(b *hclwrite.Body, ot *monitorv1.OpenTelemetryConfig) {
+	if ot == nil {
+		return
+	}
+	endpoint := ot.GetEndpoint()
+	headers := ot.GetHeaders()
+	if endpoint == "" && len(headers) == 0 {
+		return
+	}
+	otb := b.AppendNewBlock("open_telemetry", nil).Body()
+	if endpoint != "" {
+		otb.SetAttributeValue("endpoint", cty.StringVal(endpoint))
+	}
+	for _, h := range headers {
+		if h.GetKey() == "" {
+			continue
+		}
+		hb := otb.AppendNewBlock("headers", nil).Body()
+		hb.SetAttributeValue("key", cty.StringVal(h.GetKey()))
+		hb.SetAttributeValue("value", cty.StringVal(h.GetValue()))
+	}
 }
 
 func writeHeaders(b *hclwrite.Body, headers []*monitorv1.Headers) {

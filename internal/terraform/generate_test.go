@@ -213,6 +213,108 @@ func TestCrossReferenceFallbackToString(t *testing.T) {
 	mustContain(t, content, `monitor_id = "nonexistent-id"`)
 }
 
+func TestGenerateMonitorsFile_HTTP_OpenTelemetry(t *testing.T) {
+	ot := &monitorv1.OpenTelemetryConfig{}
+	ot.SetEndpoint("https://otel.example.com/v1/metrics")
+	h := &monitorv1.Headers{}
+	h.SetKey("X-Api-Key")
+	h.SetValue("secret")
+	ot.SetHeaders([]*monitorv1.Headers{h})
+
+	m := &monitorv1.HTTPMonitor{}
+	m.SetId("1")
+	m.SetName("API")
+	m.SetUrl("https://api.example.com")
+	m.SetPeriodicity(monitorv1.Periodicity_PERIODICITY_5M)
+	m.SetActive(true)
+	m.SetOpenTelemetry(ot)
+
+	data := &WorkspaceData{HTTPMonitors: []*monitorv1.HTTPMonitor{m}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateMonitorsFile().Bytes())
+
+	mustContain(t, content, "open_telemetry {")
+	mustContain(t, content, `endpoint = "https://otel.example.com/v1/metrics"`)
+	mustContain(t, content, `key   = "X-Api-Key"`)
+	mustContain(t, content, `value = "secret"`)
+}
+
+func TestGenerateMonitorsFile_TCP_OpenTelemetry(t *testing.T) {
+	ot := &monitorv1.OpenTelemetryConfig{}
+	ot.SetEndpoint("https://otel.example.com/v1/metrics")
+
+	m := &monitorv1.TCPMonitor{}
+	m.SetId("1")
+	m.SetName("TCP")
+	m.SetUri("example.com:443")
+	m.SetPeriodicity(monitorv1.Periodicity_PERIODICITY_5M)
+	m.SetActive(true)
+	m.SetOpenTelemetry(ot)
+
+	data := &WorkspaceData{TCPMonitors: []*monitorv1.TCPMonitor{m}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateMonitorsFile().Bytes())
+
+	mustContain(t, content, "open_telemetry {")
+	mustContain(t, content, `endpoint = "https://otel.example.com/v1/metrics"`)
+}
+
+func TestGenerateMonitorsFile_DNS_OpenTelemetry(t *testing.T) {
+	ot := &monitorv1.OpenTelemetryConfig{}
+	ot.SetEndpoint("https://otel.example.com/v1/metrics")
+
+	m := &monitorv1.DNSMonitor{}
+	m.SetId("1")
+	m.SetName("DNS")
+	m.SetUri("example.com")
+	m.SetPeriodicity(monitorv1.Periodicity_PERIODICITY_5M)
+	m.SetActive(true)
+	m.SetOpenTelemetry(ot)
+
+	data := &WorkspaceData{DNSMonitors: []*monitorv1.DNSMonitor{m}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateMonitorsFile().Bytes())
+
+	mustContain(t, content, "open_telemetry {")
+	mustContain(t, content, `endpoint = "https://otel.example.com/v1/metrics"`)
+}
+
+func TestGenerateMonitorsFile_OpenTelemetry_SkippedWhenEmpty(t *testing.T) {
+	m := &monitorv1.HTTPMonitor{}
+	m.SetId("1")
+	m.SetName("API")
+	m.SetUrl("https://api.example.com")
+	m.SetPeriodicity(monitorv1.Periodicity_PERIODICITY_5M)
+	m.SetActive(true)
+	m.SetOpenTelemetry(&monitorv1.OpenTelemetryConfig{})
+
+	data := &WorkspaceData{HTTPMonitors: []*monitorv1.HTTPMonitor{m}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateMonitorsFile().Bytes())
+
+	mustNotContain(t, content, "open_telemetry")
+}
+
+func TestGenerateMonitorsFile_RegionsSorted(t *testing.T) {
+	m := &monitorv1.HTTPMonitor{}
+	m.SetId("1")
+	m.SetName("API")
+	m.SetUrl("https://api.example.com")
+	m.SetPeriodicity(monitorv1.Periodicity_PERIODICITY_5M)
+	m.SetActive(true)
+	m.SetRegions([]monitorv1.Region{
+		monitorv1.Region_REGION_FLY_SYD,
+		monitorv1.Region_REGION_FLY_AMS,
+		monitorv1.Region_REGION_FLY_IAD,
+	})
+
+	data := &WorkspaceData{HTTPMonitors: []*monitorv1.HTTPMonitor{m}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateMonitorsFile().Bytes())
+
+	mustContain(t, content, `["fly-ams", "fly-iad", "fly-syd"]`)
+}
+
 func TestGenerateStatusPagesFile_ComponentGroupDefaultOpen(t *testing.T) {
 	page := &status_pagev1.StatusPage{}
 	page.SetId("p1")

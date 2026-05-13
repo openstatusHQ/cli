@@ -57,7 +57,7 @@ func Test_run(t *testing.T) {
 			t.Errorf("Monitor Trigger should return error")
 		}
 	})
-	t.Run("Successfully run http reponse", func(t *testing.T) {
+	t.Run("Successfully run http response", func(t *testing.T) {
 		body := `[
   {
   "jobType": "http",
@@ -101,7 +101,7 @@ func Test_run(t *testing.T) {
 			t.Errorf("Monitor Trigger should return error")
 		}
 	})
-	t.Run("Successfully run tcp reponse", func(t *testing.T) {
+	t.Run("Successfully run tcp response", func(t *testing.T) {
 		body := `[
 		{
     "jobType": "tcp",

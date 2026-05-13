@@ -5,8 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/openstatusHQ/cli/internal/config"
 	clilib "github.com/urfave/cli/v3"
+
+	"github.com/openstatusHQ/cli/internal/config"
 )
 
 // ResolveAccessToken extracts the access token from CLI flags or falls back to saved token.
@@ -40,7 +41,7 @@ func SaveToken(token string) error {
 	if err != nil {
 		return fmt.Errorf("failed to determine config directory: %w", err)
 	}
-	if err := os.MkdirAll(dir, 0700); err != nil {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
@@ -64,7 +65,7 @@ func SaveToken(token string) error {
 		os.Remove(tmpPath)
 		return fmt.Errorf("failed to close temp file: %w", err)
 	}
-	if err := os.Chmod(tmpPath, 0600); err != nil {
+	if err := os.Chmod(tmpPath, 0o600); err != nil {
 		os.Remove(tmpPath)
 		return fmt.Errorf("failed to set token file permissions: %w", err)
 	}

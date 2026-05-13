@@ -182,7 +182,7 @@ func Test_UpdateMonitor(t *testing.T) {
 		if result.Periodicity != "5m" {
 			t.Errorf("Expected periodicity '5m', got %s", result.Periodicity)
 		}
-		if result.Method != "POST" {
+		if result.Method != http.MethodPost {
 			t.Errorf("Expected method 'POST', got %s", result.Method)
 		}
 		if result.Active != true {

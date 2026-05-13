@@ -6,8 +6,9 @@ import (
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/notification/v1/notificationv1connect"
 	notificationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/notification/v1"
 	"connectrpc.com/connect"
-	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/urfave/cli/v3"
+
+	"github.com/openstatusHQ/cli/internal/api"
 )
 
 func NewNotificationClient(apiKey string) notificationv1connect.NotificationServiceClient {

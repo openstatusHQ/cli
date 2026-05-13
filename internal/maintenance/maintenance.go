@@ -7,8 +7,9 @@ import (
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/maintenance/v1/maintenancev1connect"
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
-	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/urfave/cli/v3"
+
+	"github.com/openstatusHQ/cli/internal/api"
 )
 
 func NewMaintenanceClient(apiKey string) maintenancev1connect.MaintenanceServiceClient {

@@ -1,0 +1,100 @@
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - copyloopvar
+    - errorlint
+    - gocritic
+    - gosec
+    - misspell
+    - nolintlint
+    - revive
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - whitespace
+
+  settings:
+    errcheck:
+      exclude-functions:
+        - (*github.com/olekukonko/tablewriter.Table).Bulk
+        - (*github.com/olekukonko/tablewriter.Table).Render
+        - (*os/exec.Cmd).Wait
+        - github.com/joho/godotenv.Load
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+      disabled-checks:
+        - appendCombine
+        - commentedOutCode
+        - hugeParam
+        - ifElseChain
+        - importShadow
+        - paramTypeCombine
+        - rangeValCopy
+        - unlambda # test seams use this pattern
+        - unnamedResult
+    gosec:
+      excludes:
+        - G104 # duplicated by errcheck
+        - G115 # int->int32 narrowing for proto/API fields is intentional
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: increment-decrement
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unexported-return
+          disabled: true # CLI internals return unexported result types
+        - name: unreachable-code
+        - name: unused-parameter
+          disabled: true
+        - name: var-naming
+          disabled: true # conflicts with generated proto identifiers (Id, Url, …)
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
+          - gocritic
+          - gosec
+          - unparam
+      - path: internal/cli/pager\.go
+        linters:
+          - gosec # G204: PAGER env var is the standard CLI pattern
+      # int(cmd.Int(...)) idiom from urfave/cli/v3 and int64() casts of proto ints
+      - linters:
+          - unconvert
+        text: unnecessary conversion
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/openstatusHQ/cli

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
 	"github.com/openstatusHQ/cli/internal/config"
 )
 
@@ -24,7 +25,7 @@ func Test_ReadConfig(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if _, err := f.Write([]byte(configFile)); err != nil {
+		if _, err := f.WriteString(configFile); err != nil {
 			t.Fatal(err)
 		}
 		if err := f.Close(); err != nil {
@@ -60,7 +61,7 @@ func Test_ReadConfig(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if _, err := f.Write([]byte("invalid: yaml: content: [")); err != nil {
+		if _, err := f.WriteString("invalid: yaml: content: ["); err != nil {
 			t.Fatal(err)
 		}
 		if err := f.Close(); err != nil {
@@ -78,12 +79,12 @@ func Test_ReadConfig_NoStatePollution(t *testing.T) {
 	dir := t.TempDir()
 
 	file1 := filepath.Join(dir, "config1.yaml")
-	if err := os.WriteFile(file1, []byte("tests:\n  ids:\n    - 1\n    - 2\n    - 3\n"), 0600); err != nil {
+	if err := os.WriteFile(file1, []byte("tests:\n  ids:\n    - 1\n    - 2\n    - 3\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	file2 := filepath.Join(dir, "config2.yaml")
-	if err := os.WriteFile(file2, []byte("tests:\n  ids:\n    - 4\n    - 5\n    - 6\n"), 0600); err != nil {
+	if err := os.WriteFile(file2, []byte("tests:\n  ids:\n    - 4\n    - 5\n    - 6\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

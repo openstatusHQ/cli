@@ -17,17 +17,15 @@ type Lock struct {
 type MonitorsLock map[string]Lock
 
 func ReadLockFile(filename string) (MonitorsLock, error) {
-
 	var out MonitorsLock
 	if _, err := os.Stat(filename); errors.Is(err, os.ErrNotExist) {
 		return MonitorsLock{}, nil
 	}
 
 	file := file.Provider(filename)
-	var k = koanf.New(".")
+	k := koanf.New(".")
 
 	err := k.Load(file, yaml.Parser())
-
 	if err != nil {
 		return nil, err
 	}
@@ -41,5 +39,4 @@ func ReadLockFile(filename string) (MonitorsLock, error) {
 	}
 
 	return out, nil
-
 }

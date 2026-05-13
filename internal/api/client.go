@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+
 	output "github.com/openstatusHQ/cli/internal/cli"
 )
 

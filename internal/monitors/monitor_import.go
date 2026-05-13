@@ -10,11 +10,12 @@ import (
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
+	"github.com/urfave/cli/v3"
+	"sigs.k8s.io/yaml"
+
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/config"
-	"github.com/urfave/cli/v3"
-	"sigs.k8s.io/yaml"
 )
 
 // ExportMonitor exports all monitors to a YAML file using the SDK
@@ -56,7 +57,7 @@ func ExportMonitor(ctx context.Context, client monitorv1connect.MonitorServiceCl
 		return fmt.Errorf("failed to marshal lock file: %w", err)
 	}
 
-	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return err
 	}
@@ -69,7 +70,7 @@ func ExportMonitor(ctx context.Context, client monitorv1connect.MonitorServiceCl
 		return err
 	}
 
-	lockFile, err := os.OpenFile("openstatus.lock", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	lockFile, err := os.OpenFile("openstatus.lock", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return fmt.Errorf("failed to create lock file: %w", err)
 	}

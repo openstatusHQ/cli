@@ -7,12 +7,13 @@ import (
 	"os"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/urfave/cli/v3"
+	"sigs.k8s.io/yaml"
+
 	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/config"
-	"github.com/urfave/cli/v3"
-	"sigs.k8s.io/yaml"
 )
 
 // countChanges computes the number of creates, updates, and deletes without making API calls.
@@ -206,7 +207,7 @@ Compares your openstatus.yaml with the current state and applies changes.`,
 			if err != nil {
 				return cli.Exit("Failed to marshal lock file", 1)
 			}
-			file, err := os.OpenFile("openstatus.lock", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+			file, err := os.OpenFile("openstatus.lock", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o600)
 			if err != nil {
 				return cli.Exit("Failed to open lock file", 1)
 			}

@@ -397,6 +397,9 @@ func (g *Generator) GenerateStatusPagesFile() *hclwrite.File {
 			gb := body.AppendNewBlock("resource", []string{"openstatus_status_page_component_group", gName}).Body()
 			setTraversalOrString(gb, "page_id", g.pageRefs, page.GetId())
 			gb.SetAttributeValue("name", cty.StringVal(grp.GetName()))
+			if grp.GetDefaultOpen() {
+				gb.SetAttributeValue("default_open", cty.BoolVal(true))
+			}
 			body.AppendNewline()
 		}
 

@@ -213,6 +213,46 @@ func TestCrossReferenceFallbackToString(t *testing.T) {
 	mustContain(t, content, `monitor_id = "nonexistent-id"`)
 }
 
+func TestGenerateStatusPagesFile_ComponentGroupDefaultOpen(t *testing.T) {
+	page := &status_pagev1.StatusPage{}
+	page.SetId("p1")
+	page.SetTitle("Page")
+	page.SetSlug("page")
+
+	grpOpen := &status_pagev1.PageComponentGroup{}
+	grpOpen.SetId("g1")
+	grpOpen.SetPageId("p1")
+	grpOpen.SetName("Infrastructure")
+	grpOpen.SetDefaultOpen(true)
+
+	grpClosed := &status_pagev1.PageComponentGroup{}
+	grpClosed.SetId("g2")
+	grpClosed.SetPageId("p1")
+	grpClosed.SetName("Other")
+
+	data := &WorkspaceData{
+		StatusPages: []StatusPageData{{
+			Page:   page,
+			Groups: []*status_pagev1.PageComponentGroup{grpOpen, grpClosed},
+		}},
+	}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateStatusPagesFile().Bytes())
+
+	mustContain(t, content, `resource "openstatus_status_page_component_group" "infrastructure"`)
+	mustContain(t, content, `default_open = true`)
+	mustContain(t, content, `resource "openstatus_status_page_component_group" "other"`)
+
+	otherStart := strings.Index(content, `"other"`)
+	if otherStart == -1 {
+		t.Fatalf("expected 'other' resource not found")
+	}
+	otherBlock := content[otherStart:]
+	if strings.Contains(otherBlock[:strings.Index(otherBlock, "}")], "default_open") {
+		t.Errorf("default_open should not be emitted for the 'other' group, got:\n%s", otherBlock)
+	}
+}
+
 func TestGenerateStatusPagesFile_IPAccess(t *testing.T) {
 	page := &status_pagev1.StatusPage{}
 	page.SetId("p1")

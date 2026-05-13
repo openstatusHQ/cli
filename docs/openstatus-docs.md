@@ -21,6 +21,34 @@ Global flags:
 | `--quiet` (`-q`) | Suppress non-error output | bool |    `false`    |        *none*         |
 | `--debug`        | Enable debug output       | bool |    `false`    |        *none*         |
 
+### `check` command (aliases: `c`)
+
+Run an HTTP check against a URL from 28 global regions.
+
+> openstatus check <URL>
+>   openstatus check https://openstat.us
+>   openstatus check https://openstat.us -X POST -H 'Authorization: Bearer …' -d '{"ping":true}'
+>   openstatus check https://openstat.us -d @payload.json
+>   openstatus check https://openstat.us --timing
+>   openstatus check https://openstat.us --json | jq '.summary'
+
+Run a one-shot HTTP check against a URL from 28 global regions.  The check is executed by the public OpenStatus speed checker. No API token is required. Results stream to the terminal as they arrive from each region.  Output is sorted in the order regions report back (roughly fastest first). Pass --timing to see DNS/Connection/TLS/TTFB/Transfer phase breakdowns. Pass --json for a machine-readable single object including all phase data.  Rate limit: 3 requests per 60 seconds.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] check [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                  | Description                                              | Type   | Default value | Environment variables |
+|-----------------------|----------------------------------------------------------|--------|:-------------:|:---------------------:|
+| `--method="…"` (`-X`) | HTTP method                                              | string |    `"GET"`    |        *none*         |
+| `--header="…"` (`-H`) | Header in "Key: Value" form (repeatable)                 | string |               |        *none*         |
+| `--body="…"` (`-d`)   | Request body. Use @filename to read a file, @- for stdin | string |               |        *none*         |
+| `--timing`            | Show DNS/Connection/TLS/TTFB/Transfer phases             | bool   |    `false`    |        *none*         |
+
 ### `monitors` command (aliases: `m`)
 
 Manage your monitors.

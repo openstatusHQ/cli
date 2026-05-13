@@ -87,6 +87,96 @@ T}@T{
 \f[I]none\f[R]
 T}
 .TE
+.SS \f[CR]check\f[R] command (aliases: \f[CR]c\f[R])
+Run an HTTP check against a URL from 28 global regions.
+.RS
+.PP
+openstatus check  openstatus check https://openstat.us openstatus check
+https://openstat.us \-X POST \-H `Authorization: Bearer \&...' \-d
+`{\(lqping\(rq:true}' openstatus check https://openstat.us \-d
+\(atpayload.json openstatus check https://openstat.us \(entiming
+openstatus check https://openstat.us \(enjson | jq `.summary'
+.RE
+.PP
+Run a one\-shot HTTP check against a URL from 28 global regions.
+The check is executed by the public OpenStatus speed checker.
+No API token is required.
+Results stream to the terminal as they arrive from each region.
+Output is sorted in the order regions report back (roughly fastest
+first).
+Pass \(entiming to see DNS/Connection/TLS/TTFB/Transfer phase
+breakdowns.
+Pass \(enjson for a machine\-readable single object including all phase
+data.
+Rate limit: 3 requests per 60 seconds.
+.PP
+Usage:
+.IP
+.EX
+$ openstatus [GLOBAL FLAGS] check [COMMAND FLAGS] [ARGUMENTS...]
+.EE
+.PP
+The following flags are supported:
+.PP
+.TS
+tab(@);
+lw(12.7n) lw(32.0n) lw(4.4n) cw(8.3n) cw(12.7n).
+T{
+Name
+T}@T{
+Description
+T}@T{
+Type
+T}@T{
+Default value
+T}@T{
+Environment variables
+T}
+_
+T{
+\f[CR]\-\-method=\(dq\&...\(dq\f[R] (\f[CR]\-X\f[R])
+T}@T{
+HTTP method
+T}@T{
+string
+T}@T{
+\f[CR]\(dqGET\(dq\f[R]
+T}@T{
+\f[I]none\f[R]
+T}
+T{
+\f[CR]\-\-header=\(dq\&...\(dq\f[R] (\f[CR]\-H\f[R])
+T}@T{
+Header in \(lqKey: Value\(rq form (repeatable)
+T}@T{
+string
+T}@T{
+T}@T{
+\f[I]none\f[R]
+T}
+T{
+\f[CR]\-\-body=\(dq\&...\(dq\f[R] (\f[CR]\-d\f[R])
+T}@T{
+Request body.
+Use \(atfilename to read a file, \(at\- for stdin
+T}@T{
+string
+T}@T{
+T}@T{
+\f[I]none\f[R]
+T}
+T{
+\f[CR]\-\-timing\f[R]
+T}@T{
+Show DNS/Connection/TLS/TTFB/Transfer phases
+T}@T{
+bool
+T}@T{
+\f[CR]false\f[R]
+T}@T{
+\f[I]none\f[R]
+T}
+.TE
 .SS \f[CR]monitors\f[R] command (aliases: \f[CR]m\f[R])
 Manage your monitors.
 .PP

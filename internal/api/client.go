@@ -16,6 +16,11 @@ const APIBaseURL = "https://api.openstatus.dev/v1"
 
 const ConnectBaseURL = "https://api.openstatus.dev/rpc"
 
+// PlayCheckerURL is the public Speed Checker endpoint backing the `check`
+// command. The www. prefix is intentional: the bare openstatus.dev host
+// returns a 308 redirect that adds latency to every call.
+const PlayCheckerURL = "https://www.openstatus.dev/play/checker/api"
+
 var DefaultHTTPClient = &http.Client{
 	Timeout: 30 * time.Second,
 }

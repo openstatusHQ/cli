@@ -25,6 +25,9 @@ iwr https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.p
 ## Quick Start
 
 ```bash
+# Run a one-shot HTTP check against a URL from 28 global regions (no auth)
+openstatus check https://openstat.us
+
 # Authenticate with your API token
 openstatus login
 
@@ -44,10 +47,26 @@ openstatus status-report create --title "API degradation" --status investigating
 openstatus run
 ```
 
+## Global Speed Check
+
+`openstatus check <URL>` runs a one-shot HTTP check from 28 global probe
+regions via the public OpenStatus speed checker. No API token required.
+
+```bash
+openstatus check https://openstat.us
+openstatus check https://openstat.us -X POST -H 'Authorization: Bearer …' -d '{"ping":true}'
+openstatus check https://openstat.us -d @payload.json
+openstatus check https://openstat.us --timing            # adds DNS/Connection/TLS/TTFB/Transfer columns
+openstatus check https://openstat.us --json | jq '.summary'
+```
+
+Rate limit: 3 requests per 60 seconds.
+
 ## Commands
 
 | Command | Alias | Description |
 |---------|-------|-------------|
+| `check` | `c` | Run an HTTP check against a URL from 28 global regions (no auth) |
 | `login` / `logout` | | Authenticate with the OpenStatus API |
 | `whoami` | `w` | Show current workspace info |
 | `monitors` | `m` | List, inspect, trigger, import, and apply monitors |

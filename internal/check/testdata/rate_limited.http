@@ -1,0 +1,15 @@
+HTTP/2 429
+cache-control: public, max-age=0, must-revalidate
+content-security-policy: frame-ancestors 'self' https://shoogle.dev
+content-type: application/json
+date: Wed, 13 May 2026 13:58:25 GMT
+retry-after: 16
+server: Vercel
+strict-transport-security: max-age=63072000
+x-matched-path: /play/checker/api
+x-ratelimit-limit: 3
+x-ratelimit-remaining: 0
+x-ratelimit-reset: 1778680721687
+x-vercel-cache: MISS
+
+{"error":"You have exceeded the rate limit of 3 requests per 60 seconds","code":"RATE_LIMIT_EXCEEDED","limit":3,"remaining":0,"reset":1778680721687}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/urfave/cli/v3"
 
+	"github.com/openstatusHQ/cli/internal/check"
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/login"
 	"github.com/openstatusHQ/cli/internal/maintenance"
@@ -41,7 +42,7 @@ Get started:
   openstatus run                  Run synthetic tests
 
 https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
-		Version: "v1.1.0",
+		Version: "v1.2.0",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "json",
@@ -69,6 +70,7 @@ https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
 			return ctx, nil
 		},
 		Commands: []*cli.Command{
+			check.CheckCmd(),
 			monitors.MonitorsCmd(),
 			statusreport.StatusReportCmd(),
 			maintenance.MaintenanceCmd(),

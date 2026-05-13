@@ -12,7 +12,7 @@ import (
 func TestGenerateProviderFile(t *testing.T) {
 	content := string(GenerateProviderFile())
 	mustContain(t, content, `source  = "openstatusHQ/openstatus"`)
-	mustContain(t, content, `version = "~> 0.1.0"`)
+	mustContain(t, content, `version = "~> 0.2"`)
 	mustContain(t, content, `provider "openstatus" {}`)
 	mustContain(t, content, `OPENSTATUS_API_TOKEN`)
 }

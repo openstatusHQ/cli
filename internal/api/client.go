@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	output "github.com/openstatusHQ/cli/internal/cli"
 	"connectrpc.com/connect"
+	output "github.com/openstatusHQ/cli/internal/cli"
 )
 
 const APIBaseURL = "https://api.openstatus.dev/v1"

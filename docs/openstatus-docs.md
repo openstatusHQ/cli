@@ -14,12 +14,12 @@ $ openstatus [GLOBAL FLAGS] [COMMAND] [COMMAND FLAGS] [ARGUMENTS...]
 
 Global flags:
 
-| Name             | Description               | Default value | Environment variables |
-|------------------|---------------------------|:-------------:|:---------------------:|
-| `--json`         | Output results as JSON    |    `false`    |        *none*         |
-| `--no-color`     | Disable colored output    |    `false`    |        *none*         |
-| `--quiet` (`-q`) | Suppress non-error output |    `false`    |        *none*         |
-| `--debug`        | Enable debug output       |    `false`    |        *none*         |
+| Name             | Description               | Type | Default value | Environment variables |
+|------------------|---------------------------|------|:-------------:|:---------------------:|
+| `--json`         | Output results as JSON    | bool |    `false`    |        *none*         |
+| `--no-color`     | Disable colored output    | bool |    `false`    |        *none*         |
+| `--quiet` (`-q`) | Suppress non-error output | bool |    `false`    |        *none*         |
+| `--debug`        | Enable debug output       | bool |    `false`    |        *none*         |
 
 ### `monitors` command (aliases: `m`)
 
@@ -49,12 +49,12 @@ $ openstatus [GLOBAL FLAGS] monitors apply [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                                           |   Default value   |  Environment variables |
-|-----------------------------|-------------------------------------------------------|:-----------------:|:----------------------:|
-| `--config="…"` (`-c`)       | The configuration file containing monitor information | `openstatus.yaml` |         *none*         |
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           |                   | `OPENSTATUS_API_TOKEN` |
-| `--auto-accept` (`-y`)      | Automatically accept the prompt                       |      `false`      |         *none*         |
-| `--dry-run` (`-n`)          | Show what would be changed without applying           |      `false`      |         *none*         |
+| Name                        | Description                                           | Type   |    Default value    |  Environment variables |
+|-----------------------------|-------------------------------------------------------|--------|:-------------------:|:----------------------:|
+| `--config="…"` (`-c`)       | The configuration file containing monitor information | string | `"openstatus.yaml"` |         *none*         |
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           | string |                     | `OPENSTATUS_API_TOKEN` |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt                       | bool   |       `false`       |         *none*         |
+| `--dry-run` (`-n`)          | Show what would be changed without applying           | bool   |       `false`       |         *none*         |
 
 ### `monitors create` subcommand
 
@@ -73,11 +73,11 @@ $ openstatus [GLOBAL FLAGS] monitors create [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                                           |   Default value   |  Environment variables |
-|-----------------------------|-------------------------------------------------------|:-----------------:|:----------------------:|
-| `--config="…"` (`-c`)       | The configuration file containing monitor information | `openstatus.yaml` |         *none*         |
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           |                   | `OPENSTATUS_API_TOKEN` |
-| `--auto-accept` (`-y`)      | Automatically accept the prompt                       |      `false`      |         *none*         |
+| Name                        | Description                                           | Type   |    Default value    |  Environment variables |
+|-----------------------------|-------------------------------------------------------|--------|:-------------------:|:----------------------:|
+| `--config="…"` (`-c`)       | The configuration file containing monitor information | string | `"openstatus.yaml"` |         *none*         |
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           | string |                     | `OPENSTATUS_API_TOKEN` |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt                       | bool   |       `false`       |         *none*         |
 
 ### `monitors delete` subcommand
 
@@ -94,10 +94,10 @@ $ openstatus [GLOBAL FLAGS] monitors delete [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                     | Default value |  Environment variables |
-|-----------------------------|---------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token     |               | `OPENSTATUS_API_TOKEN` |
-| `--auto-accept` (`-y`)      | Automatically accept the prompt |    `false`    |         *none*         |
+| Name                        | Description                     | Type   | Default value |  Environment variables |
+|-----------------------------|---------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token     | string |               | `OPENSTATUS_API_TOKEN` |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt | bool   |    `false`    |         *none*         |
 
 ### `monitors import` subcommand
 
@@ -116,10 +116,10 @@ $ openstatus [GLOBAL FLAGS] monitors import [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                 |   Default value   |  Environment variables |
-|-----------------------------|-----------------------------|:-----------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token |                   | `OPENSTATUS_API_TOKEN` |
-| `--output="…"` (`-o`)       | The output file name        | `openstatus.yaml` |         *none*         |
+| Name                        | Description                 | Type   |    Default value    |  Environment variables |
+|-----------------------------|-----------------------------|--------|:-------------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |                     | `OPENSTATUS_API_TOKEN` |
+| `--output="…"` (`-o`)       | The output file name        | string | `"openstatus.yaml"` |         *none*         |
 
 ### `monitors info` subcommand
 
@@ -139,10 +139,10 @@ $ openstatus [GLOBAL FLAGS] monitors info [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                                  | Default value |  Environment variables |
-|-----------------------------|----------------------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                  |               | `OPENSTATUS_API_TOKEN` |
-| `--time-range="…"`          | Time range for summary metrics (1d, 7d, 14d) |     `1d`      |         *none*         |
+| Name                        | Description                                  | Type   | Default value |  Environment variables |
+|-----------------------------|----------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                  | string |               | `OPENSTATUS_API_TOKEN` |
+| `--time-range="…"`          | Time range for summary metrics (1d, 7d, 14d) | string |    `"1d"`     |         *none*         |
 
 ### `monitors list` subcommand
 
@@ -161,10 +161,10 @@ $ openstatus [GLOBAL FLAGS] monitors list [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                               | Default value |  Environment variables |
-|-----------------------------|-------------------------------------------|:-------------:|:----------------------:|
-| `--all`                     | List all monitors including inactive ones |    `false`    |         *none*         |
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token               |               | `OPENSTATUS_API_TOKEN` |
+| Name                        | Description                               | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------|--------|:-------------:|:----------------------:|
+| `--all`                     | List all monitors including inactive ones | bool   |    `false`    |         *none*         |
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token               | string |               | `OPENSTATUS_API_TOKEN` |
 
 ### `monitors logs` subcommand
 
@@ -186,13 +186,13 @@ $ openstatus [GLOBAL FLAGS] monitors logs [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                              | Default value |  Environment variables |
-|-----------------------------|------------------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token              |               | `OPENSTATUS_API_TOKEN` |
-| `--limit="…"`               | Maximum number of logs to return (1-100) |      `0`      |         *none*         |
-| `--offset="…"`              | Number of logs to skip for pagination    |      `0`      |         *none*         |
-| `--from="…"`                | Start of time window (RFC 3339 format)   |               |         *none*         |
-| `--to="…"`                  | End of time window (RFC 3339 format)     |               |         *none*         |
+| Name                        | Description                              | Type   | Default value |  Environment variables |
+|-----------------------------|------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token              | string |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of logs to return (1-100) | int    |      `0`      |         *none*         |
+| `--offset="…"`              | Number of logs to skip for pagination    | int    |      `0`      |         *none*         |
+| `--from="…"`                | Start of time window (RFC 3339 format)   | string |               |         *none*         |
+| `--to="…"`                  | End of time window (RFC 3339 format)     | string |               |         *none*         |
 
 ### `monitors log-info` subcommand
 
@@ -211,9 +211,9 @@ $ openstatus [GLOBAL FLAGS] monitors log-info [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                 | Default value |  Environment variables |
-|-----------------------------|-----------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+| Name                        | Description                 | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
 ### `monitors trigger` subcommand
 
@@ -232,9 +232,9 @@ $ openstatus [GLOBAL FLAGS] monitors trigger [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                 | Default value |  Environment variables |
-|-----------------------------|-----------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+| Name                        | Description                 | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
 ### `status-report` command (aliases: `sr`)
 
@@ -261,11 +261,11 @@ $ openstatus [GLOBAL FLAGS] status-report list [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                                                        | Default value |  Environment variables |
-|-----------------------------|--------------------------------------------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                        |               | `OPENSTATUS_API_TOKEN` |
-| `--status="…"`              | Filter by status (investigating, identified, monitoring, resolved) |               |         *none*         |
-| `--limit="…"`               | Maximum number of reports to return (1-100)                        |      `0`      |         *none*         |
+| Name                        | Description                                                        | Type   | Default value |  Environment variables |
+|-----------------------------|--------------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                        | string |               | `OPENSTATUS_API_TOKEN` |
+| `--status="…"`              | Filter by status (investigating, identified, monitoring, resolved) | string |               |         *none*         |
+| `--limit="…"`               | Maximum number of reports to return (1-100)                        | int    |      `0`      |         *none*         |
 
 ### `status-report info` subcommand
 
@@ -282,9 +282,9 @@ $ openstatus [GLOBAL FLAGS] status-report info [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                 | Default value |  Environment variables |
-|-----------------------------|-----------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+| Name                        | Description                 | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
 ### `status-report create` subcommand
 
@@ -300,16 +300,16 @@ $ openstatus [GLOBAL FLAGS] status-report create [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                                                      | Default value |  Environment variables |
-|-----------------------------|------------------------------------------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                      |               | `OPENSTATUS_API_TOKEN` |
-| `--title="…"`               | Title of the status report                                       |               |         *none*         |
-| `--status="…"`              | Initial status (investigating, identified, monitoring, resolved) |               |         *none*         |
-| `--message="…"`             | Initial message describing the incident                          |               |         *none*         |
-| `--page-id="…"`             | Status page ID to associate with this report                     |               |         *none*         |
-| `--component-ids="…"`       | Comma-separated page component IDs                               |               |         *none*         |
-| `--notify`                  | Notify subscribers about this status report                      |    `false`    |         *none*         |
-| `--date="…"`                | Date when the event occurred (RFC 3339 format, defaults to now)  |               |         *none*         |
+| Name                        | Description                                                      | Type   | Default value |  Environment variables |
+|-----------------------------|------------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                      | string |               | `OPENSTATUS_API_TOKEN` |
+| `--title="…"`               | Title of the status report                                       | string |               |         *none*         |
+| `--status="…"`              | Initial status (investigating, identified, monitoring, resolved) | string |               |         *none*         |
+| `--message="…"`             | Initial message describing the incident                          | string |               |         *none*         |
+| `--page-id="…"`             | Status page ID to associate with this report                     | string |               |         *none*         |
+| `--component-ids="…"`       | Comma-separated page component IDs                               | string |               |         *none*         |
+| `--notify`                  | Notify subscribers about this status report                      | bool   |    `false`    |         *none*         |
+| `--date="…"`                | Date when the event occurred (RFC 3339 format, defaults to now)  | string |               |         *none*         |
 
 ### `status-report update` subcommand
 
@@ -325,11 +325,11 @@ $ openstatus [GLOBAL FLAGS] status-report update [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                                                 | Default value |  Environment variables |
-|-----------------------------|-------------------------------------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                 |               | `OPENSTATUS_API_TOKEN` |
-| `--title="…"`               | New title for the report                                    |               |         *none*         |
-| `--component-ids="…"`       | Comma-separated page component IDs (replaces existing list) |               |         *none*         |
+| Name                        | Description                                                 | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                 | string |               | `OPENSTATUS_API_TOKEN` |
+| `--title="…"`               | New title for the report                                    | string |               |         *none*         |
+| `--component-ids="…"`       | Comma-separated page component IDs (replaces existing list) | string |               |         *none*         |
 
 ### `status-report delete` subcommand
 
@@ -346,10 +346,10 @@ $ openstatus [GLOBAL FLAGS] status-report delete [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                     | Default value |  Environment variables |
-|-----------------------------|---------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token     |               | `OPENSTATUS_API_TOKEN` |
-| `--auto-accept` (`-y`)      | Automatically accept the prompt |    `false`    |         *none*         |
+| Name                        | Description                     | Type   | Default value |  Environment variables |
+|-----------------------------|---------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token     | string |               | `OPENSTATUS_API_TOKEN` |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt | bool   |    `false`    |         *none*         |
 
 ### `status-report add-update` subcommand
 
@@ -365,13 +365,13 @@ $ openstatus [GLOBAL FLAGS] status-report add-update [COMMAND FLAGS] [ARGUMENTS.
 
 The following flags are supported:
 
-| Name                        | Description                                                  | Default value |  Environment variables |
-|-----------------------------|--------------------------------------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                  |               | `OPENSTATUS_API_TOKEN` |
-| `--status="…"`              | New status (investigating, identified, monitoring, resolved) |               |         *none*         |
-| `--message="…"`             | Message describing what changed                              |               |         *none*         |
-| `--date="…"`                | Date for the update (RFC 3339 format, defaults to now)       |               |         *none*         |
-| `--notify`                  | Notify subscribers about this update                         |    `false`    |         *none*         |
+| Name                        | Description                                                  | Type   | Default value |  Environment variables |
+|-----------------------------|--------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                  | string |               | `OPENSTATUS_API_TOKEN` |
+| `--status="…"`              | New status (investigating, identified, monitoring, resolved) | string |               |         *none*         |
+| `--message="…"`             | Message describing what changed                              | string |               |         *none*         |
+| `--date="…"`                | Date for the update (RFC 3339 format, defaults to now)       | string |               |         *none*         |
+| `--notify`                  | Notify subscribers about this update                         | bool   |    `false`    |         *none*         |
 
 ### `maintenance` command (aliases: `mt`)
 
@@ -398,11 +398,11 @@ $ openstatus [GLOBAL FLAGS] maintenance list [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                                      | Default value |  Environment variables |
-|-----------------------------|--------------------------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                      |               | `OPENSTATUS_API_TOKEN` |
-| `--page-id="…"`             | Filter by status page ID                         |               |         *none*         |
-| `--limit="…"`               | Maximum number of maintenances to return (1-100) |      `0`      |         *none*         |
+| Name                        | Description                                      | Type   | Default value |  Environment variables |
+|-----------------------------|--------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                      | string |               | `OPENSTATUS_API_TOKEN` |
+| `--page-id="…"`             | Filter by status page ID                         | string |               |         *none*         |
+| `--limit="…"`               | Maximum number of maintenances to return (1-100) | int    |      `0`      |         *none*         |
 
 ### `maintenance info` subcommand
 
@@ -419,9 +419,9 @@ $ openstatus [GLOBAL FLAGS] maintenance info [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                 | Default value |  Environment variables |
-|-----------------------------|-----------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+| Name                        | Description                 | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
 ### `maintenance create` subcommand
 
@@ -437,16 +437,16 @@ $ openstatus [GLOBAL FLAGS] maintenance create [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                                            | Default value |  Environment variables |
-|-----------------------------|--------------------------------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                            |               | `OPENSTATUS_API_TOKEN` |
-| `--title="…"`               | Title of the maintenance                               |               |         *none*         |
-| `--message="…"`             | Message describing the maintenance                     |               |         *none*         |
-| `--from="…"`                | Start time of the maintenance window (RFC 3339 format) |               |         *none*         |
-| `--to="…"`                  | End time of the maintenance window (RFC 3339 format)   |               |         *none*         |
-| `--page-id="…"`             | Status page ID to associate with this maintenance      |               |         *none*         |
-| `--component-ids="…"`       | Comma-separated page component IDs                     |               |         *none*         |
-| `--notify`                  | Notify subscribers about this maintenance              |    `false`    |         *none*         |
+| Name                        | Description                                            | Type   | Default value |  Environment variables |
+|-----------------------------|--------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                            | string |               | `OPENSTATUS_API_TOKEN` |
+| `--title="…"`               | Title of the maintenance                               | string |               |         *none*         |
+| `--message="…"`             | Message describing the maintenance                     | string |               |         *none*         |
+| `--from="…"`                | Start time of the maintenance window (RFC 3339 format) | string |               |         *none*         |
+| `--to="…"`                  | End time of the maintenance window (RFC 3339 format)   | string |               |         *none*         |
+| `--page-id="…"`             | Status page ID to associate with this maintenance      | string |               |         *none*         |
+| `--component-ids="…"`       | Comma-separated page component IDs                     | string |               |         *none*         |
+| `--notify`                  | Notify subscribers about this maintenance              | bool   |    `false`    |         *none*         |
 
 ### `maintenance update` subcommand
 
@@ -462,14 +462,14 @@ $ openstatus [GLOBAL FLAGS] maintenance update [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                                                 | Default value |  Environment variables |
-|-----------------------------|-------------------------------------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                 |               | `OPENSTATUS_API_TOKEN` |
-| `--title="…"`               | New title for the maintenance                               |               |         *none*         |
-| `--message="…"`             | New message for the maintenance                             |               |         *none*         |
-| `--from="…"`                | New start time (RFC 3339 format)                            |               |         *none*         |
-| `--to="…"`                  | New end time (RFC 3339 format)                              |               |         *none*         |
-| `--component-ids="…"`       | Comma-separated page component IDs (replaces existing list) |               |         *none*         |
+| Name                        | Description                                                 | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                 | string |               | `OPENSTATUS_API_TOKEN` |
+| `--title="…"`               | New title for the maintenance                               | string |               |         *none*         |
+| `--message="…"`             | New message for the maintenance                             | string |               |         *none*         |
+| `--from="…"`                | New start time (RFC 3339 format)                            | string |               |         *none*         |
+| `--to="…"`                  | New end time (RFC 3339 format)                              | string |               |         *none*         |
+| `--component-ids="…"`       | Comma-separated page component IDs (replaces existing list) | string |               |         *none*         |
 
 ### `maintenance delete` subcommand
 
@@ -486,10 +486,10 @@ $ openstatus [GLOBAL FLAGS] maintenance delete [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                     | Default value |  Environment variables |
-|-----------------------------|---------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token     |               | `OPENSTATUS_API_TOKEN` |
-| `--auto-accept` (`-y`)      | Automatically accept the prompt |    `false`    |         *none*         |
+| Name                        | Description                     | Type   | Default value |  Environment variables |
+|-----------------------------|---------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token     | string |               | `OPENSTATUS_API_TOKEN` |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt | bool   |    `false`    |         *none*         |
 
 ### `status-page` command (aliases: `sp`)
 
@@ -516,10 +516,10 @@ $ openstatus [GLOBAL FLAGS] status-page list [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                               | Default value |  Environment variables |
-|-----------------------------|-------------------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token               |               | `OPENSTATUS_API_TOKEN` |
-| `--limit="…"`               | Maximum number of pages to return (1-100) |      `0`      |         *none*         |
+| Name                        | Description                               | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token               | string |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of pages to return (1-100) | int    |      `0`      |         *none*         |
 
 ### `status-page info` subcommand
 
@@ -536,9 +536,9 @@ $ openstatus [GLOBAL FLAGS] status-page info [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                 | Default value |  Environment variables |
-|-----------------------------|-----------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+| Name                        | Description                 | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
 ### `notification` command (aliases: `n`)
 
@@ -565,10 +565,10 @@ $ openstatus [GLOBAL FLAGS] notification list [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                                       | Default value |  Environment variables |
-|-----------------------------|---------------------------------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                       |               | `OPENSTATUS_API_TOKEN` |
-| `--limit="…"`               | Maximum number of notifications to return (1-100) |      `0`      |         *none*         |
+| Name                        | Description                                       | Type   | Default value |  Environment variables |
+|-----------------------------|---------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                       | string |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of notifications to return (1-100) | int    |      `0`      |         *none*         |
 
 ### `notification info` subcommand
 
@@ -585,9 +585,9 @@ $ openstatus [GLOBAL FLAGS] notification info [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                 | Default value |  Environment variables |
-|-----------------------------|-----------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+| Name                        | Description                 | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
 ### `run` command (aliases: `r`)
 
@@ -606,10 +606,10 @@ $ openstatus [GLOBAL FLAGS] run [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                 |      Default value       |  Environment variables |
-|-----------------------------|-----------------------------|:------------------------:|:----------------------:|
-| `--config="…"`              | The configuration file      | `config.openstatus.yaml` |         *none*         |
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token |                          | `OPENSTATUS_API_TOKEN` |
+| Name                        | Description                 | Type   |       Default value        |  Environment variables |
+|-----------------------------|-----------------------------|--------|:--------------------------:|:----------------------:|
+| `--config="…"`              | The configuration file      | string | `"config.openstatus.yaml"` |         *none*         |
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |                            | `OPENSTATUS_API_TOKEN` |
 
 ### `whoami` command (aliases: `w`)
 
@@ -627,9 +627,9 @@ $ openstatus [GLOBAL FLAGS] whoami [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                 | Default value |  Environment variables |
-|-----------------------------|-----------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+| Name                        | Description                 | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
 ### `login` command
 
@@ -681,7 +681,8 @@ $ openstatus [GLOBAL FLAGS] terraform generate [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                             |       Default value       |  Environment variables |
-|-----------------------------|-----------------------------------------|:-------------------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token             |                           | `OPENSTATUS_API_TOKEN` |
-| `--output-dir="…"` (`-o`)   | Directory to write Terraform files into | `./openstatus-terraform/` |         *none*         |
+| Name                        | Description                              | Type   |        Default value        |  Environment variables |
+|-----------------------------|------------------------------------------|--------|:---------------------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token              | string |                             | `OPENSTATUS_API_TOKEN` |
+| `--output-dir="…"` (`-o`)   | Directory to write Terraform files into  | string | `"./openstatus-terraform/"` |         *none*         |
+| `--force` (`-f`)            | Overwrite existing files in --output-dir | bool   |           `false`           |         *none*         |

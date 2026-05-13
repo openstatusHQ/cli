@@ -29,11 +29,13 @@ Global flags:
 .PP
 .TS
 tab(@);
-lw(15.2n) lw(22.8n) cw(12.7n) cw(19.4n).
+lw(14.2n) lw(21.2n) lw(4.7n) cw(11.8n) cw(18.1n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -45,6 +47,8 @@ T{
 T}@T{
 Output results as JSON
 T}@T{
+bool
+T}@T{
 \f[CR]false\f[R]
 T}@T{
 \f[I]none\f[R]
@@ -53,6 +57,8 @@ T{
 \f[CR]\-\-no\-color\f[R]
 T}@T{
 Disable colored output
+T}@T{
+bool
 T}@T{
 \f[CR]false\f[R]
 T}@T{
@@ -63,6 +69,8 @@ T{
 T}@T{
 Suppress non\-error output
 T}@T{
+bool
+T}@T{
 \f[CR]false\f[R]
 T}@T{
 \f[I]none\f[R]
@@ -71,6 +79,8 @@ T{
 \f[CR]\-\-debug\f[R]
 T}@T{
 Enable debug output
+T}@T{
+bool
 T}@T{
 \f[CR]false\f[R]
 T}@T{
@@ -108,11 +118,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(16.0n) lw(30.3n) cw(10.5n) cw(13.2n).
+lw(14.8n) lw(28.1n) lw(4.1n) cw(10.7n) cw(12.3n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -124,7 +136,9 @@ T{
 T}@T{
 The configuration file containing monitor information
 T}@T{
-\f[CR]openstatus.yaml\f[R]
+string
+T}@T{
+\f[CR]\(dqopenstatus.yaml\(dq\f[R]
 T}@T{
 \f[I]none\f[R]
 T}
@@ -132,6 +146,8 @@ T{
 \f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
 T}@T{
 OpenStatus API Access Token
+T}@T{
+string
 T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
@@ -141,6 +157,8 @@ T{
 T}@T{
 Automatically accept the prompt
 T}@T{
+bool
+T}@T{
 \f[CR]false\f[R]
 T}@T{
 \f[I]none\f[R]
@@ -149,6 +167,8 @@ T{
 \f[CR]\-\-dry\-run\f[R] (\f[CR]\-n\f[R])
 T}@T{
 Show what would be changed without applying
+T}@T{
+bool
 T}@T{
 \f[CR]false\f[R]
 T}@T{
@@ -175,11 +195,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(16.0n) lw(30.3n) cw(10.5n) cw(13.2n).
+lw(14.8n) lw(28.1n) lw(4.1n) cw(10.7n) cw(12.3n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -191,7 +213,9 @@ T{
 T}@T{
 The configuration file containing monitor information
 T}@T{
-\f[CR]openstatus.yaml\f[R]
+string
+T}@T{
+\f[CR]\(dqopenstatus.yaml\(dq\f[R]
 T}@T{
 \f[I]none\f[R]
 T}
@@ -200,6 +224,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -207,6 +233,8 @@ T{
 \f[CR]\-\-auto\-accept\f[R] (\f[CR]\-y\f[R])
 T}@T{
 Automatically accept the prompt
+T}@T{
+bool
 T}@T{
 \f[CR]false\f[R]
 T}@T{
@@ -230,11 +258,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(20.1n) lw(22.9n) cw(10.4n) cw(16.6n).
+lw(18.6n) lw(21.2n) lw(5.1n) cw(9.6n) cw(15.4n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -246,6 +276,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -253,6 +285,8 @@ T{
 \f[CR]\-\-auto\-accept\f[R] (\f[CR]\-y\f[R])
 T}@T{
 Automatically accept the prompt
+T}@T{
+bool
 T}@T{
 \f[CR]false\f[R]
 T}@T{
@@ -280,11 +314,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(20.1n) lw(20.1n) cw(13.2n) cw(16.6n).
+lw(18.3n) lw(18.3n) lw(5.0n) cw(13.2n) cw(15.1n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -296,6 +332,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -304,7 +342,9 @@ T{
 T}@T{
 The output file name
 T}@T{
-\f[CR]openstatus.yaml\f[R]
+string
+T}@T{
+\f[CR]\(dqopenstatus.yaml\(dq\f[R]
 T}@T{
 \f[I]none\f[R]
 T}
@@ -330,11 +370,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(17.8n) lw(28.2n) cw(9.2n) cw(14.7n).
+lw(16.6n) lw(26.4n) lw(4.6n) cw(8.6n) cw(13.8n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -346,6 +388,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -354,7 +398,9 @@ T{
 T}@T{
 Time range for summary metrics (1d, 7d, 14d)
 T}@T{
-\f[CR]1d\f[R]
+string
+T}@T{
+\f[CR]\(dq1d\(dq\f[R]
 T}@T{
 \f[I]none\f[R]
 T}
@@ -380,11 +426,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(18.3n) lw(27.1n) cw(9.5n) cw(15.1n).
+lw(17.1n) lw(25.3n) lw(4.7n) cw(8.8n) cw(14.1n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -396,6 +444,8 @@ T{
 T}@T{
 List all monitors including inactive ones
 T}@T{
+bool
+T}@T{
 \f[CR]false\f[R]
 T}@T{
 \f[I]none\f[R]
@@ -404,6 +454,142 @@ T{
 \f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
 T}@T{
 OpenStatus API Access Token
+T}@T{
+string
+T}@T{
+T}@T{
+\f[CR]OPENSTATUS_API_TOKEN\f[R]
+T}
+.TE
+.SS \f[CR]monitors logs\f[R] subcommand
+List HTTP response logs for a monitor.
+.RS
+.PP
+openstatus monitors logs  openstatus monitors logs 12345 openstatus
+monitors logs 12345 \(enlimit 10 openstatus monitors logs 12345
+\(enlimit 5 \(enoffset 5 openstatus monitors logs 12345 \(enfrom
+2026\-05\-06T00:00:00Z \(ento 2026\-05\-07T00:00:00Z
+.RE
+.PP
+List HTTP response logs for a monitor from the 14\-day retention window.
+Supports pagination and time filtering.
+.PP
+Usage:
+.IP
+.EX
+$ openstatus [GLOBAL FLAGS] monitors logs [COMMAND FLAGS] [ARGUMENTS...]
+.EE
+.PP
+The following flags are supported:
+.PP
+.TS
+tab(@);
+lw(17.2n) lw(24.9n) lw(4.7n) cw(8.9n) cw(14.2n).
+T{
+Name
+T}@T{
+Description
+T}@T{
+Type
+T}@T{
+Default value
+T}@T{
+Environment variables
+T}
+_
+T{
+\f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
+T}@T{
+OpenStatus API Access Token
+T}@T{
+string
+T}@T{
+T}@T{
+\f[CR]OPENSTATUS_API_TOKEN\f[R]
+T}
+T{
+\f[CR]\-\-limit=\(dq\&...\(dq\f[R]
+T}@T{
+Maximum number of logs to return (1\-100)
+T}@T{
+int
+T}@T{
+\f[CR]0\f[R]
+T}@T{
+\f[I]none\f[R]
+T}
+T{
+\f[CR]\-\-offset=\(dq\&...\(dq\f[R]
+T}@T{
+Number of logs to skip for pagination
+T}@T{
+int
+T}@T{
+\f[CR]0\f[R]
+T}@T{
+\f[I]none\f[R]
+T}
+T{
+\f[CR]\-\-from=\(dq\&...\(dq\f[R]
+T}@T{
+Start of time window (RFC 3339 format)
+T}@T{
+string
+T}@T{
+T}@T{
+\f[I]none\f[R]
+T}
+T{
+\f[CR]\-\-to=\(dq\&...\(dq\f[R]
+T}@T{
+End of time window (RFC 3339 format)
+T}@T{
+string
+T}@T{
+T}@T{
+\f[I]none\f[R]
+T}
+.TE
+.SS \f[CR]monitors log\-info\f[R] subcommand
+Get detailed HTTP response log for a monitor.
+.RS
+.PP
+openstatus monitors log\-info   openstatus monitors log\-info 12345
+abc\-def\-ghi
+.RE
+.PP
+Fetch a single HTTP response log with full details including timing
+phases, response headers, and assertion results.
+.PP
+Usage:
+.IP
+.EX
+$ openstatus [GLOBAL FLAGS] monitors log\-info [COMMAND FLAGS] [ARGUMENTS...]
+.EE
+.PP
+The following flags are supported:
+.PP
+.TS
+tab(@);
+lw(19.3n) lw(19.3n) lw(5.3n) cw(10.0n) cw(16.0n).
+T{
+Name
+T}@T{
+Description
+T}@T{
+Type
+T}@T{
+Default value
+T}@T{
+Environment variables
+T}
+_
+T{
+\f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
+T}@T{
+OpenStatus API Access Token
+T}@T{
+string
 T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
@@ -429,11 +615,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(20.9n) lw(20.9n) cw(10.8n) cw(17.3n).
+lw(19.3n) lw(19.3n) lw(5.3n) cw(10.0n) cw(16.0n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -444,6 +632,8 @@ T{
 \f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
 T}@T{
 OpenStatus API Access Token
+T}@T{
+string
 T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
@@ -475,11 +665,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(14.9n) lw(35.0n) cw(7.7n) cw(12.4n).
+lw(14.1n) lw(33.1n) lw(3.9n) cw(7.3n) cw(11.7n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -491,6 +683,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -499,6 +693,8 @@ T{
 T}@T{
 Filter by status (investigating, identified, monitoring, resolved)
 T}@T{
+string
+T}@T{
 T}@T{
 \f[I]none\f[R]
 T}
@@ -506,6 +702,8 @@ T{
 \f[CR]\-\-limit=\(dq\&...\(dq\f[R]
 T}@T{
 Maximum number of reports to return (1\-100)
+T}@T{
+int
 T}@T{
 \f[CR]0\f[R]
 T}@T{
@@ -529,11 +727,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(20.9n) lw(20.9n) cw(10.8n) cw(17.3n).
+lw(19.3n) lw(19.3n) lw(5.3n) cw(10.0n) cw(16.0n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -544,6 +744,8 @@ T{
 \f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
 T}@T{
 OpenStatus API Access Token
+T}@T{
+string
 T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
@@ -568,11 +770,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(15.1n) lw(34.5n) cw(7.8n) cw(12.5n).
+lw(14.3n) lw(32.5n) lw(3.9n) cw(7.4n) cw(11.8n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -584,6 +788,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -591,6 +797,8 @@ T{
 \f[CR]\-\-title=\(dq\&...\(dq\f[R]
 T}@T{
 Title of the status report
+T}@T{
+string
 T}@T{
 T}@T{
 \f[I]none\f[R]
@@ -600,6 +808,8 @@ T{
 T}@T{
 Initial status (investigating, identified, monitoring, resolved)
 T}@T{
+string
+T}@T{
 T}@T{
 \f[I]none\f[R]
 T}
@@ -607,6 +817,8 @@ T{
 \f[CR]\-\-message=\(dq\&...\(dq\f[R]
 T}@T{
 Initial message describing the incident
+T}@T{
+string
 T}@T{
 T}@T{
 \f[I]none\f[R]
@@ -616,6 +828,8 @@ T{
 T}@T{
 Status page ID to associate with this report
 T}@T{
+string
+T}@T{
 T}@T{
 \f[I]none\f[R]
 T}
@@ -623,6 +837,8 @@ T{
 \f[CR]\-\-component\-ids=\(dq\&...\(dq\f[R]
 T}@T{
 Comma\-separated page component IDs
+T}@T{
+string
 T}@T{
 T}@T{
 \f[I]none\f[R]
@@ -632,6 +848,8 @@ T{
 T}@T{
 Notify subscribers about this status report
 T}@T{
+bool
+T}@T{
 \f[CR]false\f[R]
 T}@T{
 \f[I]none\f[R]
@@ -640,6 +858,8 @@ T{
 \f[CR]\-\-date=\(dq\&...\(dq\f[R]
 T}@T{
 Date when the event occurred (RFC 3339 format, defaults to now)
+T}@T{
+string
 T}@T{
 T}@T{
 \f[I]none\f[R]
@@ -663,11 +883,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(15.7n) lw(33.1n) cw(8.1n) cw(13.0n).
+lw(14.8n) lw(31.2n) lw(4.1n) cw(7.7n) cw(12.3n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -679,6 +901,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -687,6 +911,8 @@ T{
 T}@T{
 New title for the report
 T}@T{
+string
+T}@T{
 T}@T{
 \f[I]none\f[R]
 T}
@@ -694,6 +920,8 @@ T{
 \f[CR]\-\-component\-ids=\(dq\&...\(dq\f[R]
 T}@T{
 Comma\-separated page component IDs (replaces existing list)
+T}@T{
+string
 T}@T{
 T}@T{
 \f[I]none\f[R]
@@ -717,11 +945,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(20.1n) lw(22.9n) cw(10.4n) cw(16.6n).
+lw(18.6n) lw(21.2n) lw(5.1n) cw(9.6n) cw(15.4n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -733,6 +963,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -740,6 +972,8 @@ T{
 \f[CR]\-\-auto\-accept\f[R] (\f[CR]\-y\f[R])
 T}@T{
 Automatically accept the prompt
+T}@T{
+bool
 T}@T{
 \f[CR]false\f[R]
 T}@T{
@@ -764,11 +998,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(15.6n) lw(33.4n) cw(8.1n) cw(12.9n).
+lw(14.7n) lw(31.4n) lw(4.1n) cw(7.6n) cw(12.2n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -780,6 +1016,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -787,6 +1025,8 @@ T{
 \f[CR]\-\-status=\(dq\&...\(dq\f[R]
 T}@T{
 New status (investigating, identified, monitoring, resolved)
+T}@T{
+string
 T}@T{
 T}@T{
 \f[I]none\f[R]
@@ -796,6 +1036,8 @@ T{
 T}@T{
 Message describing what changed
 T}@T{
+string
+T}@T{
 T}@T{
 \f[I]none\f[R]
 T}
@@ -804,6 +1046,8 @@ T{
 T}@T{
 Date for the update (RFC 3339 format, defaults to now)
 T}@T{
+string
+T}@T{
 T}@T{
 \f[I]none\f[R]
 T}
@@ -811,6 +1055,8 @@ T{
 \f[CR]\-\-notify\f[R]
 T}@T{
 Notify subscribers about this update
+T}@T{
+bool
 T}@T{
 \f[CR]false\f[R]
 T}@T{
@@ -843,11 +1089,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(17.2n) lw(29.7n) cw(8.9n) cw(14.2n).
+lw(16.1n) lw(27.8n) lw(4.4n) cw(8.3n) cw(13.3n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -859,6 +1107,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -867,6 +1117,8 @@ T{
 T}@T{
 Filter by status page ID
 T}@T{
+string
+T}@T{
 T}@T{
 \f[I]none\f[R]
 T}
@@ -874,6 +1126,8 @@ T{
 \f[CR]\-\-limit=\(dq\&...\(dq\f[R]
 T}@T{
 Maximum number of maintenances to return (1\-100)
+T}@T{
+int
 T}@T{
 \f[CR]0\f[R]
 T}@T{
@@ -897,11 +1151,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(20.9n) lw(20.9n) cw(10.8n) cw(17.3n).
+lw(19.3n) lw(19.3n) lw(5.3n) cw(10.0n) cw(16.0n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -912,6 +1168,8 @@ T{
 \f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
 T}@T{
 OpenStatus API Access Token
+T}@T{
+string
 T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
@@ -936,11 +1194,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(16.4n) lw(31.6n) cw(8.5n) cw(13.5n).
+lw(15.4n) lw(29.7n) lw(4.2n) cw(8.0n) cw(12.7n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -952,6 +1212,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -959,6 +1221,8 @@ T{
 \f[CR]\-\-title=\(dq\&...\(dq\f[R]
 T}@T{
 Title of the maintenance
+T}@T{
+string
 T}@T{
 T}@T{
 \f[I]none\f[R]
@@ -968,6 +1232,8 @@ T{
 T}@T{
 Message describing the maintenance
 T}@T{
+string
+T}@T{
 T}@T{
 \f[I]none\f[R]
 T}
@@ -975,6 +1241,8 @@ T{
 \f[CR]\-\-from=\(dq\&...\(dq\f[R]
 T}@T{
 Start time of the maintenance window (RFC 3339 format)
+T}@T{
+string
 T}@T{
 T}@T{
 \f[I]none\f[R]
@@ -984,6 +1252,8 @@ T{
 T}@T{
 End time of the maintenance window (RFC 3339 format)
 T}@T{
+string
+T}@T{
 T}@T{
 \f[I]none\f[R]
 T}
@@ -991,6 +1261,8 @@ T{
 \f[CR]\-\-page\-id=\(dq\&...\(dq\f[R]
 T}@T{
 Status page ID to associate with this maintenance
+T}@T{
+string
 T}@T{
 T}@T{
 \f[I]none\f[R]
@@ -1000,6 +1272,8 @@ T{
 T}@T{
 Comma\-separated page component IDs
 T}@T{
+string
+T}@T{
 T}@T{
 \f[I]none\f[R]
 T}
@@ -1007,6 +1281,8 @@ T{
 \f[CR]\-\-notify\f[R]
 T}@T{
 Notify subscribers about this maintenance
+T}@T{
+bool
 T}@T{
 \f[CR]false\f[R]
 T}@T{
@@ -1032,11 +1308,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(15.7n) lw(33.1n) cw(8.1n) cw(13.0n).
+lw(14.8n) lw(31.2n) lw(4.1n) cw(7.7n) cw(12.3n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -1048,6 +1326,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -1055,6 +1335,8 @@ T{
 \f[CR]\-\-title=\(dq\&...\(dq\f[R]
 T}@T{
 New title for the maintenance
+T}@T{
+string
 T}@T{
 T}@T{
 \f[I]none\f[R]
@@ -1064,6 +1346,8 @@ T{
 T}@T{
 New message for the maintenance
 T}@T{
+string
+T}@T{
 T}@T{
 \f[I]none\f[R]
 T}
@@ -1071,6 +1355,8 @@ T{
 \f[CR]\-\-from=\(dq\&...\(dq\f[R]
 T}@T{
 New start time (RFC 3339 format)
+T}@T{
+string
 T}@T{
 T}@T{
 \f[I]none\f[R]
@@ -1080,6 +1366,8 @@ T{
 T}@T{
 New end time (RFC 3339 format)
 T}@T{
+string
+T}@T{
 T}@T{
 \f[I]none\f[R]
 T}
@@ -1087,6 +1375,8 @@ T{
 \f[CR]\-\-component\-ids=\(dq\&...\(dq\f[R]
 T}@T{
 Comma\-separated page component IDs (replaces existing list)
+T}@T{
+string
 T}@T{
 T}@T{
 \f[I]none\f[R]
@@ -1109,11 +1399,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(20.1n) lw(22.9n) cw(10.4n) cw(16.6n).
+lw(18.6n) lw(21.2n) lw(5.1n) cw(9.6n) cw(15.4n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -1125,6 +1417,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -1132,6 +1426,8 @@ T{
 \f[CR]\-\-auto\-accept\f[R] (\f[CR]\-y\f[R])
 T}@T{
 Automatically accept the prompt
+T}@T{
+bool
 T}@T{
 \f[CR]false\f[R]
 T}@T{
@@ -1163,11 +1459,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(18.3n) lw(27.1n) cw(9.5n) cw(15.1n).
+lw(17.1n) lw(25.3n) lw(4.7n) cw(8.8n) cw(14.1n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -1179,6 +1477,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -1186,6 +1486,8 @@ T{
 \f[CR]\-\-limit=\(dq\&...\(dq\f[R]
 T}@T{
 Maximum number of pages to return (1\-100)
+T}@T{
+int
 T}@T{
 \f[CR]0\f[R]
 T}@T{
@@ -1209,11 +1511,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(20.9n) lw(20.9n) cw(10.8n) cw(17.3n).
+lw(19.3n) lw(19.3n) lw(5.3n) cw(10.0n) cw(16.0n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -1224,6 +1528,8 @@ T{
 \f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
 T}@T{
 OpenStatus API Access Token
+T}@T{
+string
 T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
@@ -1254,11 +1560,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(17.1n) lw(30.0n) cw(8.8n) cw(14.1n).
+lw(16.0n) lw(28.1n) lw(4.4n) cw(8.3n) cw(13.2n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -1270,6 +1578,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -1277,6 +1587,8 @@ T{
 \f[CR]\-\-limit=\(dq\&...\(dq\f[R]
 T}@T{
 Maximum number of notifications to return (1\-100)
+T}@T{
+int
 T}@T{
 \f[CR]0\f[R]
 T}@T{
@@ -1300,11 +1612,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(20.9n) lw(20.9n) cw(10.8n) cw(17.3n).
+lw(19.3n) lw(19.3n) lw(5.3n) cw(10.0n) cw(16.0n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -1315,6 +1629,8 @@ T{
 \f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
 T}@T{
 OpenStatus API Access Token
+T}@T{
+string
 T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
@@ -1341,11 +1657,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(18.8n) lw(18.8n) cw(16.9n) cw(15.6n).
+lw(17.2n) lw(17.2n) lw(4.7n) cw(16.6n) cw(14.2n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -1357,7 +1675,9 @@ T{
 T}@T{
 The configuration file
 T}@T{
-\f[CR]config.openstatus.yaml\f[R]
+string
+T}@T{
+\f[CR]\(dqconfig.openstatus.yaml\(dq\f[R]
 T}@T{
 \f[I]none\f[R]
 T}
@@ -1365,6 +1685,8 @@ T{
 \f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
 T}@T{
 OpenStatus API Access Token
+T}@T{
+string
 T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
@@ -1390,11 +1712,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(20.9n) lw(20.9n) cw(10.8n) cw(17.3n).
+lw(19.3n) lw(19.3n) lw(5.3n) cw(10.0n) cw(16.0n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -1405,6 +1729,8 @@ T{
 \f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
 T}@T{
 OpenStatus API Access Token
+T}@T{
+string
 T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
@@ -1462,11 +1788,13 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(16.8n) lw(23.7n) cw(15.6n) cw(13.9n).
+lw(15.4n) lw(22.3n) lw(4.2n) cw(15.4n) cw(12.7n).
 T{
 Name
 T}@T{
 Description
+T}@T{
+Type
 T}@T{
 Default value
 T}@T{
@@ -1478,6 +1806,8 @@ T{
 T}@T{
 OpenStatus API Access Token
 T}@T{
+string
+T}@T{
 T}@T{
 \f[CR]OPENSTATUS_API_TOKEN\f[R]
 T}
@@ -1486,7 +1816,20 @@ T{
 T}@T{
 Directory to write Terraform files into
 T}@T{
-\f[CR]./openstatus\-terraform/\f[R]
+string
+T}@T{
+\f[CR]\(dq./openstatus\-terraform/\(dq\f[R]
+T}@T{
+\f[I]none\f[R]
+T}
+T{
+\f[CR]\-\-force\f[R] (\f[CR]\-f\f[R])
+T}@T{
+Overwrite existing files in \(enoutput\-dir
+T}@T{
+bool
+T}@T{
+\f[CR]false\f[R]
 T}@T{
 \f[I]none\f[R]
 T}

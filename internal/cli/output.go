@@ -17,13 +17,15 @@ var (
 	debugMode  atomic.Bool
 )
 
-func SetJSONOutput(v bool)  { jsonOutput.Store(v) }
-func SetQuietMode(v bool)   { quietMode.Store(v) }
-func SetDebugMode(v bool)   { debugMode.Store(v) }
-func IsJSONOutput() bool    { return jsonOutput.Load() }
-func IsQuiet() bool         { return quietMode.Load() }
-func IsDebug() bool         { return debugMode.Load() }
-func IsTerminal() bool { return isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd()) }
+func SetJSONOutput(v bool) { jsonOutput.Store(v) }
+func SetQuietMode(v bool)  { quietMode.Store(v) }
+func SetDebugMode(v bool)  { debugMode.Store(v) }
+func IsJSONOutput() bool   { return jsonOutput.Load() }
+func IsQuiet() bool        { return quietMode.Load() }
+func IsDebug() bool        { return debugMode.Load() }
+func IsTerminal() bool {
+	return isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
+}
 func IsStdinTerminal() bool {
 	return isatty.IsTerminal(os.Stdin.Fd()) || isatty.IsCygwinTerminal(os.Stdin.Fd())
 }

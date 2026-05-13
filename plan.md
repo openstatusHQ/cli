@@ -522,19 +522,18 @@ This is the largest phase. Land in one commit (per Q7) but write it incrementall
 - [x] `go test ./internal/terraform/...` (no tag) still green and does NOT invoke terraform.
 - [x] Manually verified: `go test -tags=smoke ./internal/terraform/` passes locally.
 
-### Phase 8 — Version + docs (commit 8: `chore: bump cli to v1.1.0 and regenerate docs`)
+### Phase 8 — Version + docs (commit 8: `chore: bump cli to v1.1.0 and regenerate docs`) ✅
 
-- [ ] `internal/cmd/app.go` — change `Version: "v1.0.5"` → `Version: "v1.1.0"`.
-- [ ] From repo root: `go run cmd/docs/docs.go` (updates `docs/openstatus-docs.md`).
-- [ ] `cd docs && pandoc -s -t man openstatus-docs.md -o openstatus.1` (updates the manpage).
-- [ ] `git diff docs/` — sanity-check that the `--force` flag and updated terraform-generate help text show up in both files.
-- [ ] Stage both regenerated files plus `internal/cmd/app.go`.
-- [ ] `go build ./... && go test ./...` green one last time.
+- [x] `internal/cmd/app.go` — change `Version: "v1.0.5"` → `Version: "v1.1.0"`. Also updated `internal/cmd/app_test.go` to match.
+- [x] From repo root: `go run cmd/docs/docs.go` (updates `docs/openstatus-docs.md`).
+- [x] `cd docs && pandoc -s -t man openstatus-docs.md -o openstatus.1` (updates the manpage).
+- [x] Verified that `--force` flag entry appears in both `openstatus-docs.md` and `openstatus.1`.
+- [x] `go build ./... && go vet ./... && go test ./...` all green.
 
-### Phase 9 — Submit
+### Phase 9 — Submit ✅
 
-- [ ] Push the branch.
-- [ ] Open PR. Title suggestion: `terraform generate: sync with provider v0.2 (open_telemetry, ms_teams, ip access, theme/locales, --force)`.
+- [x] Push the branch. _(Pushed `feat/tf-generate-sync-v0.2` to origin via `jj git push --bookmark feat/tf-generate-sync-v0.2 --allow-new`.)_
+- [ ] Open PR. Title suggestion: `terraform generate: sync with provider v0.2 (open_telemetry, ms_teams, ip access, theme/locales, --force)`. _(Author to open — GitHub provided: https://github.com/openstatusHQ/cli/pull/new/feat/tf-generate-sync-v0.2)_
 - [ ] PR description: bullet list of user-visible changes; include "Closes #…" if upstream has tracking issues; call out the two correctness fixes (webhook headers, IP access type) since they affect real users.
 - [ ] Watch CI; address review feedback.
 - [ ] Merge strategy is the author's call (repo allows squash, merge, rebase).

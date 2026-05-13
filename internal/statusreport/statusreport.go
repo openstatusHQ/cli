@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/status_report/v1/status_reportv1connect"
+	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
 	"github.com/openstatusHQ/cli/internal/api"

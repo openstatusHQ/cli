@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	status_pagev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_page/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/status_page/v1/status_pagev1connect"
+	status_pagev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_page/v1"
 	"github.com/fatih/color"
 	"github.com/logrusorgru/aurora/v4"
 	"github.com/olekukonko/tablewriter"

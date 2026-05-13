@@ -196,4 +196,3 @@ func Test_getMonitorInfo(t *testing.T) {
 		}
 	})
 }
-

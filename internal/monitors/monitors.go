@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
+	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"connectrpc.com/connect"
 	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/config"
@@ -533,9 +533,9 @@ type TCPRunResult struct {
 
 func MonitorsCmd() *cli.Command {
 	monitorsCmd := cli.Command{
-		Name:  "monitors",
-		Usage: "Manage your monitors",
-		Aliases:   []string{"m"},
+		Name:    "monitors",
+		Usage:   "Manage your monitors",
+		Aliases: []string{"m"},
 		Commands: []*cli.Command{
 			GetMonitorsApplyCmd(),
 			GetMonitorCreateCmd(),

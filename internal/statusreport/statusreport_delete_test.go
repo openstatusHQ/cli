@@ -25,7 +25,7 @@ func Test_DeleteStatusReport(t *testing.T) {
 			},
 		}
 
-		err := statusreport.DeleteStatusReportWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"test-token", "")
+		err := statusreport.DeleteStatusReportWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-token", "")
 		if err == nil {
 			t.Error("Expected error for empty report ID, got nil")
 		}
@@ -56,7 +56,7 @@ func Test_DeleteStatusReport(t *testing.T) {
 			},
 		}
 
-		err := statusreport.DeleteStatusReportWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"test-token", "123")
+		err := statusreport.DeleteStatusReportWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-token", "123")
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
@@ -78,7 +78,7 @@ func Test_DeleteStatusReport(t *testing.T) {
 			},
 		}
 
-		err := statusreport.DeleteStatusReportWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"test-token", "999")
+		err := statusreport.DeleteStatusReportWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-token", "999")
 		if err == nil {
 			t.Error("Expected error for not found, got nil")
 		}

@@ -8,8 +8,8 @@ import (
 	"os"
 	"strconv"
 
-	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
+	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
@@ -146,7 +146,7 @@ func GetMonitorCreateCmd() *cli.Command {
 		Hidden:          true,
 		HideHelp:        true,
 		HideHelpCommand: true,
-		Description: "Create the monitors defined in the openstatus.yaml file",
+		Description:     "Create the monitors defined in the openstatus.yaml file",
 		UsageText: `openstatus monitors create
   openstatus monitors create --config custom.yaml -y`,
 

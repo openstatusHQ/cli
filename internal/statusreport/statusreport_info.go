@@ -7,14 +7,14 @@ import (
 	"os"
 	"strings"
 
-	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/status_report/v1/status_reportv1connect"
-	"github.com/openstatusHQ/cli/internal/auth"
-	output "github.com/openstatusHQ/cli/internal/cli"
+	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
 	"github.com/logrusorgru/aurora/v4"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
+	"github.com/openstatusHQ/cli/internal/auth"
+	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/urfave/cli/v3"
 )
 

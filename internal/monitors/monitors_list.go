@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
-	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
+	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
+	"github.com/fatih/color"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
-	"github.com/fatih/color"
 	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
 )

@@ -57,7 +57,7 @@ type Request struct {
 }
 
 type OpenTelemetryConfig struct {
-	Endpoint string `json:"endpoint,omitempty" ,yaml:"endpoint,omitempty"`
+	Endpoint string            `json:"endpoint,omitempty" ,yaml:"endpoint,omitempty"`
 	Headers  map[string]string `json:"headers,omitempty" ,yaml:"headers,omitempty"`
 }
 

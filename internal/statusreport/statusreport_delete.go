@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"os"
 
-	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/status_report/v1/status_reportv1connect"
+	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/urfave/cli/v3"
@@ -38,8 +38,8 @@ func DeleteStatusReportWithHTTPClient(ctx context.Context, httpClient *http.Clie
 
 func GetStatusReportDeleteCmd() *cli.Command {
 	return &cli.Command{
-		Name:      "delete",
-		Usage:     "Delete a status report",
+		Name:  "delete",
+		Usage: "Delete a status report",
 		UsageText: `openstatus status-report delete <ReportID>
   openstatus status-report delete 12345 -y`,
 		Flags: []cli.Flag{

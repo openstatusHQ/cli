@@ -3,8 +3,8 @@ package wizard
 import (
 	"context"
 
-	status_pagev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_page/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/status_page/v1/status_pagev1connect"
+	status_pagev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_page/v1"
 	"connectrpc.com/connect"
 	"github.com/openstatusHQ/cli/internal/api"
 	output "github.com/openstatusHQ/cli/internal/cli"

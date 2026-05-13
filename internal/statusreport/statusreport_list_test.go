@@ -36,7 +36,7 @@ func Test_ListStatusReports(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := statusreport.ListStatusReportsWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"test-token", "", 0)
+		err := statusreport.ListStatusReportsWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-token", "", 0)
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
@@ -58,7 +58,7 @@ func Test_ListStatusReports(t *testing.T) {
 			},
 		}
 
-		err := statusreport.ListStatusReportsWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"test-token", "", 0)
+		err := statusreport.ListStatusReportsWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-token", "", 0)
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
@@ -80,7 +80,7 @@ func Test_ListStatusReports(t *testing.T) {
 			},
 		}
 
-		err := statusreport.ListStatusReportsWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"test-token", "investigating", 0)
+		err := statusreport.ListStatusReportsWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-token", "investigating", 0)
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
@@ -98,7 +98,7 @@ func Test_ListStatusReports(t *testing.T) {
 			},
 		}
 
-		err := statusreport.ListStatusReportsWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"test-token", "invalid", 0)
+		err := statusreport.ListStatusReportsWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-token", "invalid", 0)
 		if err == nil {
 			t.Error("Expected error for invalid status, got nil")
 		}
@@ -120,7 +120,7 @@ func Test_ListStatusReports(t *testing.T) {
 			},
 		}
 
-		err := statusreport.ListStatusReportsWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"test-token", "", 0)
+		err := statusreport.ListStatusReportsWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-token", "", 0)
 		if err == nil {
 			t.Error("Expected error, got nil")
 		}

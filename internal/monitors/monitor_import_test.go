@@ -42,7 +42,7 @@ func Test_ExportMonitor(t *testing.T) {
 		defer os.Remove("openstatus.lock")
 		outputFile.Close()
 
-		err = monitors.ExportMonitorWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"test-api-key", outputFile.Name())
+		err = monitors.ExportMonitorWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-api-key", outputFile.Name())
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}
@@ -81,7 +81,7 @@ func Test_ExportMonitor(t *testing.T) {
 		defer os.Remove("openstatus.lock")
 		outputFile.Close()
 
-		err = monitors.ExportMonitorWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"test-api-key", outputFile.Name())
+		err = monitors.ExportMonitorWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-api-key", outputFile.Name())
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}
@@ -103,7 +103,7 @@ func Test_ExportMonitor(t *testing.T) {
 			},
 		}
 
-		err := monitors.ExportMonitorWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"invalid-key", "output.yaml")
+		err := monitors.ExportMonitorWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "invalid-key", "output.yaml")
 		if err == nil {
 			t.Error("Expected error for non-200 status, got nil")
 		}
@@ -133,7 +133,7 @@ func Test_ExportMonitor(t *testing.T) {
 		defer os.Remove("openstatus.lock")
 		outputFile.Close()
 
-		err = monitors.ExportMonitorWithHTTPClient(context.Background(), interceptor.GetHTTPClient(),"test-api-key", outputFile.Name())
+		err = monitors.ExportMonitorWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-api-key", outputFile.Name())
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}

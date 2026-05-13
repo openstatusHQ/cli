@@ -24,7 +24,7 @@ func NewApp() *cli.Command {
 		Name:                  "openstatus",
 		Suggest:               true,
 		EnableShellCompletion: true,
-		Usage: "Manage status pages, monitors, and incidents from the terminal",
+		Usage:                 "Manage status pages, monitors, and incidents from the terminal",
 		Description: `OpenStatus CLI lets you manage your status pages and uptime monitors
 from the command line. Report and track incidents, define monitors as code,
 and run on-demand checks.
@@ -40,7 +40,7 @@ Get started:
   openstatus run                  Run synthetic tests
 
 https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
-		Version:     "v1.0.5",
+		Version: "v1.1.0",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "json",

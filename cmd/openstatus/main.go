@@ -1,8 +1,8 @@
 package main
 
 import (
-	cmd "github.com/openstatusHQ/cli/internal/cmd"
 	"github.com/joho/godotenv"
+	cmd "github.com/openstatusHQ/cli/internal/cmd"
 	"log"
 )
 

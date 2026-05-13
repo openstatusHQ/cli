@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"os"
 
-	maintenancev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/maintenance/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/maintenance/v1/maintenancev1connect"
+	maintenancev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/maintenance/v1"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/urfave/cli/v3"
@@ -38,8 +38,8 @@ func DeleteMaintenanceWithHTTPClient(ctx context.Context, httpClient *http.Clien
 
 func GetMaintenanceDeleteCmd() *cli.Command {
 	return &cli.Command{
-		Name:      "delete",
-		Usage:     "Delete a maintenance window",
+		Name:  "delete",
+		Usage: "Delete a maintenance window",
 		UsageText: `openstatus maintenance delete <MaintenanceID>
   openstatus maintenance delete 12345 -y`,
 		Flags: []cli.Flag{

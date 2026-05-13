@@ -89,4 +89,3 @@ func RemoveToken() error {
 	}
 	return nil
 }
-

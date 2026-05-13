@@ -8,8 +8,8 @@ import (
 	"os"
 	"strconv"
 
-	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
+	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/config"
@@ -276,8 +276,8 @@ func ExportMonitorWithHTTPClient(ctx context.Context, httpClient *http.Client, a
 
 func GetMonitorImportCmd() *cli.Command {
 	monitorImportCmd := cli.Command{
-		Name:        "import",
-		Usage:       "Import all your monitors",
+		Name:  "import",
+		Usage: "Import all your monitors",
 		UsageText: `openstatus monitors import
   openstatus monitors import --output monitors.yaml`,
 		Description: "Import all your monitors from your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.",

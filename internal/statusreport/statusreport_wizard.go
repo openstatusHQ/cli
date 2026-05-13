@@ -334,4 +334,3 @@ func runAddUpdateWizard(ctx context.Context, apiKey string, prefilled *addUpdate
 
 	return &inputs, nil
 }
-

@@ -503,15 +503,14 @@ This is the largest phase. Land in one commit (per Q7) but write it incrementall
 - [x] `internal/terraform/generate_test.go` — `TestGenerateNotificationsFile_UnknownProviderSkipped`.
 - [x] `go test ./internal/terraform/...` green.
 
-### Phase 6 — CLI ergonomics (commit 6: `feat(terraform): --force flag and terraform init -upgrade hint`)
+### Phase 6 — CLI ergonomics (commit 6: `feat(terraform): --force flag and terraform init -upgrade hint`) ✅
 
-- [ ] `internal/terraform/generate.go` — add `&cli.BoolFlag{Name: "force", Aliases: []string{"f"}, Usage: "Overwrite existing files in --output-dir"}` to `GetTerraformGenerateCmd().Flags`.
-- [ ] `internal/terraform/generate.go` — after `apiKey` resolution and before `MkdirAll`, if `!cmd.Bool("force")`, stat each of `provider.tf`, `monitors.tf`, `notifications.tf`, `status_pages.tf`, `imports.tf` in `outputDir`; if any exists, return `cli.Exit("refusing to overwrite existing file %s; pass --force to replace", 1)`.
-- [ ] `internal/terraform/generate.go` — extend `printSummary` with a final line: `Note: provider version pinned to ~> 0.2. Run 'terraform init -upgrade' if you previously ran this command.`
-- [ ] `internal/terraform/generate_test.go` (or new `internal/terraform/cli_test.go`) — `TestGenerateForceFlag_RefusesExisting`: create a temp dir with one of the target filenames; run the cmd's Action; assert exit error mentions the filename.
-- [ ] Same test file — `TestGenerateForceFlag_OverwritesWithForce`: same fixture, but `--force` set → succeeds.
-- [ ] Same test file — `TestPrintSummary_IncludesInitUpgradeHint` (capture stdout via redirection): assert the hint substring is present.
-- [ ] `go test ./internal/terraform/...` green.
+- [x] `internal/terraform/generate.go` — add `&cli.BoolFlag{Name: "force", Aliases: []string{"f"}, Usage: "Overwrite existing files in --output-dir"}` to `GetTerraformGenerateCmd().Flags`.
+- [x] `internal/terraform/generate.go` — extract `checkExistingFiles(outputDir, force)` helper; invoke before `MkdirAll`. Stats each of `provider.tf`, `monitors.tf`, `notifications.tf`, `status_pages.tf`, `imports.tf` and returns an error mentioning the filename if any exists.
+- [x] `internal/terraform/generate.go` — extend `printSummary` with the `terraform init -upgrade` hint.
+- [x] `internal/terraform/cli_test.go` — `TestCheckExistingFiles_RefusesExisting` / `_OverwritesWithForce` / `_EmptyDir` / `_NonexistentDir`.
+- [x] `internal/terraform/cli_test.go` — `TestPrintSummary_IncludesInitUpgradeHint` (captures stdout).
+- [x] `go test ./internal/terraform/...` green.
 
 ### Phase 7 — Opt-in smoke test (commit 7: `test(terraform): add terraform-validate smoke test behind build tag`)
 

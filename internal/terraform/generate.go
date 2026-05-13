@@ -11,6 +11,14 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
+var generatedFileNames = []string{
+	"provider.tf",
+	"monitors.tf",
+	"notifications.tf",
+	"status_pages.tf",
+	"imports.tf",
+}
+
 func GetTerraformGenerateCmd() *cli.Command {
 	return &cli.Command{
 		Name:      "generate",
@@ -30,6 +38,11 @@ func GetTerraformGenerateCmd() *cli.Command {
 				Value:   "./openstatus-terraform/",
 				Aliases: []string{"o"},
 			},
+			&cli.BoolFlag{
+				Name:    "force",
+				Usage:   "Overwrite existing files in --output-dir",
+				Aliases: []string{"f"},
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
@@ -38,6 +51,9 @@ func GetTerraformGenerateCmd() *cli.Command {
 			}
 
 			outputDir := cmd.String("output-dir")
+			if err := checkExistingFiles(outputDir, cmd.Bool("force")); err != nil {
+				return cli.Exit(err.Error(), 1)
+			}
 			if err := os.MkdirAll(outputDir, 0755); err != nil {
 				return cli.Exit(fmt.Sprintf("failed to create output directory: %v", err), 1)
 			}
@@ -89,6 +105,18 @@ func GetTerraformGenerateCmd() *cli.Command {
 	}
 }
 
+func checkExistingFiles(outputDir string, force bool) error {
+	if force {
+		return nil
+	}
+	for _, name := range generatedFileNames {
+		if _, err := os.Stat(filepath.Join(outputDir, name)); err == nil {
+			return fmt.Errorf("refusing to overwrite existing file %s; pass --force to replace", name)
+		}
+	}
+	return nil
+}
+
 func writeFile(path string, content []byte) error {
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
@@ -131,4 +159,5 @@ func printSummary(outputDir string, data *WorkspaceData) {
 	fmt.Printf("  cd %s\n", outputDir)
 	fmt.Printf("  terraform init\n")
 	fmt.Printf("  terraform plan\n")
+	fmt.Printf("\nNote: provider version pinned to ~> 0.2. Run 'terraform init -upgrade' if you previously ran this command.\n")
 }

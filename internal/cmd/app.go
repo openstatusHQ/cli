@@ -6,6 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/urfave/cli/v3"
+
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/login"
 	"github.com/openstatusHQ/cli/internal/maintenance"
@@ -16,7 +18,6 @@ import (
 	"github.com/openstatusHQ/cli/internal/statusreport"
 	"github.com/openstatusHQ/cli/internal/terraform"
 	"github.com/openstatusHQ/cli/internal/whoami"
-	"github.com/urfave/cli/v3"
 )
 
 func NewApp() *cli.Command {

@@ -9,8 +9,10 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-var nonAlphanumRegexp = regexp.MustCompile(`[^a-z0-9]+`)
-var multiUnderscoreRegexp = regexp.MustCompile(`_+`)
+var (
+	nonAlphanumRegexp     = regexp.MustCompile(`[^a-z0-9]+`)
+	multiUnderscoreRegexp = regexp.MustCompile(`_+`)
+)
 
 func sanitizeName(name string) string {
 	name = strings.TrimSpace(name)

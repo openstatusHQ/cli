@@ -14,13 +14,14 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/logrusorgru/aurora/v4"
+	"github.com/rodaine/table"
+	"github.com/urfave/cli/v3"
+
 	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/config"
 	"github.com/openstatusHQ/cli/internal/monitors"
-	"github.com/rodaine/table"
-	"github.com/urfave/cli/v3"
 )
 
 type runRegionResult struct {
@@ -37,7 +38,6 @@ type runMonitorResult struct {
 
 // MonitorTrigger triggers a monitor run and returns the results without printing.
 func MonitorTrigger(ctx context.Context, httpClient *http.Client, apiKey string, monitorId string) (runMonitorResult, error) {
-
 	if monitorId == "" {
 		return runMonitorResult{}, fmt.Errorf("monitor ID is required")
 	}
@@ -51,7 +51,7 @@ func MonitorTrigger(ctx context.Context, httpClient *http.Client, apiKey string,
 
 	payload := strings.NewReader("{}")
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, payload)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, payload)
 	if err != nil {
 		return runMonitorResult{}, err
 	}

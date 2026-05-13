@@ -7,10 +7,11 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/urfave/cli/v3"
+
 	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
-	"github.com/urfave/cli/v3"
 )
 
 type Whoami struct {
@@ -22,7 +23,7 @@ type Whoami struct {
 func GetWhoamiCmd(ctx context.Context, httpClient *http.Client, apiKey string, s *output.Spinner) error {
 	url := fmt.Sprintf("%s/whoami", api.APIBaseURL)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -87,7 +88,8 @@ Displays the workspace name, slug, and plan.`,
 				Usage:   "OpenStatus API Access Token",
 				Aliases: []string{"t"},
 				Sources: cli.EnvVars("OPENSTATUS_API_TOKEN"),
-			}},
+			},
+		},
 	}
 	return &whoamiCmd
 }

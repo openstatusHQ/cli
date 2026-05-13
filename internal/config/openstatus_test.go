@@ -37,7 +37,7 @@ func Test_ReadOpenStatus(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if _, err := f.Write([]byte(openstatusConfig)); err != nil {
+		if _, err := f.WriteString(openstatusConfig); err != nil {
 			t.Fatal(err)
 		}
 		if err := f.Close(); err != nil {
@@ -114,7 +114,7 @@ func Test_ReadOpenStatus_FollowRedirects(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if _, err := f.Write([]byte(yaml)); err != nil {
+		if _, err := f.WriteString(yaml); err != nil {
 			t.Fatal(err)
 		}
 		if err := f.Close(); err != nil {
@@ -157,7 +157,7 @@ func Test_ReadOpenStatus_FollowRedirects(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if _, err := f.Write([]byte(yaml)); err != nil {
+		if _, err := f.WriteString(yaml); err != nil {
 			t.Fatal(err)
 		}
 		if err := f.Close(); err != nil {
@@ -272,7 +272,7 @@ func Test_ReadOpenStatus_NoStatePollution(t *testing.T) {
   request:
     method: GET
     url: https://a.example.com
-`), 0600); err != nil {
+`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -288,7 +288,7 @@ func Test_ReadOpenStatus_NoStatePollution(t *testing.T) {
   request:
     method: POST
     url: https://b.example.com
-`), 0600); err != nil {
+`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

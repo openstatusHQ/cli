@@ -1,9 +1,11 @@
 package main
 
 import (
-	"github.com/joho/godotenv"
-	cmd "github.com/openstatusHQ/cli/internal/cmd"
 	"log"
+
+	"github.com/joho/godotenv"
+
+	cmd "github.com/openstatusHQ/cli/internal/cmd"
 )
 
 func main() {

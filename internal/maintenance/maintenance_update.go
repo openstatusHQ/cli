@@ -9,9 +9,10 @@ import (
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/maintenance/v1/maintenancev1connect"
 	maintenancev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/maintenance/v1"
+	"github.com/urfave/cli/v3"
+
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
-	"github.com/urfave/cli/v3"
 )
 
 func UpdateMaintenance(ctx context.Context, client maintenancev1connect.MaintenanceServiceClient, id, title, message, from, to string, componentIds []string, hasTitle, hasMessage, hasFrom, hasTo, hasComponents bool) error {

@@ -8,6 +8,7 @@ import (
 
 	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
 	"github.com/charmbracelet/huh"
+
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/statuspage"
 	"github.com/openstatusHQ/cli/internal/wizard"

@@ -16,10 +16,11 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
-	"github.com/openstatusHQ/cli/internal/auth"
-	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
+
+	"github.com/openstatusHQ/cli/internal/auth"
+	output "github.com/openstatusHQ/cli/internal/cli"
 )
 
 type statusPageDetail struct {

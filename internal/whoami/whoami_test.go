@@ -59,7 +59,6 @@ func Test_getWhoami(t *testing.T) {
 	})
 
 	t.Run("Should return error", func(t *testing.T) {
-
 		interceptor := &interceptorHTTPClient{
 			f: func(req *http.Request) (*http.Response, error) {
 				return &http.Response{

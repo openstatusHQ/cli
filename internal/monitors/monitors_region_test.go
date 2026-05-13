@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
+
 	"github.com/openstatusHQ/cli/internal/config"
 	"github.com/openstatusHQ/cli/internal/monitors"
 )

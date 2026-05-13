@@ -6,9 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/urfave/cli/v3"
+
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
-	"github.com/urfave/cli/v3"
 )
 
 var generatedFileNames = []string{
@@ -54,7 +55,7 @@ func GetTerraformGenerateCmd() *cli.Command {
 			if err := checkExistingFiles(outputDir, cmd.Bool("force")); err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
-			if err := os.MkdirAll(outputDir, 0755); err != nil {
+			if err := os.MkdirAll(outputDir, 0o755); err != nil {
 				return cli.Exit(fmt.Sprintf("failed to create output directory: %v", err), 1)
 			}
 
@@ -118,7 +119,7 @@ func checkExistingFiles(outputDir string, force bool) error {
 }
 
 func writeFile(path string, content []byte) error {
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o644)
 	if err != nil {
 		return err
 	}

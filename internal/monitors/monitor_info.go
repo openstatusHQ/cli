@@ -14,10 +14,11 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
+	"github.com/urfave/cli/v3"
+
 	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
-	"github.com/urfave/cli/v3"
 )
 
 type MonitorInfoOutput struct {
@@ -167,7 +168,6 @@ func newBlueprintTable() *tablewriter.Table {
 }
 
 func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string, monitorId string, timeRange monitorv1.TimeRange, timeRangeStr string, s *output.Spinner) error {
-
 	if monitorId == "" {
 		output.StopSpinner(s)
 		fmt.Fprintln(os.Stderr, "Usage: openstatus monitors info <monitor-id>")

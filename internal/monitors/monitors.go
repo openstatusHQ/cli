@@ -9,9 +9,10 @@ import (
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"connectrpc.com/connect"
+	"github.com/urfave/cli/v3"
+
 	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/config"
-	"github.com/urfave/cli/v3"
 )
 
 func NewMonitorClient(apiKey string) monitorv1connect.MonitorServiceClient {

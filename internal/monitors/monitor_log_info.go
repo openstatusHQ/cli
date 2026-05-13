@@ -13,9 +13,10 @@ import (
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"github.com/fatih/color"
 	"github.com/logrusorgru/aurora/v4"
+	"github.com/urfave/cli/v3"
+
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
-	"github.com/urfave/cli/v3"
 )
 
 type responseLogDetailOutput struct {

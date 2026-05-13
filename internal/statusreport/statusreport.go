@@ -8,8 +8,9 @@ import (
 	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
-	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/urfave/cli/v3"
+
+	"github.com/openstatusHQ/cli/internal/api"
 )
 
 func NewStatusReportClient(apiKey string) status_reportv1connect.StatusReportServiceClient {

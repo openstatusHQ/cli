@@ -29,7 +29,7 @@ func HandleFormError(err error) error {
 func BuildSummary(lines [][2]string) string {
 	var sb strings.Builder
 	for _, line := range lines {
-		sb.WriteString(fmt.Sprintf("  %s: %s\n", line[0], line[1]))
+		fmt.Fprintf(&sb, "  %s: %s\n", line[0], line[1])
 	}
 	return sb.String()
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
 	"github.com/openstatusHQ/cli/internal/config"
 )
 
@@ -43,7 +44,7 @@ func Test_getMonitorTrigger(t *testing.T) {
 		}
 		defer os.Remove(f.Name()) // clean up
 
-		if _, err := f.Write([]byte(lockfile)); err != nil {
+		if _, err := f.WriteString(lockfile); err != nil {
 			t.Fatal(err)
 		}
 		if err := f.Close(); err != nil {
@@ -89,7 +90,6 @@ func Test_getMonitorTrigger(t *testing.T) {
 	})
 
 	t.Run("No Lock file", func(t *testing.T) {
-
 		out, err := config.ReadLockFile("doesnotexist")
 		if err != nil {
 			t.Fatal(err)

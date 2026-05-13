@@ -11,6 +11,7 @@ import (
 	notificationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/notification/v1"
 	status_pagev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_page/v1"
 	"connectrpc.com/connect"
+
 	"github.com/openstatusHQ/cli/internal/api"
 )
 

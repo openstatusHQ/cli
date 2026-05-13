@@ -3,8 +3,9 @@ package main
 import (
 	"os"
 
-	cmd "github.com/openstatusHQ/cli/internal/cmd"
 	docs "github.com/urfave/cli-docs/v3"
+
+	cmd "github.com/openstatusHQ/cli/internal/cmd"
 )
 
 func main() {

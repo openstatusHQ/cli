@@ -10,7 +10,7 @@ import (
 
 func TestCheckExistingFiles_RefusesExisting(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "monitors.tf"), []byte("existing"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "monitors.tf"), []byte("existing"), 0o644); err != nil {
 		t.Fatalf("seeding fixture: %v", err)
 	}
 
@@ -28,7 +28,7 @@ func TestCheckExistingFiles_RefusesExisting(t *testing.T) {
 
 func TestCheckExistingFiles_OverwritesWithForce(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "monitors.tf"), []byte("existing"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "monitors.tf"), []byte("existing"), 0o644); err != nil {
 		t.Fatalf("seeding fixture: %v", err)
 	}
 

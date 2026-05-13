@@ -7,11 +7,12 @@ import (
 	"os"
 	"strings"
 
+	"github.com/urfave/cli/v3"
+	"golang.org/x/term"
+
 	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	"github.com/openstatusHQ/cli/internal/whoami"
-	"github.com/urfave/cli/v3"
-	"golang.org/x/term"
 )
 
 func LoginCmd() *cli.Command {

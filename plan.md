@@ -472,16 +472,16 @@ Order matters within this phase: add helpers first, then call them.
 - [x] `internal/terraform/generate_test.go` — extend `TestGenerateStatusPagesFile` (or add a focused test) to include a group with `DefaultOpen: true` and assert the line.
 - [x] `go test ./internal/terraform/...` green.
 
-### Phase 4 — Monitor `open_telemetry` (commit 4: `feat(terraform): emit open_telemetry block on HTTP/TCP/DNS monitors`)
+### Phase 4 — Monitor `open_telemetry` (commit 4: `feat(terraform): emit open_telemetry block on HTTP/TCP/DNS monitors`) ✅
 
-- [ ] `internal/terraform/hcl.go` — modify the existing `writeRegions` helper to sort regions alphabetically (per §2b — set semantics, deterministic output).
-- [ ] `internal/terraform/hcl.go` — new helper `writeOpenTelemetry(b *hclwrite.Body, ot *monitorv1.OpenTelemetryConfig)` per Q2: skip iff `ot == nil` OR (`endpoint == "" && len(headers) == 0`); inside, emit `endpoint` only when non-empty; emit one `headers { key/value }` block per header (no sort — preserves API order per §2b).
-- [ ] Call `writeOpenTelemetry(b, m.GetOpenTelemetry())` in each of: HTTP monitor branch (`hcl.go:109` block, after the assertion writers), TCP monitor branch (`hcl.go:151`, after `writeRegions`), DNS monitor branch (`hcl.go:180`, after `record_assertions`).
-- [ ] `internal/terraform/generate_test.go` — `TestGenerateMonitorsFile_HTTP_OpenTelemetry`: endpoint + one header → block present.
-- [ ] `internal/terraform/generate_test.go` — `TestGenerateMonitorsFile_TCP_OpenTelemetry` (also adds first TCP-only test).
-- [ ] `internal/terraform/generate_test.go` — `TestGenerateMonitorsFile_DNS_OpenTelemetry`.
-- [ ] `internal/terraform/generate_test.go` — `TestGenerateMonitorsFile_OpenTelemetry_SkippedWhenEmpty`: `OpenTelemetryConfig{Endpoint:"", Headers:nil}` → no block.
-- [ ] `go test ./internal/terraform/...` green.
+- [x] `internal/terraform/hcl.go` — modify the existing `writeRegions` helper to sort regions alphabetically (per §2b — set semantics, deterministic output).
+- [x] `internal/terraform/hcl.go` — new helper `writeOpenTelemetry(b *hclwrite.Body, ot *monitorv1.OpenTelemetryConfig)` per Q2: skip iff `ot == nil` OR (`endpoint == "" && len(headers) == 0`); inside, emit `endpoint` only when non-empty; emit one `headers { key/value }` block per header (no sort — preserves API order per §2b).
+- [x] Call `writeOpenTelemetry(b, m.GetOpenTelemetry())` in each of: HTTP monitor branch (`hcl.go:109` block, after the assertion writers), TCP monitor branch (`hcl.go:151`, after `writeRegions`), DNS monitor branch (`hcl.go:180`, after `record_assertions`).
+- [x] `internal/terraform/generate_test.go` — `TestGenerateMonitorsFile_HTTP_OpenTelemetry`: endpoint + one header → block present.
+- [x] `internal/terraform/generate_test.go` — `TestGenerateMonitorsFile_TCP_OpenTelemetry` (also adds first TCP-only test).
+- [x] `internal/terraform/generate_test.go` — `TestGenerateMonitorsFile_DNS_OpenTelemetry`.
+- [x] `internal/terraform/generate_test.go` — `TestGenerateMonitorsFile_OpenTelemetry_SkippedWhenEmpty`: `OpenTelemetryConfig{Endpoint:"", Headers:nil}` → no block.
+- [x] `go test ./internal/terraform/...` green.
 
 ### Phase 5 — Notification refactor + fixes (commit 5: `fix(terraform): notification provider type from data oneof; ms_teams; webhook headers attribute; monitor_ids traversals`)
 

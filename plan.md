@@ -466,11 +466,11 @@ Order matters within this phase: add helpers first, then call them.
 - [x] `internal/terraform/generate_test.go` — `TestGenerateStatusPagesFile_ThemeLocaleAllowIndex`: dark + fr default_locale + locales=[en,fr] + allow_index=true → all four emitted; default page → none emitted.
 - [x] `go test ./internal/terraform/...` green.
 
-### Phase 3 — Component group `default_open` (commit 3: `feat(terraform): emit default_open on status page component groups`)
+### Phase 3 — Component group `default_open` (commit 3: `feat(terraform): emit default_open on status page component groups`) ✅
 
-- [ ] `internal/terraform/hcl.go` — component-group branch in `GenerateStatusPagesFile`: `if grp.GetDefaultOpen() { gb.SetAttributeValue("default_open", cty.BoolVal(true)) }`.
-- [ ] `internal/terraform/generate_test.go` — extend `TestGenerateStatusPagesFile` (or add a focused test) to include a group with `DefaultOpen: true` and assert the line.
-- [ ] `go test ./internal/terraform/...` green.
+- [x] `internal/terraform/hcl.go` — component-group branch in `GenerateStatusPagesFile`: `if grp.GetDefaultOpen() { gb.SetAttributeValue("default_open", cty.BoolVal(true)) }`.
+- [x] `internal/terraform/generate_test.go` — extend `TestGenerateStatusPagesFile` (or add a focused test) to include a group with `DefaultOpen: true` and assert the line.
+- [x] `go test ./internal/terraform/...` green.
 
 ### Phase 4 — Monitor `open_telemetry` (commit 4: `feat(terraform): emit open_telemetry block on HTTP/TCP/DNS monitors`)
 

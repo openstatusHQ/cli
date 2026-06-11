@@ -77,6 +77,52 @@ func statusColor(s string) string {
 	}
 }
 
+func impactToSDK(s string) (status_reportv1.PageComponentImpact, error) {
+	switch s {
+	case "operational":
+		return status_reportv1.PageComponentImpact_PAGE_COMPONENT_IMPACT_OPERATIONAL, nil
+	case "degraded", "degraded_performance":
+		return status_reportv1.PageComponentImpact_PAGE_COMPONENT_IMPACT_DEGRADED_PERFORMANCE, nil
+	case "partial_outage":
+		return status_reportv1.PageComponentImpact_PAGE_COMPONENT_IMPACT_PARTIAL_OUTAGE, nil
+	case "major_outage":
+		return status_reportv1.PageComponentImpact_PAGE_COMPONENT_IMPACT_MAJOR_OUTAGE, nil
+	default:
+		return status_reportv1.PageComponentImpact_PAGE_COMPONENT_IMPACT_UNSPECIFIED,
+			fmt.Errorf("invalid impact %q: must be one of operational, degraded, partial_outage, major_outage", s)
+	}
+}
+
+func impactToString(i status_reportv1.PageComponentImpact) string {
+	switch i {
+	case status_reportv1.PageComponentImpact_PAGE_COMPONENT_IMPACT_OPERATIONAL:
+		return "operational"
+	case status_reportv1.PageComponentImpact_PAGE_COMPONENT_IMPACT_DEGRADED_PERFORMANCE:
+		return "degraded"
+	case status_reportv1.PageComponentImpact_PAGE_COMPONENT_IMPACT_PARTIAL_OUTAGE:
+		return "partial_outage"
+	case status_reportv1.PageComponentImpact_PAGE_COMPONENT_IMPACT_MAJOR_OUTAGE:
+		return "major_outage"
+	default:
+		return ""
+	}
+}
+
+func impactColor(s string) string {
+	switch s {
+	case "operational":
+		return color.GreenString(s)
+	case "degraded":
+		return color.YellowString(s)
+	case "partial_outage":
+		return color.MagentaString(s)
+	case "major_outage":
+		return color.RedString(s)
+	default:
+		return s
+	}
+}
+
 func StatusReportCmd() *cli.Command {
 	return &cli.Command{
 		Name:    "status-report",

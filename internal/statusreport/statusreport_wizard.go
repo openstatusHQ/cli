@@ -44,6 +44,15 @@ func statusSelectOptions() []huh.Option[string] {
 	}
 }
 
+func impactSelectOptions() []huh.Option[string] {
+	return []huh.Option[string]{
+		huh.NewOption("Operational", "operational"),
+		huh.NewOption("Degraded performance", "degraded"),
+		huh.NewOption("Partial outage", "partial_outage"),
+		huh.NewOption("Major outage", "major_outage"),
+	}
+}
+
 func fetchStatusReports(ctx context.Context, apiKey string) ([]*status_reportv1.StatusReportSummary, error) {
 	client := NewStatusReportClient(apiKey)
 

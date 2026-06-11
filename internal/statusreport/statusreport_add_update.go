@@ -16,8 +16,17 @@ import (
 	output "github.com/openstatusHQ/cli/internal/cli"
 )
 
-func AddStatusReportUpdate(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, reportId, status, message, date string, notify bool, s *output.Spinner) error {
-	if reportId == "" {
+type AddStatusReportUpdateParams struct {
+	ReportID         string
+	Status           string
+	Message          string
+	Date             string
+	ComponentImpacts []*status_reportv1.ComponentImpact
+	Notify           bool
+}
+
+func AddStatusReportUpdate(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, p AddStatusReportUpdateParams, s *output.Spinner) error {
+	if p.ReportID == "" {
 		output.StopSpinner(s)
 		fmt.Fprintln(os.Stderr, "Usage: openstatus status-report add-update <report-id> --status <status> --message <message>")
 		fmt.Fprintln(os.Stderr, "")
@@ -25,45 +34,49 @@ func AddStatusReportUpdate(ctx context.Context, client status_reportv1connect.St
 		return fmt.Errorf("report ID is required")
 	}
 
-	sdkStatus, err := statusToSDK(status)
+	sdkStatus, err := statusToSDK(p.Status)
 	if err != nil {
 		output.StopSpinner(s)
 		return err
 	}
 
 	req := &status_reportv1.AddStatusReportUpdateRequest{
-		StatusReportId: reportId,
+		StatusReportId: p.ReportID,
 		Status:         sdkStatus,
-		Message:        message,
+		Message:        p.Message,
 	}
 
-	if date != "" {
-		req.SetDate(date)
+	if p.Date != "" {
+		req.SetDate(p.Date)
 	}
 
-	if notify {
+	if len(p.ComponentImpacts) > 0 {
+		req.SetComponentImpacts(p.ComponentImpacts)
+	}
+
+	if p.Notify {
 		req.SetNotify(true)
 	}
 
 	resp, err := client.AddStatusReportUpdate(ctx, req)
 	output.StopSpinner(s)
 	if err != nil {
-		return output.FormatError(err, "status-report", reportId)
+		return output.FormatError(err, "status-report", p.ReportID)
 	}
 
 	report := resp.GetStatusReport()
 	fmt.Printf("Status report %s updated to %s\n", report.GetId(), statusColor(statusToString(report.GetStatus())))
 
-	if status == "resolved" {
+	if p.Status == "resolved" {
 		fmt.Println("Report resolved.")
 	}
 
 	return nil
 }
 
-func AddStatusReportUpdateWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, reportId, status, message, date string, notify bool) error {
+func AddStatusReportUpdateWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, p AddStatusReportUpdateParams) error {
 	client := NewStatusReportClientWithHTTPClient(httpClient, apiKey)
-	return AddStatusReportUpdate(ctx, client, reportId, status, message, date, notify, nil)
+	return AddStatusReportUpdate(ctx, client, p, nil)
 }
 
 func GetStatusReportAddUpdateCmd() *cli.Command {
@@ -138,16 +151,13 @@ func GetStatusReportAddUpdateCmd() *cli.Command {
 
 			s := output.StartSpinner("Adding update...")
 			client := NewStatusReportClient(apiKey)
-			err = AddStatusReportUpdate(
-				ctx,
-				client,
-				inputs.ReportID,
-				inputs.Status,
-				inputs.Message,
-				date,
-				inputs.Notify,
-				s,
-			)
+			err = AddStatusReportUpdate(ctx, client, AddStatusReportUpdateParams{
+				ReportID: inputs.ReportID,
+				Status:   inputs.Status,
+				Message:  inputs.Message,
+				Date:     date,
+				Notify:   inputs.Notify,
+			}, s)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}

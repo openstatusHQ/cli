@@ -31,7 +31,12 @@ func Test_AddStatusReportUpdate(t *testing.T) {
 
 		err := statusreport.AddStatusReportUpdateWithHTTPClient(
 			context.Background(), interceptor.GetHTTPClient(), "test-token",
-			"1", "identified", "Root cause found", "2026-03-20T10:30:00Z", false,
+			statusreport.AddStatusReportUpdateParams{
+				ReportID: "1",
+				Status:   "identified",
+				Message:  "Root cause found",
+				Date:     "2026-03-20T10:30:00Z",
+			},
 		)
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
@@ -56,7 +61,12 @@ func Test_AddStatusReportUpdate(t *testing.T) {
 
 		err := statusreport.AddStatusReportUpdateWithHTTPClient(
 			context.Background(), interceptor.GetHTTPClient(), "test-token",
-			"1", "resolved", "Issue resolved", "", true,
+			statusreport.AddStatusReportUpdateParams{
+				ReportID: "1",
+				Status:   "resolved",
+				Message:  "Issue resolved",
+				Notify:   true,
+			},
 		)
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
@@ -77,7 +87,11 @@ func Test_AddStatusReportUpdate(t *testing.T) {
 
 		err := statusreport.AddStatusReportUpdateWithHTTPClient(
 			context.Background(), interceptor.GetHTTPClient(), "test-token",
-			"1", "invalid", "Message", "", false,
+			statusreport.AddStatusReportUpdateParams{
+				ReportID: "1",
+				Status:   "invalid",
+				Message:  "Message",
+			},
 		)
 		if err == nil {
 			t.Error("Expected error for invalid status, got nil")
@@ -98,7 +112,10 @@ func Test_AddStatusReportUpdate(t *testing.T) {
 
 		err := statusreport.AddStatusReportUpdateWithHTTPClient(
 			context.Background(), interceptor.GetHTTPClient(), "test-token",
-			"", "investigating", "Message", "", false,
+			statusreport.AddStatusReportUpdateParams{
+				Status:  "investigating",
+				Message: "Message",
+			},
 		)
 		if err == nil {
 			t.Error("Expected error for empty report ID, got nil")
@@ -123,7 +140,11 @@ func Test_AddStatusReportUpdate(t *testing.T) {
 
 		err := statusreport.AddStatusReportUpdateWithHTTPClient(
 			context.Background(), interceptor.GetHTTPClient(), "test-token",
-			"999", "investigating", "Message", "", false,
+			statusreport.AddStatusReportUpdateParams{
+				ReportID: "999",
+				Status:   "investigating",
+				Message:  "Message",
+			},
 		)
 		if err == nil {
 			t.Error("Expected error, got nil")

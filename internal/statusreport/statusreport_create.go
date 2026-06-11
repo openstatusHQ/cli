@@ -15,25 +15,40 @@ import (
 	output "github.com/openstatusHQ/cli/internal/cli"
 )
 
-func CreateStatusReport(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, title, status, message, date, pageId string, componentIds []string, notify bool) (string, error) {
-	sdkStatus, err := statusToSDK(status)
+type CreateStatusReportParams struct {
+	Title            string
+	Status           string
+	Message          string
+	Date             string
+	PageID           string
+	ComponentIDs     []string
+	ComponentImpacts []*status_reportv1.ComponentImpact
+	Notify           bool
+}
+
+func CreateStatusReport(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, p CreateStatusReportParams) (string, error) {
+	sdkStatus, err := statusToSDK(p.Status)
 	if err != nil {
 		return "", err
 	}
 
 	req := &status_reportv1.CreateStatusReportRequest{
-		Title:   title,
+		Title:   p.Title,
 		Status:  sdkStatus,
-		Message: message,
-		Date:    date,
-		PageId:  pageId,
+		Message: p.Message,
+		Date:    p.Date,
+		PageId:  p.PageID,
 	}
 
-	if len(componentIds) > 0 {
-		req.SetPageComponentIds(componentIds)
+	if len(p.ComponentIDs) > 0 {
+		req.SetPageComponentIds(p.ComponentIDs)
 	}
 
-	if notify {
+	if len(p.ComponentImpacts) > 0 {
+		req.SetComponentImpacts(p.ComponentImpacts)
+	}
+
+	if p.Notify {
 		req.SetNotify(true)
 	}
 
@@ -45,9 +60,9 @@ func CreateStatusReport(ctx context.Context, client status_reportv1connect.Statu
 	return resp.GetStatusReport().GetId(), nil
 }
 
-func CreateStatusReportWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, title, status, message, date, pageId string, componentIds []string, notify bool) (string, error) {
+func CreateStatusReportWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, p CreateStatusReportParams) (string, error) {
 	client := NewStatusReportClientWithHTTPClient(httpClient, apiKey)
-	return CreateStatusReport(ctx, client, title, status, message, date, pageId, componentIds, notify)
+	return CreateStatusReport(ctx, client, p)
 }
 
 func GetStatusReportCreateCmd() *cli.Command {
@@ -141,17 +156,15 @@ func GetStatusReportCreateCmd() *cli.Command {
 
 			client := NewStatusReportClient(apiKey)
 			s := output.StartSpinner("Creating status report...")
-			id, err := CreateStatusReport(
-				ctx,
-				client,
-				inputs.Title,
-				inputs.Status,
-				inputs.Message,
-				date,
-				inputs.PageID,
-				inputs.ComponentIDs,
-				inputs.Notify,
-			)
+			id, err := CreateStatusReport(ctx, client, CreateStatusReportParams{
+				Title:        inputs.Title,
+				Status:       inputs.Status,
+				Message:      inputs.Message,
+				Date:         date,
+				PageID:       inputs.PageID,
+				ComponentIDs: inputs.ComponentIDs,
+				Notify:       inputs.Notify,
+			})
 			output.StopSpinner(s)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)

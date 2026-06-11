@@ -34,8 +34,13 @@ func Test_CreateStatusReport(t *testing.T) {
 
 		id, err := statusreport.CreateStatusReportWithHTTPClient(
 			context.Background(), interceptor.GetHTTPClient(), "test-token",
-			"API Outage", "investigating", "Investigating the issue",
-			"2026-03-20T10:00:00Z", "page-1", nil, false,
+			statusreport.CreateStatusReportParams{
+				Title:   "API Outage",
+				Status:  "investigating",
+				Message: "Investigating the issue",
+				Date:    "2026-03-20T10:00:00Z",
+				PageID:  "page-1",
+			},
 		)
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
@@ -63,8 +68,15 @@ func Test_CreateStatusReport(t *testing.T) {
 
 		id, err := statusreport.CreateStatusReportWithHTTPClient(
 			context.Background(), interceptor.GetHTTPClient(), "test-token",
-			"DB Issue", "investigating", "Looking into DB issues",
-			"2026-03-20T10:00:00Z", "page-1", []string{"c1", "c2"}, true,
+			statusreport.CreateStatusReportParams{
+				Title:        "DB Issue",
+				Status:       "investigating",
+				Message:      "Looking into DB issues",
+				Date:         "2026-03-20T10:00:00Z",
+				PageID:       "page-1",
+				ComponentIDs: []string{"c1", "c2"},
+				Notify:       true,
+			},
 		)
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
@@ -88,8 +100,13 @@ func Test_CreateStatusReport(t *testing.T) {
 
 		_, err := statusreport.CreateStatusReportWithHTTPClient(
 			context.Background(), interceptor.GetHTTPClient(), "test-token",
-			"Title", "invalid-status", "Message",
-			"2026-03-20T10:00:00Z", "page-1", nil, false,
+			statusreport.CreateStatusReportParams{
+				Title:   "Title",
+				Status:  "invalid-status",
+				Message: "Message",
+				Date:    "2026-03-20T10:00:00Z",
+				PageID:  "page-1",
+			},
 		)
 		if err == nil {
 			t.Error("Expected error for invalid status, got nil")
@@ -114,8 +131,13 @@ func Test_CreateStatusReport(t *testing.T) {
 
 		_, err := statusreport.CreateStatusReportWithHTTPClient(
 			context.Background(), interceptor.GetHTTPClient(), "test-token",
-			"Title", "investigating", "Message",
-			"2026-03-20T10:00:00Z", "page-1", nil, false,
+			statusreport.CreateStatusReportParams{
+				Title:   "Title",
+				Status:  "investigating",
+				Message: "Message",
+				Date:    "2026-03-20T10:00:00Z",
+				PageID:  "page-1",
+			},
 		)
 		if err == nil {
 			t.Error("Expected error, got nil")

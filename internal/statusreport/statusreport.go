@@ -123,6 +123,45 @@ func impactColor(s string) string {
 	}
 }
 
+func currentImpacts(updates []*status_reportv1.StatusReportUpdate) map[string]status_reportv1.PageComponentImpact {
+	if len(updates) == 0 {
+		return nil
+	}
+	out := make(map[string]status_reportv1.PageComponentImpact)
+	for _, u := range updates {
+		for _, ci := range u.GetComponentImpacts() {
+			out[ci.GetPageComponentId()] = ci.GetImpact()
+		}
+	}
+	return out
+}
+
+func affectedOrder(report *status_reportv1.StatusReport) []string {
+	if report == nil {
+		return nil
+	}
+	seen := make(map[string]struct{})
+	out := make([]string, 0, len(report.GetPageComponentIds()))
+	for _, id := range report.GetPageComponentIds() {
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		out = append(out, id)
+	}
+	for _, u := range report.GetUpdates() {
+		for _, ci := range u.GetComponentImpacts() {
+			id := ci.GetPageComponentId()
+			if _, ok := seen[id]; ok {
+				continue
+			}
+			seen[id] = struct{}{}
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
 func StatusReportCmd() *cli.Command {
 	return &cli.Command{
 		Name:    "status-report",

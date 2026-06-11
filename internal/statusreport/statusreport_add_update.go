@@ -67,11 +67,64 @@ func AddStatusReportUpdate(ctx context.Context, client status_reportv1connect.St
 	report := resp.GetStatusReport()
 	fmt.Printf("Status report %s updated to %s\n", report.GetId(), statusColor(statusToString(report.GetStatus())))
 
+	printImpactsDiff(report)
+
 	if p.Status == "resolved" {
 		fmt.Println("Report resolved.")
 	}
 
 	return nil
+}
+
+func printImpactsDiff(report *status_reportv1.StatusReport) {
+	updates := report.GetUpdates()
+	if len(updates) == 0 {
+		return
+	}
+
+	now := currentImpacts(updates)
+	was := currentImpacts(updates[:len(updates)-1])
+
+	type diffRow struct {
+		id   string
+		from string
+		to   string
+	}
+	var rows []diffRow
+	for _, id := range affectedOrder(report) {
+		nowImpact, hasNow := now[id]
+		wasImpact, hasWas := was[id]
+		if !hasNow {
+			continue
+		}
+		if hasWas && wasImpact == nowImpact {
+			continue
+		}
+		fromStr := "(none)"
+		if hasWas {
+			fromStr = impactToString(wasImpact)
+		}
+		rows = append(rows, diffRow{
+			id:   id,
+			from: fromStr,
+			to:   impactToString(nowImpact),
+		})
+	}
+
+	if len(rows) == 0 {
+		return
+	}
+
+	fmt.Println("Impacts changed:")
+	maxID := 0
+	for _, r := range rows {
+		if len(r.id) > maxID {
+			maxID = len(r.id)
+		}
+	}
+	for _, r := range rows {
+		fmt.Printf("  %-*s  %s → %s\n", maxID, r.id, r.from, impactColor(r.to))
+	}
 }
 
 func AddStatusReportUpdateWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, p AddStatusReportUpdateParams) error {
@@ -103,6 +156,10 @@ func GetStatusReportAddUpdateCmd() *cli.Command {
 				Name:  "date",
 				Usage: "Date for the update (RFC 3339 format, defaults to now)",
 			},
+			&cli.StringSliceFlag{
+				Name:  "impact",
+				Usage: "Per-component impact, repeatable: --impact <component_id>=<level> (level: operational, degraded, partial_outage, major_outage). Can also add new affected components.",
+			},
 			&cli.BoolFlag{
 				Name:  "notify",
 				Usage: "Notify subscribers about this update",
@@ -120,6 +177,12 @@ func GetStatusReportAddUpdateCmd() *cli.Command {
 				Message:  cmd.String("message"),
 				Notify:   cmd.Bool("notify"),
 			}
+
+			impacts, err := parseImpactsFlag(cmd.StringSlice("impact"))
+			if err != nil {
+				return cli.Exit(err.Error(), 1)
+			}
+			inputs.ComponentImpacts = impactsToMap(impacts)
 
 			needsWizard := inputs.ReportID == "" || inputs.Status == "" ||
 				inputs.Message == ""
@@ -149,14 +212,20 @@ func GetStatusReportAddUpdateCmd() *cli.Command {
 				date = time.Now().UTC().Format(time.RFC3339)
 			}
 
+			componentImpacts, err := mapToImpacts(inputs.ComponentImpacts, nil)
+			if err != nil {
+				return cli.Exit(err.Error(), 1)
+			}
+
 			s := output.StartSpinner("Adding update...")
 			client := NewStatusReportClient(apiKey)
 			err = AddStatusReportUpdate(ctx, client, AddStatusReportUpdateParams{
-				ReportID: inputs.ReportID,
-				Status:   inputs.Status,
-				Message:  inputs.Message,
-				Date:     date,
-				Notify:   inputs.Notify,
+				ReportID:         inputs.ReportID,
+				Status:           inputs.Status,
+				Message:          inputs.Message,
+				Date:             date,
+				ComponentImpacts: componentImpacts,
+				Notify:           inputs.Notify,
 			}, s)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)

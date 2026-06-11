@@ -365,6 +365,62 @@ func runAddUpdateWizard(ctx context.Context, apiKey string, prefilled *addUpdate
 		inputs.ReportName = inputs.ReportID
 	}
 
+	s = output.StartSpinner("Fetching status report details...")
+	client := NewStatusReportClient(apiKey)
+	getReq := &status_reportv1.GetStatusReportRequest{}
+	getReq.SetId(inputs.ReportID)
+	detail, err := client.GetStatusReport(ctx, getReq)
+	output.StopSpinner(s)
+	if err != nil {
+		return nil, output.FormatError(err, "status-report", inputs.ReportID)
+	}
+	report := detail.GetStatusReport()
+
+	prior := currentImpacts(report.GetUpdates())
+	inputs.priorImpacts = make(map[string]string, len(prior))
+	for id, level := range prior {
+		inputs.priorImpacts[id] = impactToString(level)
+	}
+
+	affectedIDs := affectedOrder(report)
+
+	var selectedComponents []string
+	if len(affectedIDs) > 0 {
+		compOptions := make([]huh.Option[string], 0, len(affectedIDs))
+		for _, id := range affectedIDs {
+			currentLabel := "—"
+			if v, ok := prior[id]; ok && v != status_reportv1.PageComponentImpact_PAGE_COMPONENT_IMPACT_UNSPECIFIED {
+				currentLabel = impactToString(v)
+			}
+			compOptions = append(compOptions, huh.NewOption(id+" (current: "+currentLabel+")", id))
+		}
+		form2 := huh.NewForm(
+			huh.NewGroup(
+				huh.NewMultiSelect[string]().
+					Title("Components to re-impact (leave empty to skip)").
+					Options(compOptions...).
+					Value(&selectedComponents),
+			),
+		).WithTheme(huh.ThemeBase())
+		if err := form2.Run(); err != nil {
+			return nil, wizard.HandleFormError(err)
+		}
+	}
+
+	if inputs.ComponentImpacts == nil {
+		inputs.ComponentImpacts = make(map[string]string, len(selectedComponents))
+	}
+	for _, id := range selectedComponents {
+		if _, ok := inputs.ComponentImpacts[id]; ok {
+			continue
+		}
+		if prev, ok := inputs.priorImpacts[id]; ok && prev != "" {
+			inputs.ComponentImpacts[id] = prev
+		} else {
+			inputs.ComponentImpacts[id] = "partial_outage"
+		}
+	}
+
 	var fields []huh.Field
 
 	if inputs.Status == "" {
@@ -381,6 +437,16 @@ func runAddUpdateWizard(ctx context.Context, apiKey string, prefilled *addUpdate
 			Value(&inputs.Message))
 	}
 
+	impactPickers := make(map[string]*string, len(selectedComponents))
+	for _, id := range selectedComponents {
+		current := inputs.ComponentImpacts[id]
+		impactPickers[id] = &current
+		fields = append(fields, huh.NewSelect[string]().
+			Title("Impact for "+id).
+			Options(impactSelectOptions()...).
+			Value(impactPickers[id]))
+	}
+
 	fields = append(fields, huh.NewConfirm().
 		Title("Notify subscribers?").
 		Value(&inputs.Notify))
@@ -393,6 +459,21 @@ func runAddUpdateWizard(ctx context.Context, apiKey string, prefilled *addUpdate
 				{"Status", inputs.Status},
 				{"Message", inputs.Message},
 			}
+			if len(selectedComponents) > 0 {
+				rows := make([]string, 0, len(selectedComponents))
+				for _, id := range selectedComponents {
+					prev := inputs.priorImpacts[id]
+					if prev == "" {
+						prev = "(none)"
+					}
+					next := ""
+					if impactPickers[id] != nil {
+						next = *impactPickers[id]
+					}
+					rows = append(rows, id+": "+prev+" → "+next)
+				}
+				lines = append(lines, [2]string{"Impacts", strings.Join(rows, ", ")})
+			}
 			notifyStr := "no"
 			if inputs.Notify {
 				notifyStr = "yes"
@@ -401,7 +482,7 @@ func runAddUpdateWizard(ctx context.Context, apiKey string, prefilled *addUpdate
 			return wizard.BuildSummary(lines)
 		}, &inputs)
 
-	form2 := huh.NewForm(
+	form3 := huh.NewForm(
 		huh.NewGroup(fields...),
 		huh.NewGroup(
 			summaryNote,
@@ -411,8 +492,12 @@ func runAddUpdateWizard(ctx context.Context, apiKey string, prefilled *addUpdate
 		),
 	).WithTheme(huh.ThemeBase())
 
-	if err := form2.Run(); err != nil {
+	if err := form3.Run(); err != nil {
 		return nil, wizard.HandleFormError(err)
+	}
+
+	for id, ptr := range impactPickers {
+		inputs.ComponentImpacts[id] = *ptr
 	}
 
 	if !inputs.Confirmed {

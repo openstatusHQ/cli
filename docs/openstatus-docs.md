@@ -328,16 +328,17 @@ $ openstatus [GLOBAL FLAGS] status-report create [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                                                      | Type   | Default value |  Environment variables |
-|-----------------------------|------------------------------------------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                      | string |               | `OPENSTATUS_API_TOKEN` |
-| `--title="…"`               | Title of the status report                                       | string |               |         *none*         |
-| `--status="…"`              | Initial status (investigating, identified, monitoring, resolved) | string |               |         *none*         |
-| `--message="…"`             | Initial message describing the incident                          | string |               |         *none*         |
-| `--page-id="…"`             | Status page ID to associate with this report                     | string |               |         *none*         |
-| `--component-ids="…"`       | Comma-separated page component IDs                               | string |               |         *none*         |
-| `--notify`                  | Notify subscribers about this status report                      | bool   |    `false`    |         *none*         |
-| `--date="…"`                | Date when the event occurred (RFC 3339 format, defaults to now)  | string |               |         *none*         |
+| Name                        | Description                                                                                                                                                             | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                                                                                                                             | string |               | `OPENSTATUS_API_TOKEN` |
+| `--title="…"`               | Title of the status report                                                                                                                                              | string |               |         *none*         |
+| `--status="…"`              | Initial status (investigating, identified, monitoring, resolved)                                                                                                        | string |               |         *none*         |
+| `--message="…"`             | Initial message describing the incident                                                                                                                                 | string |               |         *none*         |
+| `--page-id="…"`             | Status page ID to associate with this report                                                                                                                            | string |               |         *none*         |
+| `--component-ids="…"`       | Comma-separated page component IDs (legacy; mutually exclusive with --impact)                                                                                           | string |               |         *none*         |
+| `--impact="…"`              | Per-component impact, repeatable: --impact <component_id>=<level> (level: operational, degraded, partial_outage, major_outage). Mutually exclusive with --component-ids | string |               |         *none*         |
+| `--notify`                  | Notify subscribers about this status report                                                                                                                             | bool   |    `false`    |         *none*         |
+| `--date="…"`                | Date when the event occurred (RFC 3339 format, defaults to now)                                                                                                         | string |               |         *none*         |
 
 ### `status-report update` subcommand
 
@@ -393,13 +394,14 @@ $ openstatus [GLOBAL FLAGS] status-report add-update [COMMAND FLAGS] [ARGUMENTS.
 
 The following flags are supported:
 
-| Name                        | Description                                                  | Type   | Default value |  Environment variables |
-|-----------------------------|--------------------------------------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                  | string |               | `OPENSTATUS_API_TOKEN` |
-| `--status="…"`              | New status (investigating, identified, monitoring, resolved) | string |               |         *none*         |
-| `--message="…"`             | Message describing what changed                              | string |               |         *none*         |
-| `--date="…"`                | Date for the update (RFC 3339 format, defaults to now)       | string |               |         *none*         |
-| `--notify`                  | Notify subscribers about this update                         | bool   |    `false`    |         *none*         |
+| Name                        | Description                                                                                                                                                          | Type   | Default value |  Environment variables |
+|-----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                                                                                                                          | string |               | `OPENSTATUS_API_TOKEN` |
+| `--status="…"`              | New status (investigating, identified, monitoring, resolved)                                                                                                         | string |               |         *none*         |
+| `--message="…"`             | Message describing what changed                                                                                                                                      | string |               |         *none*         |
+| `--date="…"`                | Date for the update (RFC 3339 format, defaults to now)                                                                                                               | string |               |         *none*         |
+| `--impact="…"`              | Per-component impact, repeatable: --impact <component_id>=<level> (level: operational, degraded, partial_outage, major_outage). Can also add new affected components | string |               |         *none*         |
+| `--notify`                  | Notify subscribers about this update                                                                                                                                 | bool   |    `false`    |         *none*         |
 
 ### `maintenance` command (aliases: `mt`)
 

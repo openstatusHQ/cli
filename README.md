@@ -43,6 +43,14 @@ openstatus monitors trigger 123
 # Report an incident
 openstatus status-report create --title "API degradation" --status investigating --page-id 1
 
+# Report an incident with per-component impact
+openstatus sr create --title "API down" --status investigating --message "Investigating" \
+  --page-id 1 --impact comp_api=major_outage --impact comp_db=degraded
+
+# Update an incident and change impact
+openstatus sr add-update sr_42 --status monitoring --message "Recovering" \
+  --impact comp_api=degraded,comp_db=operational
+
 # Run synthetic tests from config
 openstatus run
 ```

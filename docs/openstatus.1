@@ -860,7 +860,7 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(14.3n) lw(32.5n) lw(3.9n) cw(7.4n) cw(11.8n).
+lw(8.3n) lw(48.3n) lw(2.3n) cw(4.3n) cw(6.9n).
 T{
 Name
 T}@T{
@@ -926,7 +926,20 @@ T}
 T{
 \f[CR]\-\-component\-ids=\(dq\&...\(dq\f[R]
 T}@T{
-Comma\-separated page component IDs
+Comma\-separated page component IDs (legacy; mutually exclusive with
+\(enimpact)
+T}@T{
+string
+T}@T{
+T}@T{
+\f[I]none\f[R]
+T}
+T{
+\f[CR]\-\-impact=\(dq\&...\(dq\f[R]
+T}@T{
+Per\-component impact, repeatable: \(enimpact = (level: operational,
+degraded, partial_outage, major_outage).
+Mutually exclusive with \(encomponent\-ids
 T}@T{
 string
 T}@T{
@@ -1088,7 +1101,7 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(14.7n) lw(31.4n) lw(4.1n) cw(7.6n) cw(12.2n).
+lw(8.4n) lw(48.0n) lw(2.3n) cw(4.3n) cw(6.9n).
 T{
 Name
 T}@T{
@@ -1135,6 +1148,18 @@ T{
 \f[CR]\-\-date=\(dq\&...\(dq\f[R]
 T}@T{
 Date for the update (RFC 3339 format, defaults to now)
+T}@T{
+string
+T}@T{
+T}@T{
+\f[I]none\f[R]
+T}
+T{
+\f[CR]\-\-impact=\(dq\&...\(dq\f[R]
+T}@T{
+Per\-component impact, repeatable: \(enimpact = (level: operational,
+degraded, partial_outage, major_outage).
+Can also add new affected components
 T}@T{
 string
 T}@T{

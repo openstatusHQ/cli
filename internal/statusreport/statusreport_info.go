@@ -20,19 +20,26 @@ import (
 )
 
 type statusReportDetail struct {
-	ID         string               `json:"id"`
-	Title      string               `json:"title"`
-	Status     string               `json:"status"`
-	Components []string             `json:"components,omitempty"`
-	CreatedAt  string               `json:"created_at"`
-	UpdatedAt  string               `json:"updated_at"`
-	Updates    []statusReportUpdate `json:"updates,omitempty"`
+	ID             string                `json:"id"`
+	Title          string                `json:"title"`
+	Status         string                `json:"status"`
+	Components     []string              `json:"components,omitempty"`
+	CurrentImpacts []componentImpactJSON `json:"current_impacts,omitempty"`
+	CreatedAt      string                `json:"created_at"`
+	UpdatedAt      string                `json:"updated_at"`
+	Updates        []statusReportUpdate  `json:"updates,omitempty"`
 }
 
 type statusReportUpdate struct {
-	Date    string `json:"date"`
-	Status  string `json:"status"`
-	Message string `json:"message"`
+	Date    string                `json:"date"`
+	Status  string                `json:"status"`
+	Message string                `json:"message"`
+	Impacts []componentImpactJSON `json:"impacts,omitempty"`
+}
+
+type componentImpactJSON struct {
+	ComponentID string `json:"component_id"`
+	Impact      string `json:"impact"`
 }
 
 func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, reportId string, s *output.Spinner) error {
@@ -54,6 +61,9 @@ func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.Stat
 
 	report := resp.GetStatusReport()
 
+	affected := affectedOrder(report)
+	current := currentImpacts(report.GetUpdates())
+
 	if output.IsJSONOutput() {
 		detail := statusReportDetail{
 			ID:         report.GetId(),
@@ -63,12 +73,25 @@ func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.Stat
 			CreatedAt:  report.GetCreatedAt(),
 			UpdatedAt:  report.GetUpdatedAt(),
 		}
+		for _, id := range affected {
+			detail.CurrentImpacts = append(detail.CurrentImpacts, componentImpactJSON{
+				ComponentID: id,
+				Impact:      impactToString(current[id]),
+			})
+		}
 		for _, u := range report.GetUpdates() {
-			detail.Updates = append(detail.Updates, statusReportUpdate{
+			ue := statusReportUpdate{
 				Date:    u.GetDate(),
 				Status:  statusToString(u.GetStatus()),
 				Message: u.GetMessage(),
-			})
+			}
+			for _, ci := range u.GetComponentImpacts() {
+				ue.Impacts = append(ue.Impacts, componentImpactJSON{
+					ComponentID: ci.GetPageComponentId(),
+					Impact:      impactToString(ci.GetImpact()),
+				})
+			}
+			detail.Updates = append(detail.Updates, ue)
 		}
 		return output.PrintJSON(detail)
 	}
@@ -103,17 +126,16 @@ func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.Stat
 		{"ID", report.GetId()},
 		{"Title", report.GetTitle()},
 		{"Status", statusColor(statusToString(report.GetStatus()))},
+		{"Created", output.FormatTimestamp(report.GetCreatedAt())},
+		{"Updated", output.FormatTimestamp(report.GetUpdatedAt())},
 	}
-
-	if len(report.GetPageComponentIds()) > 0 {
-		data = append(data, []string{"Components", strings.Join(report.GetPageComponentIds(), ", ")})
-	}
-
-	data = append(data, []string{"Created", output.FormatTimestamp(report.GetCreatedAt())})
-	data = append(data, []string{"Updated", output.FormatTimestamp(report.GetUpdatedAt())})
 
 	table.Bulk(data)
 	table.Render()
+
+	if len(affected) > 0 {
+		printAffectedSection(report, affected, current)
+	}
 
 	updates := report.GetUpdates()
 	if len(updates) == 0 {
@@ -128,9 +150,53 @@ func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.Stat
 			statusColor(statusToString(u.GetStatus())),
 			u.GetMessage(),
 		)
+		if len(u.GetComponentImpacts()) > 0 {
+			parts := make([]string, 0, len(u.GetComponentImpacts()))
+			for _, ci := range u.GetComponentImpacts() {
+				parts = append(parts, ci.GetPageComponentId()+"="+impactColor(impactToString(ci.GetImpact())))
+			}
+			fmt.Printf("    → %s\n", strings.Join(parts, ", "))
+		}
 	}
 
 	return nil
+}
+
+func printAffectedSection(report *status_reportv1.StatusReport, affected []string, current map[string]status_reportv1.PageComponentImpact) {
+	fmt.Println(aurora.Bold("\nAffected:"))
+
+	priorPerComponent := make(map[string]status_reportv1.PageComponentImpact)
+	finalPerComponent := make(map[string]status_reportv1.PageComponentImpact)
+	for _, u := range report.GetUpdates() {
+		for _, ci := range u.GetComponentImpacts() {
+			id := ci.GetPageComponentId()
+			if prev, ok := finalPerComponent[id]; ok && prev != ci.GetImpact() {
+				priorPerComponent[id] = prev
+			}
+			finalPerComponent[id] = ci.GetImpact()
+		}
+	}
+
+	maxID := 0
+	for _, id := range affected {
+		if len(id) > maxID {
+			maxID = len(id)
+		}
+	}
+
+	for _, id := range affected {
+		impact := current[id]
+		token := impactToString(impact)
+		display := "—"
+		if token != "" {
+			display = impactColor(token)
+		}
+		line := fmt.Sprintf("  %-*s  %s", maxID, id, display)
+		if prior, ok := priorPerComponent[id]; ok {
+			line += "  ← was " + impactToString(prior)
+		}
+		fmt.Println(line)
+	}
 }
 
 func GetStatusReportInfoWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, reportId string) error {

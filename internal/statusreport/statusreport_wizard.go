@@ -15,24 +15,66 @@ import (
 )
 
 type createInputs struct {
-	PageID         string
-	PageName       string
-	Title          string
-	Status         string
-	Message        string
-	ComponentIDs   []string
-	componentNames map[string]string
-	Notify         bool
-	Confirmed      bool
+	PageID           string
+	PageName         string
+	Title            string
+	Status           string
+	Message          string
+	ComponentIDs     []string
+	ComponentImpacts map[string]string
+	componentNames   map[string]string
+	Notify           bool
+	Confirmed        bool
 }
 
 type addUpdateInputs struct {
-	ReportID   string
-	ReportName string
-	Status     string
-	Message    string
-	Notify     bool
-	Confirmed  bool
+	ReportID         string
+	ReportName       string
+	Status           string
+	Message          string
+	ComponentImpacts map[string]string
+	priorImpacts     map[string]string
+	Notify           bool
+	Confirmed        bool
+}
+
+func impactsToMap(in []*status_reportv1.ComponentImpact) map[string]string {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(in))
+	for _, ci := range in {
+		out[ci.GetPageComponentId()] = impactToString(ci.GetImpact())
+	}
+	return out
+}
+
+func mapToImpacts(in map[string]string, order []string) ([]*status_reportv1.ComponentImpact, error) {
+	if len(in) == 0 {
+		return nil, nil
+	}
+	out := make([]*status_reportv1.ComponentImpact, 0, len(in))
+	if len(order) == 0 {
+		order = make([]string, 0, len(in))
+		for k := range in {
+			order = append(order, k)
+		}
+	}
+	for _, id := range order {
+		token, ok := in[id]
+		if !ok {
+			continue
+		}
+		level, err := impactToSDK(token)
+		if err != nil {
+			return nil, err
+		}
+		ci := &status_reportv1.ComponentImpact{}
+		ci.SetPageComponentId(id)
+		ci.SetImpact(level)
+		out = append(out, ci)
+	}
+	return out, nil
 }
 
 func statusSelectOptions() []huh.Option[string] {
@@ -134,8 +176,6 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 		return nil, err
 	}
 
-	var fields []huh.Field
-
 	if len(components) > 0 {
 		groupMap := make(map[string]string, len(groups))
 		for _, g := range groups {
@@ -155,13 +195,29 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 			compOptions = append(compOptions, huh.NewOption(label, c.GetId()))
 		}
 
-		if len(prefilled.ComponentIDs) == 0 {
-			fields = append(fields, huh.NewMultiSelect[string]().
-				Title("Components").
-				Options(compOptions...).
-				Value(&inputs.ComponentIDs))
+		if len(prefilled.ComponentIDs) == 0 && len(prefilled.ComponentImpacts) == 0 {
+			form2 := huh.NewForm(
+				huh.NewGroup(
+					huh.NewMultiSelect[string]().
+						Title("Components").
+						Options(compOptions...).
+						Value(&inputs.ComponentIDs),
+				),
+			).WithTheme(huh.ThemeBase())
+			if err := form2.Run(); err != nil {
+				return nil, wizard.HandleFormError(err)
+			}
 		}
 	}
+
+	if len(inputs.ComponentImpacts) == 0 && len(inputs.ComponentIDs) > 0 {
+		inputs.ComponentImpacts = make(map[string]string, len(inputs.ComponentIDs))
+		for _, id := range inputs.ComponentIDs {
+			inputs.ComponentImpacts[id] = "partial_outage"
+		}
+	}
+
+	var fields []huh.Field
 
 	if inputs.Title == "" {
 		fields = append(fields, huh.NewInput().
@@ -184,6 +240,20 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 			Value(&inputs.Message))
 	}
 
+	impactPickers := make(map[string]*string, len(inputs.ComponentIDs))
+	for _, id := range inputs.ComponentIDs {
+		current := inputs.ComponentImpacts[id]
+		impactPickers[id] = &current
+		label := inputs.componentNames[id]
+		if label == "" {
+			label = id
+		}
+		fields = append(fields, huh.NewSelect[string]().
+			Title("Impact for "+label).
+			Options(impactSelectOptions()...).
+			Value(impactPickers[id]))
+	}
+
 	fields = append(fields, huh.NewConfirm().
 		Title("Notify subscribers?").
 		Value(&inputs.Notify))
@@ -195,15 +265,19 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 				{"Page", inputs.PageName},
 			}
 			if len(inputs.ComponentIDs) > 0 {
-				names := make([]string, 0, len(inputs.ComponentIDs))
+				rows := make([]string, 0, len(inputs.ComponentIDs))
 				for _, id := range inputs.ComponentIDs {
-					if name, ok := inputs.componentNames[id]; ok {
-						names = append(names, name)
-					} else {
-						names = append(names, id)
+					name := inputs.componentNames[id]
+					if name == "" {
+						name = id
 					}
+					token := ""
+					if impactPickers[id] != nil {
+						token = *impactPickers[id]
+					}
+					rows = append(rows, name+" ("+token+")")
 				}
-				lines = append(lines, [2]string{"Components", strings.Join(names, ", ")})
+				lines = append(lines, [2]string{"Components", strings.Join(rows, ", ")})
 			}
 			lines = append(lines,
 				[2]string{"Title", inputs.Title},
@@ -218,7 +292,7 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 			return wizard.BuildSummary(lines)
 		}, &inputs)
 
-	form2 := huh.NewForm(
+	form3 := huh.NewForm(
 		huh.NewGroup(fields...),
 		huh.NewGroup(
 			summaryNote,
@@ -228,13 +302,17 @@ func runCreateWizard(ctx context.Context, apiKey string, prefilled *createInputs
 		),
 	).WithTheme(huh.ThemeBase())
 
-	if err := form2.Run(); err != nil {
+	if err := form3.Run(); err != nil {
 		return nil, wizard.HandleFormError(err)
 	}
 
 	if !inputs.Confirmed {
 		fmt.Fprintln(os.Stderr, "Aborted.")
 		os.Exit(130)
+	}
+
+	for id, ptr := range impactPickers {
+		inputs.ComponentImpacts[id] = *ptr
 	}
 
 	return &inputs, nil

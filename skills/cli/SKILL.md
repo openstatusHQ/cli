@@ -1,7 +1,7 @@
 ---
 name: openstatus-cli
 description: |
-  OpenStatus CLI for managing uptime monitors, incident reports, status pages, notifications, maintenance windows, synthetic tests, and ad-hoc global HTTP checks. Use this skill whenever the user wants to monitor a website or API, set up uptime checks, create or manage monitors, report an incident, update a status page, view notifications, schedule maintenance, run synthetic tests, check latency or availability from around the world, run an ad-hoc speed check, define monitors as code, generate Terraform configuration, export to Terraform, or use the openstatus command. Also trigger when the user says "is my site up", "check my endpoint", "speed check", "global latency", "latency from regions", "ad-hoc check", "test from multiple regions", "create a status report", "monitor this URL", "run uptime tests", "set up monitoring", "our API is down", "schedule maintenance", "maintenance window", "planned downtime", "terraform", "generate terraform", "export to terraform", "infrastructure as code", "list notifications", "notification channels", or mentions openstatus in any context. This skill knows the full CLI — commands, flags, config format, and workflows — so Claude can act without guessing.
+  OpenStatus CLI for managing uptime monitors, incident reports, status pages, notifications, maintenance windows, synthetic tests, monitor response logs, and ad-hoc global HTTP checks. Use this skill whenever the user wants to monitor a website or API, set up uptime checks, create or manage monitors, inspect monitor response logs or debug why a check failed, report an incident, update a status page, view notifications, schedule maintenance, run synthetic tests, check latency or availability from around the world, run an ad-hoc speed check, define monitors as code, generate Terraform configuration, export to Terraform, log in or out, or use the openstatus command. Also trigger when the user says "is my site up", "check my endpoint", "speed check", "global latency", "latency from regions", "ad-hoc check", "test from multiple regions", "show monitor logs", "response logs", "why did my monitor fail", "see the failed requests", "create a status report", "set component impact", "monitor this URL", "run uptime tests", "set up monitoring", "our API is down", "schedule maintenance", "maintenance window", "planned downtime", "terraform", "generate terraform", "export to terraform", "infrastructure as code", "list notifications", "notification channels", "log in to openstatus", "save my api token", or mentions openstatus in any context. This skill knows the full CLI — commands, flags, config format, and workflows — so Claude can act without guessing.
 allowed-tools:
   - Bash(openstatus *)
 ---
@@ -20,7 +20,7 @@ Most commands require authentication. Verify with:
 openstatus whoami
 ```
 
-This shows your workspace name, slug, and plan. If not authenticated, run `openstatus login` and paste your API token from the OpenStatus dashboard.
+This shows your workspace name, slug, and plan. If not authenticated, run `openstatus login` and paste your API token from the OpenStatus dashboard. Run `openstatus logout` to remove the saved token.
 
 Token resolution order:
 1. `--access-token` / `-t` flag
@@ -37,6 +37,8 @@ Token resolution order:
 | Sync monitors from config | `monitors apply` | You have an `openstatus.yaml` and want to create/update/delete monitors |
 | List all monitors | `monitors list` | See what monitors exist in the workspace |
 | Get monitor details + metrics | `monitors info <ID>` | Check latency, status, and config for a specific monitor |
+| List monitor response logs | `monitors logs <ID>` | See recent HTTP responses (14-day retention) to debug failures |
+| Get a single log's full detail | `monitors log-info <ID> <LogID>` | Inspect timing phases, response headers, and assertion results for one request |
 | Trigger a monitor now | `monitors trigger <ID>` | Run an on-demand check across all regions |
 | Delete a monitor | `monitors delete <ID>` | Remove a monitor |
 | Export monitors to YAML | `monitors import` | Pull existing monitors into an `openstatus.yaml` + lock file |
@@ -58,8 +60,10 @@ Token resolution order:
 | Run synthetic tests | `run` | Execute on-demand tests for specific monitors |
 | Generate Terraform config | `terraform generate` | Export workspace resources to Terraform HCL files |
 | Check workspace | `whoami` | Verify auth and workspace info |
+| Save API token | `login` | Authenticate — paste your token from the dashboard |
+| Remove saved token | `logout` | Sign out (deletes the saved token) |
 
-Command aliases: `check` = `c`, `monitors` = `m`, `status-report` = `sr`, `status-page` = `sp`, `notification` = `n`, `maintenance` = `mt`, `terraform` = `tf`, `run` = `r`, `whoami` = `w`.
+Command aliases: `check` = `c`, `monitors` = `m`, `status-report` = `sr`, `status-page` = `sp`, `notification` = `n`, `maintenance` = `mt`, `terraform` = `tf` (and `terraform generate` = `gen`), `run` = `r`, `whoami` = `w`. `login` and `logout` have no aliases.
 
 ## Workflows
 
@@ -91,7 +95,7 @@ openstatus check https://openstat.us --json | jq '.summary'
 - `--quiet` silences stdout (errors still print on stderr).
 - Failure rows show `—` for missing latency/status and the server's `message` (e.g. `url not reachable`) in the State column.
 
-**Rate limit:** 3 requests per 60 seconds. On 429 the CLI prints "Rate limited. Retry after Xs." and exits 1 — do not auto-retry in scripts; loop in shell if needed.
+**Rate limit:** 3 requests per 60 seconds. On 429 the CLI prints `Rate limited. Retry after Xs. (3 requests per 60s allowed.)` and exits 1 — do not auto-retry in scripts; loop in shell if needed.
 
 **When NOT to use `check`:**
 
@@ -134,9 +138,11 @@ openstatus status-report create \
   --status investigating \
   --message "We are investigating increased error rates on the API" \
   --page-id 123 \
-  --component-ids "comp-1,comp-2" \
+  --impact comp-1=major_outage --impact comp-2=degraded \
   --notify
 ```
+
+(Or use the legacy `--component-ids "comp-1,comp-2"` instead of `--impact` to mark components affected without a per-component level — the two are mutually exclusive.)
 
 On success, the CLI prints the report ID and suggests the next command:
 ```
@@ -152,9 +158,14 @@ To add updates, run: openstatus status-report add-update 456 --status identified
 | `--status` | yes | `investigating`, `identified`, `monitoring`, or `resolved` |
 | `--message` | yes | Initial message describing the incident |
 | `--page-id` | yes | Status page ID (get it from `status-page list`) |
-| `--component-ids` | no | Comma-separated component IDs in a single string: `"id1,id2"` |
+| `--impact` | no | Per-component impact, repeatable: `--impact <component_id>=<level>`. Level is one of `operational`, `degraded`, `partial_outage`, `major_outage`. Mutually exclusive with `--component-ids`. |
+| `--component-ids` | no | **Legacy.** Comma-separated component IDs in a single string: `"id1,id2"` — marks them all affected without a specific impact level. Prefer `--impact`. Mutually exclusive with `--impact`. |
 | `--notify` | no | Send notification to status page subscribers |
 | `--date` | no | RFC 3339 timestamp (e.g. `2026-03-25T10:00:00Z`), defaults to now (UTC) |
+
+The four impact levels are `operational`, `degraded`, `partial_outage`, `major_outage` (`degraded_performance` is also accepted as an alias for `degraded`). Pass `--impact` once per component, e.g. `--impact comp-1=major_outage --impact comp-2=degraded`.
+
+> **Interactive vs. scripted:** if any required flag (`--title`, `--status`, `--message`, `--page-id`) is missing, the CLI launches an interactive wizard on a terminal. In non-interactive contexts (when `--json` is set or stdin isn't a TTY — i.e. how Claude runs it), it instead errors with `missing required flags: …` and exits 1. Always pass every required flag.
 
 **3. Post updates as you learn more:**
 ```bash
@@ -170,6 +181,7 @@ openstatus status-report add-update 456 \
 |------|----------|-------------|
 | `--status` | yes | New status value |
 | `--message` | yes | Update message |
+| `--impact` | no | Per-component impact, repeatable: `--impact <component_id>=<level>` (`operational`, `degraded`, `partial_outage`, `major_outage`). Can also add newly affected components to the report. |
 | `--notify` | no | Notify subscribers |
 | `--date` | no | RFC 3339 timestamp, defaults to now (UTC) |
 
@@ -254,6 +266,8 @@ Run 'openstatus maintenance info 789' to see details
 
 Status is computed automatically: `scheduled` (before `--from`), `in_progress` (between `--from` and `--to`), `completed` (after `--to`). There is no `--status` flag.
 
+> **Interactive vs. scripted:** like `status-report create`, if any required flag (`--title`, `--message`, `--from`, `--to`, `--page-id`) is missing, the CLI launches an interactive wizard on a terminal but errors with `missing required flags: …` and exits 1 in non-interactive contexts (`--json` set or stdin not a TTY). Pass every required flag when scripting.
+
 **3. Update a maintenance window:**
 ```bash
 openstatus maintenance update <ID> \
@@ -307,13 +321,29 @@ Both approaches run tests in parallel and show latency + status per region.
 **Monitor details with metrics:**
 ```bash
 openstatus monitors info <ID>
+openstatus monitors info <ID> --time-range 7d
 ```
-Shows config, live status per region, and summary metrics (P50/P75/P95/P99 latency). Defaults to last 24h.
+Shows config, live status per region, and summary metrics (P50/P75/P95/P99 latency). `--time-range` accepts `1d` (default), `7d`, or `14d`.
 
 **List monitors (including inactive):**
 ```bash
 openstatus monitors list --all
 ```
+
+**Monitor response logs (debug failures):**
+```bash
+openstatus monitors logs <ID>                                         # recent HTTP responses
+openstatus monitors logs <ID> --limit 10                              # cap results (1-100)
+openstatus monitors logs <ID> --limit 5 --offset 5                    # paginate
+openstatus monitors logs <ID> --from 2026-05-06T00:00:00Z --to 2026-05-07T00:00:00Z   # time window
+```
+Lists HTTP response logs from the 14-day retention window — status code, latency, region, and timestamp per request. Use this to investigate why a monitor failed. `--limit`, `--offset`, `--from`, and `--to` (RFC 3339) are all optional.
+
+**Single log full detail:**
+```bash
+openstatus monitors log-info <ID> <LogID>
+```
+Fetches one HTTP response log with full detail: timing phases (DNS/Connection/TLS/TTFB/Transfer), response headers, and assertion results. Get the `<LogID>` from `monitors logs <ID>`.
 
 **Incident timeline:**
 ```bash
@@ -359,6 +389,8 @@ This creates an `openstatus-terraform/` directory with:
 openstatus terraform generate --output-dir ./infra/openstatus/
 ```
 
+By default `generate` refuses to overwrite any of the `.tf` files it would create if they already exist (it errors with `refusing to overwrite existing file …; pass --force to replace`). Pass `--force` / `-f` to overwrite them. The `generate` subcommand also has the alias `gen`.
+
 **After generating:**
 ```bash
 cd openstatus-terraform
@@ -387,7 +419,8 @@ Use `--json` when you need to parse output programmatically or pipe it to `jq`.
 - **Use `apply`, not `create`** — `monitors apply` is the declarative, idempotent way to manage monitors. `monitors create` exists but `apply` handles creates, updates, and deletes in one command.
 - **Always `--dry-run` first** — preview what `apply` will change before committing.
 - **Get the page ID before creating reports** — `status-report create` requires `--page-id`. Run `status-page list` first. Then use `status-page info <ID>` to find component IDs if you need `--component-ids`.
-- **`--component-ids` is a single comma-separated string** — use `"id1,id2,id3"`, not multiple flags. On `update`, it replaces the full list.
+- **Prefer `--impact` over `--component-ids` for status reports** — `--impact comp-1=major_outage` records a specific per-component impact level; `--component-ids` is the legacy flag that only marks components affected without a level. They're mutually exclusive. `--component-ids` is still a single comma-separated string (`"id1,id2,id3"`, not multiple flags), and on `status-report update` it replaces the full list.
+- **Provide all required flags when scripting** — `status-report create`, `status-report add-update`, and `maintenance create` fall back to an interactive wizard when required flags are missing, but in non-interactive/JSON contexts they error with `missing required flags: …`. Always pass them explicitly.
 - **Status values are strict** — only `investigating`, `identified`, `monitoring`, `resolved`. The CLI rejects anything else.
 - **Use `--notify` deliberately** — it emails all subscribers. Useful for `create` and `resolved`, but you may want to skip it for intermediate updates.
 - **Commit your lock file** — `openstatus.lock` tracks the mapping between your YAML and the API. Without it, `apply` can't diff properly.

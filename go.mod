@@ -5,8 +5,8 @@ go 1.25.0
 require github.com/urfave/cli/v3 v3.9.0 // direct
 
 require (
-	buf.build/gen/go/openstatus/api/connectrpc/gosimple v1.19.2-20260512200453-7d7b7047611f.1
-	buf.build/gen/go/openstatus/api/protocolbuffers/go v1.36.11-20260611194648-df8af73df8e6.1
+	buf.build/gen/go/openstatus/api/connectrpc/gosimple v1.20.0-20260724145211-8d1b4f4069ec.1
+	buf.build/gen/go/openstatus/api/protocolbuffers/go v1.36.11-20260724145211-8d1b4f4069ec.1
 	connectrpc.com/connect v1.20.0
 	github.com/briandowns/spinner v1.23.2
 	github.com/charmbracelet/huh v1.0.0
@@ -25,6 +25,7 @@ require (
 	github.com/zclconf/go-cty v1.18.1
 	golang.org/x/term v0.43.0
 	golang.org/x/text v0.37.0
+	google.golang.org/protobuf v1.36.11
 	sigs.k8s.io/yaml v1.6.0
 )
 
@@ -77,5 +78,4 @@ require (
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.44.0 // indirect
 	golang.org/x/tools v0.45.0 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
 )

@@ -20,8 +20,8 @@ func Test_NewApp(t *testing.T) {
 			t.Errorf("Expected app name 'openstatus', got %s", app.Name)
 		}
 
-		if app.Version != "v1.2.1" {
-			t.Errorf("Expected version 'v1.2.1', got %s", app.Version)
+		if app.Version != "v1.3.0" {
+			t.Errorf("Expected version 'v1.3.0', got %s", app.Version)
 		}
 
 		if !app.Suggest {
@@ -32,22 +32,23 @@ func Test_NewApp(t *testing.T) {
 	t.Run("Has expected commands", func(t *testing.T) {
 		app := cmd.NewApp()
 
-		if len(app.Commands) != 11 {
-			t.Errorf("Expected 11 commands, got %d", len(app.Commands))
+		if len(app.Commands) != 12 {
+			t.Errorf("Expected 12 commands, got %d", len(app.Commands))
 		}
 
 		expectedCommands := map[string]bool{
-			"check":         false,
-			"monitors":      false,
-			"status-report": false,
-			"maintenance":   false,
-			"status-page":   false,
-			"notification":  false,
-			"run":           false,
-			"whoami":        false,
-			"login":         false,
-			"logout":        false,
-			"terraform":     false,
+			"check":             false,
+			"monitors":          false,
+			"status-report":     false,
+			"maintenance":       false,
+			"status-page":       false,
+			"notification":      false,
+			"private-locations": false,
+			"run":               false,
+			"whoami":            false,
+			"login":             false,
+			"logout":            false,
+			"terraform":         false,
 		}
 
 		for _, subcmd := range app.Commands {

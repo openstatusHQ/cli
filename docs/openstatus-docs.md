@@ -2,7 +2,7 @@
 
 ## CLI interface - openstatus
 
-OpenStatus CLI lets you manage your status pages and uptime monitors from the command line. Report and track incidents, define monitors as code, and run on-demand checks.  Get started:   openstatus login                Save your API token   openstatus status-report create Report an incident   openstatus status-report list   View active incidents   openstatus maintenance create   Schedule a maintenance window   openstatus maintenance list     View maintenance windows   openstatus monitors apply       Sync monitors from config   openstatus monitors list        List your monitors   openstatus run                  Run synthetic tests  https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new.
+OpenStatus CLI lets you manage your status pages and uptime monitors from the command line. Report and track incidents, define monitors as code, and run on-demand checks.  Get started:   openstatus login                Save your API token   openstatus status-report create Report an incident   openstatus status-report list   View active incidents   openstatus maintenance create   Schedule a maintenance window   openstatus maintenance list     View maintenance windows   openstatus monitors apply       Sync monitors from config   openstatus monitors list        List your monitors   openstatus run                  Run synthetic tests   openstatus pl list              List your private locations  https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new.
 
 Manage status pages, monitors, and incidents from the terminal.
 
@@ -618,6 +618,89 @@ The following flags are supported:
 | Name                        | Description                 | Type   | Default value |  Environment variables |
 |-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
+
+### `private-locations` command (aliases: `pl`)
+
+Manage private locations.
+
+Private locations are self-hosted checker agents that run monitors from inside your own network. This command lists them, shows their details, and creates new ones.  Public regions (Fly.io, Koyeb, Railway) are not listed here; they appear in 'openstatus monitors info' and 'openstatus check'.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] private-locations [ARGUMENTS...]
+```
+
+### `private-locations list` subcommand
+
+List all private locations.
+
+> openstatus private-locations list
+>   openstatus pl list
+>   openstatus pl list --limit 10
+
+List the private locations in your workspace, with the health of each agent and the number of monitors it runs.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] private-locations list [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                           | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           | string |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of private locations to return (1-100) | int    |      `0`      |         *none*         |
+
+### `private-locations info` subcommand
+
+Get private location details.
+
+> openstatus private-locations info <PrivateLocationID>
+>   openstatus pl info pl_1a2b3c
+>   openstatus pl info pl_1a2b3c --show-token
+
+Fetch a private location including the monitors it runs and its agent token. The token is masked unless --show-token is passed.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] private-locations info [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                  | Type   | Default value |  Environment variables |
+|-----------------------------|----------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                  | string |               | `OPENSTATUS_API_TOKEN` |
+| `--show-token`              | Reveal the agent token instead of masking it | bool   |    `false`    |         *none*         |
+
+### `private-locations create` subcommand
+
+Create a private location.
+
+> openstatus private-locations create --name office-paris
+>   openstatus pl create --name office-paris --monitor-ids 12345,12346
+>   openstatus pl create --name office-paris --metadata env=prod --metadata team=infra
+
+Create a private location and print its agent token. The token is shown in full because you need it to configure the agent; retrieve it later with 'openstatus pl info --show-token'.  Run without --name in an interactive terminal to be prompted, including a picker for the monitors to attach.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] private-locations create [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                           | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           | string |               | `OPENSTATUS_API_TOKEN` |
+| `--name="…"`                | Name of the private location                          | string |               |         *none*         |
+| `--monitor-ids="…"`         | Monitor IDs to attach, comma-separated or repeated    | string |               |         *none*         |
+| `--metadata="…"`            | Key/value label, repeatable: --metadata <key>=<value> | string |               |         *none*         |
 
 ### `run` command (aliases: `r`)
 

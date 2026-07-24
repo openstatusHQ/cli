@@ -19,13 +19,15 @@ import (
 	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
+	"github.com/openstatusHQ/cli/internal/privatelocation"
 )
 
 type MonitorInfoOutput struct {
-	Monitor Monitor              `json:"monitor"`
-	Status  string               `json:"status,omitempty"`
-	Regions []RegionStatusOutput `json:"regions,omitempty"`
-	Summary *SummaryOutput       `json:"summary,omitempty"`
+	Monitor          Monitor               `json:"monitor"`
+	Status           string                `json:"status,omitempty"`
+	Regions          []RegionStatusOutput  `json:"regions,omitempty"`
+	PrivateLocations []privatelocation.Ref `json:"private_locations,omitempty"`
+	Summary          *SummaryOutput        `json:"summary,omitempty"`
 }
 
 type RegionStatusOutput struct {
@@ -191,6 +193,7 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 	monitorConfig := resp.GetMonitor()
 	var monitor Monitor
 	var regions []monitorv1.Region
+	var privateLocationIDs []string
 	switch {
 	case monitorConfig.HasHttp():
 		monitor, err = httpMonitorToLocal(monitorConfig.GetHttp())
@@ -198,12 +201,14 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 			return err
 		}
 		regions = monitorConfig.GetHttp().GetRegions()
+		privateLocationIDs = monitorConfig.GetHttp().GetPrivateLocationIds()
 	case monitorConfig.HasTcp():
 		monitor, err = tcpMonitorToLocal(monitorConfig.GetTcp())
 		if err != nil {
 			return err
 		}
 		regions = monitorConfig.GetTcp().GetRegions()
+		privateLocationIDs = monitorConfig.GetTcp().GetPrivateLocationIds()
 	default:
 		if monitorConfig.HasDns() {
 			return fmt.Errorf("DNS monitors are not yet supported in the CLI. Monitor ID: %s", monitorId)
@@ -212,13 +217,22 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 	}
 
 	var (
-		statusResp  *monitorv1.GetMonitorStatusResponse
-		summaryResp *monitorv1.GetMonitorSummaryResponse
-		statusErr   error
-		summaryErr  error
-		wg          sync.WaitGroup
+		statusResp   *monitorv1.GetMonitorStatusResponse
+		summaryResp  *monitorv1.GetMonitorSummaryResponse
+		locationRefs map[string]privatelocation.Ref
+		statusErr    error
+		summaryErr   error
+		locationErr  error
+		wg           sync.WaitGroup
 	)
 	wg.Add(2)
+	if len(privateLocationIDs) > 0 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			locationRefs, locationErr = privatelocation.ResolveWithHTTPClient(ctx, httpClient, apiKey, privateLocationIDs)
+		}()
+	}
 	go func() {
 		defer wg.Done()
 		statusResp, statusErr = client.GetMonitorStatus(ctx, &monitorv1.GetMonitorStatusRequest{Id: monitorId})
@@ -240,6 +254,9 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 		fmt.Fprintln(os.Stderr, "Warning: could not fetch monitor summary:", summaryErr)
 		summaryResp = nil
 	}
+	if locationErr != nil {
+		fmt.Fprintln(os.Stderr, "Warning: could not resolve private locations:", locationErr)
+	}
 
 	var globalStatus string
 	if statusResp != nil {
@@ -249,6 +266,9 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 	if output.IsJSONOutput() {
 		infoOutput := MonitorInfoOutput{
 			Monitor: monitor,
+		}
+		if len(privateLocationIDs) > 0 {
+			infoOutput.PrivateLocations = privatelocation.Refs(privateLocationIDs, locationRefs)
 		}
 		if statusResp != nil {
 			infoOutput.Status = globalStatus
@@ -303,6 +323,10 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 		if len(codes) > 0 {
 			data = append(data, []string{fmt.Sprintf("Locations (%s)", provider), strings.Join(codes, ", ")})
 		}
+	}
+	if len(privateLocationIDs) > 0 {
+		labels := privatelocation.Labels(privateLocationIDs, locationRefs, true)
+		data = append(data, []string{"Locations (Private)", strings.Join(labels, ", ")})
 	}
 
 	data = append(data, []string{"Active", fmt.Sprintf("%t", monitor.Active)})

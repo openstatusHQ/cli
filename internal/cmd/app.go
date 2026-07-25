@@ -14,6 +14,7 @@ import (
 	"github.com/openstatusHQ/cli/internal/maintenance"
 	"github.com/openstatusHQ/cli/internal/monitors"
 	"github.com/openstatusHQ/cli/internal/notification"
+	"github.com/openstatusHQ/cli/internal/privatelocation"
 	"github.com/openstatusHQ/cli/internal/run"
 	"github.com/openstatusHQ/cli/internal/statuspage"
 	"github.com/openstatusHQ/cli/internal/statusreport"
@@ -40,9 +41,10 @@ Get started:
   openstatus monitors apply       Sync monitors from config
   openstatus monitors list        List your monitors
   openstatus run                  Run synthetic tests
+  openstatus pl list              List your private locations
 
 https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
-		Version: "v1.2.1",
+		Version: "v1.3.0",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "json",
@@ -76,6 +78,7 @@ https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
 			maintenance.MaintenanceCmd(),
 			statuspage.StatusPageCmd(),
 			notification.NotificationCmd(),
+			privatelocation.PrivateLocationsCmd(),
 			run.RunCmd(),
 			whoami.WhoamiCmd(),
 			login.LoginCmd(),

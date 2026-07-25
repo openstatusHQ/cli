@@ -6,13 +6,14 @@ import (
 
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	notificationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/notification/v1"
+	private_locationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/private_location/v1"
 	status_pagev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_page/v1"
 )
 
 func TestGenerateProviderFile(t *testing.T) {
 	content := string(GenerateProviderFile())
 	mustContain(t, content, `source  = "openstatusHQ/openstatus"`)
-	mustContain(t, content, `version = "~> 0.2"`)
+	mustContain(t, content, `version = "~> 0.3"`)
 	mustContain(t, content, `provider "openstatus" {}`)
 	mustContain(t, content, `OPENSTATUS_API_TOKEN`)
 }
@@ -562,6 +563,231 @@ func TestGenerateStatusPagesFile_DefaultsOmitted(t *testing.T) {
 	mustNotContain(t, content, "default_locale")
 	mustNotContain(t, content, "locales")
 	mustNotContain(t, content, "allow_index")
+}
+
+func newPrivateLocation(id, name string, monitorIDs []string, metadata map[string]string) *private_locationv1.PrivateLocation {
+	l := &private_locationv1.PrivateLocation{}
+	l.SetId(id)
+	l.SetName(name)
+	if len(monitorIDs) > 0 {
+		l.SetMonitorIds(monitorIDs)
+	}
+	if len(metadata) > 0 {
+		l.SetMetadata(metadata)
+	}
+	return l
+}
+
+func TestGeneratePrivateLocationsFile(t *testing.T) {
+	l := newPrivateLocation("pl_1", "office-paris", nil, nil)
+
+	data := &WorkspaceData{PrivateLocations: []*private_locationv1.PrivateLocation{l}}
+	gen := NewGenerator(data)
+	content := string(gen.GeneratePrivateLocationsFile().Bytes())
+
+	mustContain(t, content, `resource "openstatus_private_location" "office_paris"`)
+	mustContain(t, content, `name = "office-paris"`)
+	mustContain(t, content, "openstatus pl info <id> --show-token")
+	if !gen.HasPrivateLocations() {
+		t.Error("HasPrivateLocations() should be true")
+	}
+}
+
+func TestGeneratePrivateLocationsFile_MonitorIdsTraversal(t *testing.T) {
+	http := &monitorv1.HTTPMonitor{}
+	http.SetId("mon-http")
+	http.SetName("API Health")
+
+	tcp := &monitorv1.TCPMonitor{}
+	tcp.SetId("mon-tcp")
+	tcp.SetName("DB TCP")
+
+	l := newPrivateLocation("pl_1", "office-paris", []string{"mon-tcp", "mon-http"}, nil)
+
+	data := &WorkspaceData{
+		HTTPMonitors:     []*monitorv1.HTTPMonitor{http},
+		TCPMonitors:      []*monitorv1.TCPMonitor{tcp},
+		PrivateLocations: []*private_locationv1.PrivateLocation{l},
+	}
+	gen := NewGenerator(data)
+	content := string(gen.GeneratePrivateLocationsFile().Bytes())
+
+	mustContain(t, content, "openstatus_http_monitor.api_health.id")
+	mustContain(t, content, "openstatus_tcp_monitor.db_tcp.id")
+	mustNotContain(t, content, `"mon-http"`)
+	mustNotContain(t, content, `"mon-tcp"`)
+}
+
+func TestGeneratePrivateLocationsFile_UnknownMonitorFallback(t *testing.T) {
+	l := newPrivateLocation("pl_1", "office-paris", []string{"mon-gone"}, nil)
+
+	data := &WorkspaceData{PrivateLocations: []*private_locationv1.PrivateLocation{l}}
+	gen := NewGenerator(data)
+	content := string(gen.GeneratePrivateLocationsFile().Bytes())
+
+	mustContain(t, content, `monitor_ids = ["mon-gone"]`)
+}
+
+func TestGeneratePrivateLocationsFile_NoMonitors(t *testing.T) {
+	l := newPrivateLocation("pl_1", "spare-agent", nil, nil)
+
+	data := &WorkspaceData{PrivateLocations: []*private_locationv1.PrivateLocation{l}}
+	gen := NewGenerator(data)
+	content := string(gen.GeneratePrivateLocationsFile().Bytes())
+
+	mustNotContain(t, content, "monitor_ids")
+}
+
+func TestGeneratePrivateLocationsFile_Metadata(t *testing.T) {
+	l := newPrivateLocation("pl_1", "office-paris", nil, map[string]string{
+		"env":         "prod",
+		"k8s.cluster": "eu-1",
+	})
+
+	data := &WorkspaceData{PrivateLocations: []*private_locationv1.PrivateLocation{l}}
+	gen := NewGenerator(data)
+	content := string(gen.GeneratePrivateLocationsFile().Bytes())
+
+	mustContain(t, content, "metadata = {")
+	mustContain(t, content, `env           = "prod"`)
+	mustContain(t, content, `"k8s.cluster" = "eu-1"`)
+	if strings.Index(content, "env") > strings.Index(content, "k8s.cluster") {
+		t.Errorf("expected metadata keys sorted, got:\n%s", content)
+	}
+}
+
+func TestGeneratePrivateLocationsFile_NoMetadata(t *testing.T) {
+	l := newPrivateLocation("pl_1", "office-paris", nil, nil)
+
+	data := &WorkspaceData{PrivateLocations: []*private_locationv1.PrivateLocation{l}}
+	gen := NewGenerator(data)
+	content := string(gen.GeneratePrivateLocationsFile().Bytes())
+
+	mustNotContain(t, content, "metadata")
+}
+
+func TestGeneratePrivateLocationsFile_NoComputedAttrs(t *testing.T) {
+	l := newPrivateLocation("pl_1", "office-paris", nil, nil)
+	l.SetToken("secret-agent-token")
+	l.SetCreatedAt("2026-01-01T00:00:00Z")
+	l.SetUpdatedAt("2026-02-01T00:00:00Z")
+	l.SetLastSeenAt("2026-07-24T14:02:11Z")
+	l.SetStatus(private_locationv1.PrivateLocationStatus_PRIVATE_LOCATION_STATUS_ACTIVE)
+
+	data := &WorkspaceData{PrivateLocations: []*private_locationv1.PrivateLocation{l}}
+	gen := NewGenerator(data)
+	content := string(gen.GeneratePrivateLocationsFile().Bytes())
+
+	mustNotContain(t, content, "secret-agent-token")
+	mustNotContain(t, content, "created_at")
+	mustNotContain(t, content, "updated_at")
+	mustNotContain(t, content, "last_seen_at")
+	mustNotContain(t, content, "status =")
+}
+
+func TestGenerateImportsFile_PrivateLocation(t *testing.T) {
+	l := newPrivateLocation("pl_1a2b3c", "office-paris", nil, nil)
+
+	data := &WorkspaceData{PrivateLocations: []*private_locationv1.PrivateLocation{l}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateImportsFile().Bytes())
+
+	mustContain(t, content, "to = openstatus_private_location.office_paris")
+	mustContain(t, content, `id = "pl_1a2b3c"`)
+}
+
+func TestPrivateLocationNameCollision(t *testing.T) {
+	first := newPrivateLocation("pl_1", "office", nil, nil)
+	second := newPrivateLocation("pl_2", "office", nil, nil)
+
+	data := &WorkspaceData{PrivateLocations: []*private_locationv1.PrivateLocation{first, second}}
+	gen := NewGenerator(data)
+	content := string(gen.GeneratePrivateLocationsFile().Bytes())
+
+	mustContain(t, content, `resource "openstatus_private_location" "office"`)
+	mustContain(t, content, `resource "openstatus_private_location" "office_2"`)
+}
+
+func TestTotalResourceCount_OnlyPrivateLocations(t *testing.T) {
+	data := &WorkspaceData{
+		PrivateLocations: []*private_locationv1.PrivateLocation{
+			newPrivateLocation("pl_1", "office-paris", nil, nil),
+			newPrivateLocation("pl_2", "k8s-prod-eu", nil, nil),
+		},
+	}
+	gen := NewGenerator(data)
+
+	if got := gen.TotalResourceCount(); got != 2 {
+		t.Errorf("TotalResourceCount() = %d, want 2", got)
+	}
+}
+
+func TestGenerateStatusPagesFile_CustomTheme(t *testing.T) {
+	theme := &status_pagev1.CustomTheme{}
+	theme.SetLight(map[string]string{
+		"--primary": "hsl(24 94% 50%)",
+		"--radius":  "0.5rem",
+	})
+	theme.SetDark(map[string]string{
+		"--primary": "hsl(24 94% 60%)",
+	})
+
+	page := &status_pagev1.StatusPage{}
+	page.SetId("p1")
+	page.SetTitle("Themed")
+	page.SetSlug("themed")
+	page.SetCustomTheme(theme)
+
+	data := &WorkspaceData{StatusPages: []StatusPageData{{Page: page}}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateStatusPagesFile().Bytes())
+
+	mustContain(t, content, "custom_theme = {")
+	mustContain(t, content, "light = {")
+	mustContain(t, content, "dark = {")
+	mustContain(t, content, `"--primary" = "hsl(24 94% 50%)"`)
+	mustContain(t, content, `"--radius"  = "0.5rem"`)
+	mustContain(t, content, `"--primary" = "hsl(24 94% 60%)"`)
+	if strings.Index(content, "dark") > strings.Index(content, "light") {
+		t.Errorf("expected theme modes in sorted order (dark before light), got:\n%s", content)
+	}
+}
+
+func TestGenerateStatusPagesFile_CustomThemeLightOnly(t *testing.T) {
+	theme := &status_pagev1.CustomTheme{}
+	theme.SetLight(map[string]string{"--primary": "hsl(24 94% 50%)"})
+
+	page := &status_pagev1.StatusPage{}
+	page.SetId("p1")
+	page.SetTitle("Themed")
+	page.SetSlug("themed")
+	page.SetCustomTheme(theme)
+
+	data := &WorkspaceData{StatusPages: []StatusPageData{{Page: page}}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateStatusPagesFile().Bytes())
+
+	mustContain(t, content, "light = {")
+	mustNotContain(t, content, "dark")
+}
+
+func TestGenerateStatusPagesFile_CustomThemeOmittedWhenEmpty(t *testing.T) {
+	nilTheme := &status_pagev1.StatusPage{}
+	nilTheme.SetId("p1")
+	nilTheme.SetTitle("Plain")
+	nilTheme.SetSlug("plain")
+
+	emptyTheme := &status_pagev1.StatusPage{}
+	emptyTheme.SetId("p2")
+	emptyTheme.SetTitle("Also Plain")
+	emptyTheme.SetSlug("also-plain")
+	emptyTheme.SetCustomTheme(&status_pagev1.CustomTheme{})
+
+	data := &WorkspaceData{StatusPages: []StatusPageData{{Page: nilTheme}, {Page: emptyTheme}}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateStatusPagesFile().Bytes())
+
+	mustNotContain(t, content, "custom_theme")
 }
 
 func mustContain(t *testing.T, content, substr string) {

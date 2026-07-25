@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	private_locationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/private_location/v1"
 )
 
 func TestCheckExistingFiles_RefusesExisting(t *testing.T) {
@@ -23,6 +25,21 @@ func TestCheckExistingFiles_RefusesExisting(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "--force") {
 		t.Errorf("expected error to mention --force, got: %v", err)
+	}
+}
+
+func TestCheckExistingFiles_RefusesExistingPrivateLocations(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "private_locations.tf"), []byte("existing"), 0o644); err != nil {
+		t.Fatalf("seeding fixture: %v", err)
+	}
+
+	err := checkExistingFiles(dir, false)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "private_locations.tf") {
+		t.Errorf("expected error to mention filename, got: %v", err)
 	}
 }
 
@@ -57,8 +74,27 @@ func TestPrintSummary_IncludesInitUpgradeHint(t *testing.T) {
 	if !strings.Contains(out, "terraform init -upgrade") {
 		t.Errorf("expected init-upgrade hint, got:\n%s", out)
 	}
-	if !strings.Contains(out, "~> 0.2") {
+	if !strings.Contains(out, "~> 0.3") {
 		t.Errorf("expected version mention in hint, got:\n%s", out)
+	}
+}
+
+func TestPrintSummary_CountsPrivateLocations(t *testing.T) {
+	l := &private_locationv1.PrivateLocation{}
+	l.SetId("pl_1")
+	l.SetName("office-paris")
+
+	out := captureStdout(t, func() {
+		printSummary("/tmp/out", &WorkspaceData{
+			PrivateLocations: []*private_locationv1.PrivateLocation{l},
+		})
+	})
+
+	if !strings.Contains(out, "1 private locations") {
+		t.Errorf("expected private location count, got:\n%s", out)
+	}
+	if !strings.Contains(out, "1 import blocks") {
+		t.Errorf("expected private location to count toward imports, got:\n%s", out)
 	}
 }
 

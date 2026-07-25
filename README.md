@@ -118,7 +118,7 @@ Generate Terraform HCL for your entire workspace:
 openstatus terraform generate --output-dir ./terraform
 ```
 
-This creates `provider.tf`, `monitors.tf`, `notifications.tf`, `status_pages.tf`, and `imports.tf` ready for `terraform plan`.
+This creates `provider.tf`, `monitors.tf`, `notifications.tf`, `status_pages.tf`, `private_locations.tf`, and `imports.tf` ready for `terraform plan`.
 
 ## Authentication
 

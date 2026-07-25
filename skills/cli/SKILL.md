@@ -382,6 +382,7 @@ This creates an `openstatus-terraform/` directory with:
 - `monitors.tf` — all HTTP, TCP, and DNS monitors
 - `notifications.tf` — all notification channels with provider-specific blocks
 - `status_pages.tf` — status pages, components, and component groups
+- `private_locations.tf` — private locations with their monitor assignments
 - `imports.tf` — Terraform 1.5+ import blocks for all resources
 
 **Custom output directory:**

@@ -443,8 +443,7 @@ func (g *Generator) GenerateStatusPagesFile() *hclwrite.File {
 			b.SetAttributeValue("password", cty.StringVal("REPLACE_ME"))
 		case "email-domain":
 			b.SetAttributeValue("access_type", cty.StringVal("email-domain"))
-			domains := append([]string(nil), page.GetAuthEmailDomains()...)
-			sort.Strings(domains)
+			domains := dedupe(page.GetAuthEmailDomains())
 			if len(domains) > 0 {
 				vals := make([]cty.Value, len(domains))
 				for i, d := range domains {
@@ -472,14 +471,13 @@ func (g *Generator) GenerateStatusPagesFile() *hclwrite.File {
 			b.SetAttributeValue("default_locale", cty.StringVal(dl))
 		}
 		if locs := page.GetLocales(); len(locs) > 0 {
-			strs := make([]string, 0, len(locs))
+			raw := make([]string, 0, len(locs))
 			for _, l := range locs {
 				if s := localeToString(l); s != "" {
-					strs = append(strs, s)
+					raw = append(raw, s)
 				}
 			}
-			if len(strs) > 0 {
-				sort.Strings(strs)
+			if strs := dedupe(raw); len(strs) > 0 {
 				vals := make([]cty.Value, len(strs))
 				for i, s := range strs {
 					vals[i] = cty.StringVal(s)
@@ -637,6 +635,22 @@ func writeRegions(b *hclwrite.Body, regions []monitorv1.Region) {
 		vals[i] = cty.StringVal(s)
 	}
 	b.SetAttributeValue("regions", cty.ListVal(vals))
+}
+
+// dedupe drops repeats while keeping the API's order. Both callers feed provider
+// attributes typed as List: sorting or duplicating them makes the applied result
+// differ from the plan, which Terraform rejects as an inconsistent result.
+func dedupe(values []string) []string {
+	out := make([]string, 0, len(values))
+	seen := make(map[string]bool, len(values))
+	for _, v := range values {
+		if seen[v] {
+			continue
+		}
+		seen[v] = true
+		out = append(out, v)
+	}
+	return out
 }
 
 // stringMapValue returns cty.NilVal for an empty map so callers can omit the

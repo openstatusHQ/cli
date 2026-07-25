@@ -504,8 +504,23 @@ func TestGenerateStatusPagesFile_EmailDomainAccess(t *testing.T) {
 	content := string(gen.GenerateStatusPagesFile().Bytes())
 
 	mustContain(t, content, `access_type        = "email-domain"`)
-	mustContain(t, content, `auth_email_domains = ["acme.com", "example.com"]`)
+	mustContain(t, content, `auth_email_domains = ["example.com", "acme.com"]`)
 	mustNotContain(t, content, "REPLACE_ME")
+}
+
+func TestGenerateStatusPagesFile_EmailDomainsDeduped(t *testing.T) {
+	page := &status_pagev1.StatusPage{}
+	page.SetId("p1")
+	page.SetTitle("Internal")
+	page.SetSlug("internal")
+	page.SetAccessType(status_pagev1.PageAccessType_PAGE_ACCESS_TYPE_AUTHENTICATED)
+	page.SetAuthEmailDomains([]string{"example.com", "acme.com", "example.com"})
+
+	data := &WorkspaceData{StatusPages: []StatusPageData{{Page: page}}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateStatusPagesFile().Bytes())
+
+	mustContain(t, content, `auth_email_domains = ["example.com", "acme.com"]`)
 }
 
 func TestGenerateStatusPagesFile_EmailDomainEmptyFallback(t *testing.T) {
@@ -543,8 +558,30 @@ func TestGenerateStatusPagesFile_ThemeLocaleAllowIndex(t *testing.T) {
 
 	mustContain(t, content, `theme          = "dark"`)
 	mustContain(t, content, `default_locale = "fr"`)
-	mustContain(t, content, `locales        = ["en", "fr"]`)
+	mustContain(t, content, `locales        = ["fr", "en"]`)
 	mustContain(t, content, `allow_index    = true`)
+}
+
+// Regression: the API can return duplicate locales. Emitting them made apply fail
+// with "Provider produced inconsistent result after apply" once the API deduped.
+func TestGenerateStatusPagesFile_LocalesDeduped(t *testing.T) {
+	page := &status_pagev1.StatusPage{}
+	page.SetId("p1")
+	page.SetTitle("Meow Meow")
+	page.SetSlug("meow-meow")
+	page.SetLocales([]status_pagev1.Locale{
+		status_pagev1.Locale_LOCALE_EN,
+		status_pagev1.Locale_LOCALE_FR,
+		status_pagev1.Locale_LOCALE_DE,
+		status_pagev1.Locale_LOCALE_EN,
+		status_pagev1.Locale_LOCALE_EN,
+	})
+
+	data := &WorkspaceData{StatusPages: []StatusPageData{{Page: page}}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateStatusPagesFile().Bytes())
+
+	mustContain(t, content, `locales = ["en", "fr", "de"]`)
 }
 
 func TestGenerateStatusPagesFile_DefaultsOmitted(t *testing.T) {

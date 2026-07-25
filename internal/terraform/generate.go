@@ -17,6 +17,7 @@ var generatedFileNames = []string{
 	"monitors.tf",
 	"notifications.tf",
 	"status_pages.tf",
+	"private_locations.tf",
 	"imports.tf",
 }
 
@@ -96,6 +97,12 @@ func GetTerraformGenerateCmd() *cli.Command {
 				}
 			}
 
+			if gen.HasPrivateLocations() {
+				if err := writeFile(filepath.Join(outputDir, "private_locations.tf"), gen.GeneratePrivateLocationsFile().Bytes()); err != nil {
+					return cli.Exit(fmt.Sprintf("failed to write private_locations.tf: %v", err), 1)
+				}
+			}
+
 			if err := writeFile(filepath.Join(outputDir, "imports.tf"), gen.GenerateImportsFile().Bytes()); err != nil {
 				return cli.Exit(fmt.Sprintf("failed to write imports.tf: %v", err), 1)
 			}
@@ -134,6 +141,7 @@ func printSummary(outputDir string, data *WorkspaceData) {
 	dnsCount := len(data.DNSMonitors)
 	monitorTotal := httpCount + tcpCount + dnsCount
 	notifCount := len(data.Notifications)
+	plCount := len(data.PrivateLocations)
 
 	pageCount := len(data.StatusPages)
 	compCount := 0
@@ -143,7 +151,7 @@ func printSummary(outputDir string, data *WorkspaceData) {
 		groupCount += len(sp.Groups)
 	}
 
-	importCount := monitorTotal + notifCount + pageCount + compCount + groupCount
+	importCount := monitorTotal + notifCount + pageCount + compCount + groupCount + plCount
 
 	fmt.Printf("\nGenerated Terraform configuration in %s\n\n", outputDir)
 	if monitorTotal > 0 {
@@ -155,10 +163,13 @@ func printSummary(outputDir string, data *WorkspaceData) {
 	if pageCount > 0 {
 		fmt.Printf("  %d status pages (%d components, %d groups)\n", pageCount, compCount, groupCount)
 	}
+	if plCount > 0 {
+		fmt.Printf("  %d private locations\n", plCount)
+	}
 	fmt.Printf("  %d import blocks\n", importCount)
 	fmt.Printf("\nNext steps:\n")
 	fmt.Printf("  cd %s\n", outputDir)
 	fmt.Printf("  terraform init\n")
 	fmt.Printf("  terraform plan\n")
-	fmt.Printf("\nNote: provider version pinned to ~> 0.2. Run 'terraform init -upgrade' if you previously ran this command.\n")
+	fmt.Printf("\nNote: provider version pinned to ~> 0.3. Run 'terraform init -upgrade' if you previously ran this command.\n")
 }

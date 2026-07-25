@@ -20,6 +20,7 @@ import (
 
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	notificationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/notification/v1"
+	private_locationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/private_location/v1"
 	status_pagev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_page/v1"
 )
 
@@ -33,11 +34,12 @@ func TestSmokeValidate(t *testing.T) {
 	gen := NewGenerator(data)
 
 	files := map[string][]byte{
-		"provider.tf":      GenerateProviderFile(),
-		"monitors.tf":      gen.GenerateMonitorsFile().Bytes(),
-		"notifications.tf": gen.GenerateNotificationsFile().Bytes(),
-		"status_pages.tf":  gen.GenerateStatusPagesFile().Bytes(),
-		"imports.tf":       gen.GenerateImportsFile().Bytes(),
+		"provider.tf":          GenerateProviderFile(),
+		"monitors.tf":          gen.GenerateMonitorsFile().Bytes(),
+		"notifications.tf":     gen.GenerateNotificationsFile().Bytes(),
+		"status_pages.tf":      gen.GenerateStatusPagesFile().Bytes(),
+		"private_locations.tf": gen.GeneratePrivateLocationsFile().Bytes(),
+		"imports.tf":           gen.GenerateImportsFile().Bytes(),
 	}
 	for name, content := range files {
 		if err := os.WriteFile(filepath.Join(dir, name), content, 0644); err != nil {
@@ -45,14 +47,25 @@ func TestSmokeValidate(t *testing.T) {
 		}
 	}
 
+	// Force registry-only installation. A dev_overrides block in ~/.terraformrc or
+	// a legacy ~/.terraform.d/plugins mirror would otherwise resolve the provider
+	// locally and validate the config against a stale schema.
+	cliConfig := filepath.Join(dir, "registry.tfrc")
+	if err := os.WriteFile(cliConfig, []byte("provider_installation {\n  direct {}\n}\n"), 0644); err != nil {
+		t.Fatalf("writing terraform CLI config: %v", err)
+	}
+	env := append(os.Environ(), "TF_CLI_CONFIG_FILE="+cliConfig)
+
 	initCmd := exec.Command("terraform", "init", "-upgrade", "-no-color")
 	initCmd.Dir = dir
+	initCmd.Env = env
 	if out, err := initCmd.CombinedOutput(); err != nil {
 		t.Fatalf("terraform init failed: %v\noutput:\n%s", err, out)
 	}
 
 	validateCmd := exec.Command("terraform", "validate", "-no-color")
 	validateCmd.Dir = dir
+	validateCmd.Env = env
 	if out, err := validateCmd.CombinedOutput(); err != nil {
 		t.Fatalf("terraform validate failed: %v\noutput:\n%s", err, out)
 	}
@@ -139,6 +152,18 @@ func smokeFixture() *WorkspaceData {
 	})
 	page.SetAllowIndex(true)
 
+	// Variable names must come from the provider's allowlist or validate fails.
+	customTheme := &status_pagev1.CustomTheme{}
+	customTheme.SetLight(map[string]string{
+		"--primary": "hsl(24 94% 50%)",
+		"--radius":  "0.5rem",
+	})
+	customTheme.SetDark(map[string]string{
+		"--primary":    "hsl(24 94% 60%)",
+		"--background": "hsl(240 10% 4%)",
+	})
+	page.SetCustomTheme(customTheme)
+
 	group := &status_pagev1.PageComponentGroup{}
 	group.SetId("group-1")
 	group.SetPageId("page-1")
@@ -162,6 +187,20 @@ func smokeFixture() *WorkspaceData {
 	ipPage.SetAccessType(status_pagev1.PageAccessType_PAGE_ACCESS_TYPE_IP_RESTRICTED)
 	ipPage.SetAllowedIpRanges("10.0.0.0/8,192.168.0.0/16")
 
+	attachedLocation := &private_locationv1.PrivateLocation{}
+	attachedLocation.SetId("pl-office")
+	attachedLocation.SetName("office-paris")
+	attachedLocation.SetMonitorIds([]string{"mon-http", "mon-tcp"})
+	attachedLocation.SetMetadata(map[string]string{
+		"env":         "prod",
+		"k8s.cluster": "eu-1",
+	})
+	attachedLocation.SetToken("smoke-token")
+
+	bareLocation := &private_locationv1.PrivateLocation{}
+	bareLocation.SetId("pl-spare")
+	bareLocation.SetName("spare-agent")
+
 	return &WorkspaceData{
 		HTTPMonitors:  []*monitorv1.HTTPMonitor{httpMon},
 		TCPMonitors:   []*monitorv1.TCPMonitor{tcpMon},
@@ -175,6 +214,7 @@ func smokeFixture() *WorkspaceData {
 			},
 			{Page: ipPage},
 		},
+		PrivateLocations: []*private_locationv1.PrivateLocation{attachedLocation, bareLocation},
 	}
 }
 

@@ -281,12 +281,13 @@ func GetMonitorImportCmd() *cli.Command {
 		Usage: "Import all your monitors",
 		UsageText: `openstatus monitors import
   openstatus monitors import --output monitors.yaml`,
-		Description: "Import all your monitors from your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.",
+		Description: "Import all your monitors from your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.\n\nDEPRECATED: the monitors.yaml config file is deprecated for import. Prefer managing monitors declaratively with 'openstatus monitors apply'.",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
+			fmt.Fprintln(os.Stderr, "Warning: the monitors.yaml config file is deprecated for import. Prefer managing monitors declaratively with 'openstatus monitors apply'.")
 			s := output.StartSpinner("Importing monitors...")
 			client := NewMonitorClient(apiKey)
 			err = ExportMonitor(ctx, client, cmd.String("output"))

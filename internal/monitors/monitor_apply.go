@@ -108,7 +108,9 @@ func GetMonitorsApplyCmd() *cli.Command {
 		Name:  "apply",
 		Usage: "Create or update monitors",
 		Description: `Creates or updates monitors according to the OpenStatus configuration file.
-Compares your openstatus.yaml with the current state and applies changes.`,
+Compares your openstatus.yaml with the current state and applies changes.
+
+DEPRECATED: this command is deprecated. Prefer managing your monitors with Terraform via 'openstatus terraform generate'.`,
 		UsageText: `openstatus monitors apply
   openstatus monitors apply --config custom.yaml -y
   openstatus monitors apply --dry-run`,
@@ -143,6 +145,7 @@ Compares your openstatus.yaml with the current state and applies changes.`,
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
+			fmt.Fprintln(os.Stderr, "Warning: this command is deprecated. Prefer managing your monitors with Terraform via 'openstatus terraform generate'.")
 
 			path := cmd.String("config")
 

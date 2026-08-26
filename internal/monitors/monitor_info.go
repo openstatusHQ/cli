@@ -209,6 +209,13 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 		}
 		regions = monitorConfig.GetTcp().GetRegions()
 		privateLocationIDs = monitorConfig.GetTcp().GetPrivateLocationIds()
+	case monitorConfig.HasIcmp():
+		monitor, err = icmpMonitorToLocal(monitorConfig.GetIcmp())
+		if err != nil {
+			return err
+		}
+		regions = monitorConfig.GetIcmp().GetRegions()
+		privateLocationIDs = monitorConfig.GetIcmp().GetPrivateLocationIds()
 	default:
 		if monitorConfig.HasDns() {
 			return fmt.Errorf("DNS monitors are not yet supported in the CLI. Monitor ID: %s", monitorId)

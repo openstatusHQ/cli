@@ -12,6 +12,9 @@ monitors:
   - name: "Database TCP Check"
     kind: "tcp"
     # ... monitor fields
+  - name: "Gateway Ping"
+    kind: "icmp"
+    # ... monitor fields
 ```
 
 ## Monitor Fields
@@ -20,7 +23,7 @@ monitors:
 |-------|------|----------|-------------|
 | `name` | string | yes | Display name for the monitor |
 | `description` | string | no | Description of what this monitors |
-| `kind` | `"http"` or `"tcp"` | yes | Monitor type |
+| `kind` | `"http"`, `"tcp"`, or `"icmp"` | yes | Monitor type |
 | `active` | bool | no | Whether the monitor runs on schedule (default: true) |
 | `public` | bool | no | Whether results are publicly visible |
 | `frequency` | string | yes | Check interval: `"30s"`, `"1m"`, `"5m"`, `"10m"`, `"30m"`, `"1h"` |
@@ -48,6 +51,12 @@ monitors:
 |-------|------|----------|-------------|
 | `host` | string | yes | Hostname to connect to |
 | `port` | int | yes | Port number |
+
+## Request (ICMP)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `host` | string | yes | Hostname or IP address to ping |
 
 ## Assertions
 
@@ -136,6 +145,18 @@ monitors:
     request:
       host: "db.example.com"
       port: 5432
+
+  - name: "Gateway Ping"
+    description: "Ping the edge router"
+    kind: "icmp"
+    active: true
+    frequency: "1m"
+    timeout: 10000
+    regions:
+      - iad
+      - fra
+    request:
+      host: "8.8.8.8"
 
   - name: "Webhook POST"
     description: "Verify webhook endpoint accepts payloads"

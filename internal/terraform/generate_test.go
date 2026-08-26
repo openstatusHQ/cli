@@ -13,7 +13,7 @@ import (
 func TestGenerateProviderFile(t *testing.T) {
 	content := string(GenerateProviderFile())
 	mustContain(t, content, `source  = "openstatusHQ/openstatus"`)
-	mustContain(t, content, `version = "~> 0.3"`)
+	mustContain(t, content, `version = "~> 0.4"`)
 	mustContain(t, content, `provider "openstatus" {}`)
 	mustContain(t, content, `OPENSTATUS_API_TOKEN`)
 }
@@ -380,6 +380,81 @@ func TestGenerateMonitorsFile_DNS_OpenTelemetry(t *testing.T) {
 
 	mustContain(t, content, "open_telemetry {")
 	mustContain(t, content, `endpoint = "https://otel.example.com/v1/metrics"`)
+}
+
+func TestGenerateMonitorsFile_ICMP(t *testing.T) {
+	m := &monitorv1.ICMPMonitor{}
+	m.SetId("777")
+	m.SetName("Gateway Ping")
+	m.SetUri("8.8.8.8")
+	m.SetPeriodicity(monitorv1.Periodicity_PERIODICITY_1M)
+	m.SetTimeout(45000)
+	m.SetRetry(3)
+	m.SetActive(true)
+	m.SetPublic(false)
+	m.SetRegions([]monitorv1.Region{monitorv1.Region_REGION_FLY_FRA, monitorv1.Region_REGION_FLY_IAD})
+
+	data := &WorkspaceData{ICMPMonitors: []*monitorv1.ICMPMonitor{m}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateMonitorsFile().Bytes())
+
+	mustContain(t, content, `resource "openstatus_icmp_monitor" "gateway_ping"`)
+	mustContain(t, content, `uri         = "8.8.8.8"`)
+	mustContain(t, content, `periodicity = "1m"`)
+	mustContain(t, content, `active      = true`)
+	mustContain(t, content, `public      = false`)
+	mustContain(t, content, `["fly-fra", "fly-iad"]`)
+	// timeout and retry are omitted at defaults
+	mustNotContain(t, content, "timeout")
+	mustNotContain(t, content, "retry")
+	if !gen.HasMonitors() {
+		t.Error("HasMonitors() should be true")
+	}
+}
+
+func TestGenerateMonitorsFile_ICMP_OpenTelemetry(t *testing.T) {
+	ot := &monitorv1.OpenTelemetryConfig{}
+	ot.SetEndpoint("https://otel.example.com/v1/metrics")
+
+	m := &monitorv1.ICMPMonitor{}
+	m.SetId("1")
+	m.SetName("ICMP")
+	m.SetUri("8.8.8.8")
+	m.SetPeriodicity(monitorv1.Periodicity_PERIODICITY_5M)
+	m.SetActive(true)
+	m.SetOpenTelemetry(ot)
+
+	data := &WorkspaceData{ICMPMonitors: []*monitorv1.ICMPMonitor{m}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateMonitorsFile().Bytes())
+
+	mustContain(t, content, "open_telemetry {")
+	mustContain(t, content, `endpoint = "https://otel.example.com/v1/metrics"`)
+}
+
+func TestGenerateImportsFile_ICMP(t *testing.T) {
+	m := &monitorv1.ICMPMonitor{}
+	m.SetId("12345")
+	m.SetName("Gateway Ping")
+
+	data := &WorkspaceData{ICMPMonitors: []*monitorv1.ICMPMonitor{m}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateImportsFile().Bytes())
+
+	mustContain(t, content, "to = openstatus_icmp_monitor.gateway_ping")
+	mustContain(t, content, `id = "12345"`)
+}
+
+func TestTotalResourceCount_ICMP(t *testing.T) {
+	data := &WorkspaceData{ICMPMonitors: []*monitorv1.ICMPMonitor{
+		{Id: "1"},
+		{Id: "2"},
+	}}
+	gen := NewGenerator(data)
+
+	if got := gen.TotalResourceCount(); got != 2 {
+		t.Errorf("TotalResourceCount() = %d, want 2", got)
+	}
 }
 
 func TestGenerateMonitorsFile_OpenTelemetry_SkippedWhenEmpty(t *testing.T) {

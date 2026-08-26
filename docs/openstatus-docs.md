@@ -67,7 +67,7 @@ Create or update monitors.
 >   openstatus monitors apply --config custom.yaml -y
 >   openstatus monitors apply --dry-run
 
-Creates or updates monitors according to the OpenStatus configuration file. Compares your openstatus.yaml with the current state and applies changes.
+Creates or updates monitors according to the OpenStatus configuration file. Compares your openstatus.yaml with the current state and applies changes.  DEPRECATED: this command is deprecated. Prefer managing your monitors with Terraform via 'openstatus terraform generate'.
 
 Usage:
 
@@ -134,7 +134,7 @@ Import all your monitors.
 > openstatus monitors import
 >   openstatus monitors import --output monitors.yaml
 
-Import all your monitors from your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.
+Import all your monitors from your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.  DEPRECATED: the monitors.yaml config file is deprecated for import. Prefer managing monitors declaratively with 'openstatus monitors apply'.
 
 Usage:
 

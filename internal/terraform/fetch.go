@@ -31,6 +31,7 @@ type WorkspaceData struct {
 	HTTPMonitors     []*monitorv1.HTTPMonitor
 	TCPMonitors      []*monitorv1.TCPMonitor
 	DNSMonitors      []*monitorv1.DNSMonitor
+	ICMPMonitors     []*monitorv1.ICMPMonitor
 	Notifications    []*notificationv1.Notification
 	StatusPages      []StatusPageData
 	PrivateLocations []*private_locationv1.PrivateLocation
@@ -55,6 +56,7 @@ func FetchWorkspaceDataWithHTTPClient(ctx context.Context, httpClient *http.Clie
 	data.HTTPMonitors = monitorResp.GetHttpMonitors()
 	data.TCPMonitors = monitorResp.GetTcpMonitors()
 	data.DNSMonitors = monitorResp.GetDnsMonitors()
+	data.ICMPMonitors = monitorResp.GetIcmpMonitors()
 
 	// Notifications
 	notifClient := notificationv1connect.NewNotificationServiceClient(httpClient, api.ConnectBaseURL, interceptor, protoJSON)

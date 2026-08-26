@@ -96,6 +96,47 @@ func Test_UpdateMonitor(t *testing.T) {
 		}
 	})
 
+	t.Run("Update ICMP monitor successfully", func(t *testing.T) {
+		body := `{"monitor":{"id":"457","name":"Updated ICMP Monitor","uri":"updated.example.com","periodicity":"PERIODICITY_1M","regions":["REGION_FLY_AMS"],"active":true}}`
+		r := io.NopCloser(bytes.NewReader([]byte(body)))
+
+		interceptor := &interceptorHTTPClient{
+			f: func(req *http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       r,
+					Header:     http.Header{"Content-Type": []string{"application/json"}},
+				}, nil
+			},
+		}
+
+		monitor := config.Monitor{
+			Name:      "Updated ICMP Monitor",
+			Active:    true,
+			Frequency: config.The1M,
+			Kind:      config.ICMP,
+			Regions:   []config.Region{config.Ams},
+			Request: config.Request{
+				Host: "updated.example.com",
+			},
+		}
+
+		result, err := monitors.UpdateMonitor(context.Background(), interceptor.GetHTTPClient(), "test-api-key", 457, monitor)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if result.ID != 457 {
+			t.Errorf("Expected ID 457, got %d", result.ID)
+		}
+		if result.JobType != "icmp" {
+			t.Errorf("Expected jobType 'icmp', got %s", result.JobType)
+		}
+		if result.URL != "updated.example.com" {
+			t.Errorf("Expected URL 'updated.example.com', got %s", result.URL)
+		}
+	})
+
 	t.Run("Update monitor fails with error response", func(t *testing.T) {
 		body := `{"code":"not_found","message":"monitor not found"}`
 		r := io.NopCloser(bytes.NewReader([]byte(body)))

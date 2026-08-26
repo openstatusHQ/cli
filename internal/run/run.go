@@ -100,6 +100,15 @@ func MonitorTrigger(ctx context.Context, httpClient *http.Client, apiKey string,
 				entry.Status = "fail"
 				entry.Error = tcp.ErrorMessage
 			}
+		case "icmp":
+			var icmpResult monitors.ICMPRunResult
+			if err := json.Unmarshal(r, &icmpResult); err != nil {
+				return runMonitorResult{}, fmt.Errorf("unable to unmarshal: %w", err)
+			}
+			if icmpResult.ErrorMessage != "" {
+				entry.Status = "fail"
+				entry.Error = icmpResult.ErrorMessage
+			}
 		case "http":
 			var httpResult monitors.HTTPRunResult
 			if err := json.Unmarshal(r, &httpResult); err != nil {

@@ -101,6 +101,7 @@ type CoordinateKind string
 const (
 	HTTP CoordinateKind = "http"
 	TCP  CoordinateKind = "tcp"
+	ICMP CoordinateKind = "icmp"
 )
 
 type Region string

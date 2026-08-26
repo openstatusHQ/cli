@@ -139,7 +139,8 @@ func printSummary(outputDir string, data *WorkspaceData) {
 	httpCount := len(data.HTTPMonitors)
 	tcpCount := len(data.TCPMonitors)
 	dnsCount := len(data.DNSMonitors)
-	monitorTotal := httpCount + tcpCount + dnsCount
+	icmpCount := len(data.ICMPMonitors)
+	monitorTotal := httpCount + tcpCount + dnsCount + icmpCount
 	notifCount := len(data.Notifications)
 	plCount := len(data.PrivateLocations)
 
@@ -155,7 +156,7 @@ func printSummary(outputDir string, data *WorkspaceData) {
 
 	fmt.Printf("\nGenerated Terraform configuration in %s\n\n", outputDir)
 	if monitorTotal > 0 {
-		fmt.Printf("  %d monitors (%d HTTP, %d TCP, %d DNS)\n", monitorTotal, httpCount, tcpCount, dnsCount)
+		fmt.Printf("  %d monitors (%d HTTP, %d TCP, %d DNS, %d ICMP)\n", monitorTotal, httpCount, tcpCount, dnsCount, icmpCount)
 	}
 	if notifCount > 0 {
 		fmt.Printf("  %d notifications\n", notifCount)
@@ -171,5 +172,5 @@ func printSummary(outputDir string, data *WorkspaceData) {
 	fmt.Printf("  cd %s\n", outputDir)
 	fmt.Printf("  terraform init\n")
 	fmt.Printf("  terraform plan\n")
-	fmt.Printf("\nNote: provider version pinned to ~> 0.3. Run 'terraform init -upgrade' if you previously ran this command.\n")
+	fmt.Printf("\nNote: provider version pinned to ~> 0.4. Run 'terraform init -upgrade' if you previously ran this command.\n")
 }

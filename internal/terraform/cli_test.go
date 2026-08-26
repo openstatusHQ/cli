@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	private_locationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/private_location/v1"
 )
 
@@ -74,7 +75,7 @@ func TestPrintSummary_IncludesInitUpgradeHint(t *testing.T) {
 	if !strings.Contains(out, "terraform init -upgrade") {
 		t.Errorf("expected init-upgrade hint, got:\n%s", out)
 	}
-	if !strings.Contains(out, "~> 0.3") {
+	if !strings.Contains(out, "~> 0.4") {
 		t.Errorf("expected version mention in hint, got:\n%s", out)
 	}
 }
@@ -95,6 +96,25 @@ func TestPrintSummary_CountsPrivateLocations(t *testing.T) {
 	}
 	if !strings.Contains(out, "1 import blocks") {
 		t.Errorf("expected private location to count toward imports, got:\n%s", out)
+	}
+}
+
+func TestPrintSummary_CountsICMPMonitors(t *testing.T) {
+	m := &monitorv1.ICMPMonitor{}
+	m.SetId("777")
+	m.SetName("Gateway Ping")
+
+	out := captureStdout(t, func() {
+		printSummary("/tmp/out", &WorkspaceData{
+			ICMPMonitors: []*monitorv1.ICMPMonitor{m},
+		})
+	})
+
+	if !strings.Contains(out, "1 monitors (0 HTTP, 0 TCP, 0 DNS, 1 ICMP)") {
+		t.Errorf("expected ICMP monitor count, got:\n%s", out)
+	}
+	if !strings.Contains(out, "1 import blocks") {
+		t.Errorf("expected ICMP monitor to count toward imports, got:\n%s", out)
 	}
 }
 

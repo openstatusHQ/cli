@@ -21,6 +21,8 @@ func UpdateMonitor(ctx context.Context, httpClient *http.Client, apiKey string, 
 		return UpdateHTTPMonitor(ctx, client, id, monitor)
 	case config.TCP:
 		return UpdateTCPMonitor(ctx, client, id, monitor)
+	case config.ICMP:
+		return UpdateICMPMonitor(ctx, client, id, monitor)
 	default:
 		return Monitor{}, fmt.Errorf("unsupported monitor kind: %s", monitor.Kind)
 	}
@@ -63,4 +65,25 @@ func UpdateTCPMonitor(ctx context.Context, client monitorv1connect.MonitorServic
 	}
 
 	return tcpMonitorToLocal(resp.GetMonitor())
+}
+
+// UpdateICMPMonitor updates an ICMP monitor using the SDK
+func UpdateICMPMonitor(ctx context.Context, client monitorv1connect.MonitorServiceClient, id int, monitor config.Monitor) (Monitor, error) {
+	icmpMonitor, err := configToICMPMonitor(monitor)
+	if err != nil {
+		return Monitor{}, err
+	}
+	icmpMonitor.Id = strconv.Itoa(id)
+
+	req := &monitorv1.UpdateICMPMonitorRequest{
+		Id:      strconv.Itoa(id),
+		Monitor: icmpMonitor,
+	}
+
+	resp, err := client.UpdateICMPMonitor(ctx, req)
+	if err != nil {
+		return Monitor{}, fmt.Errorf("failed to update ICMP monitor: %w", err)
+	}
+
+	return icmpMonitorToLocal(resp.GetMonitor())
 }

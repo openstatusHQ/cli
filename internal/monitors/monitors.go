@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
@@ -394,13 +395,10 @@ func configToHTTPMonitor(m config.Monitor) *monitorv1.HTTPMonitor {
 
 	monitor := &monitorv1.HTTPMonitor{
 		Name:                 m.Name,
-		Description:          m.Description,
 		Url:                  m.Request.URL,
 		Method:               stringToHTTPMethod(m.Request.Method),
 		Body:                 m.Request.Body,
 		Periodicity:          stringToPeriodicity(m.Frequency),
-		Active:               m.Active,
-		Public:               m.Public,
 		Regions:              stringsToRegions(m.Regions),
 		Timeout:              m.Timeout,
 		Retry:                m.Retry,
@@ -409,6 +407,9 @@ func configToHTTPMonitor(m config.Monitor) *monitorv1.HTTPMonitor {
 		BodyAssertions:       bodyAssertions,
 		HeaderAssertions:     headerAssertions,
 	}
+	monitor.SetDescription(m.Description)
+	monitor.SetActive(m.Active)
+	monitor.SetPublic(m.Public)
 
 	if m.DegradedAfter > 0 {
 		monitor.DegradedAt = &m.DegradedAfter
@@ -432,21 +433,69 @@ func configToTCPMonitor(m config.Monitor) (*monitorv1.TCPMonitor, error) {
 
 	monitor := &monitorv1.TCPMonitor{
 		Name:        m.Name,
-		Description: m.Description,
 		Uri:         fmt.Sprintf("%s:%d", m.Request.Host, m.Request.Port),
 		Periodicity: stringToPeriodicity(m.Frequency),
-		Active:      m.Active,
-		Public:      m.Public,
 		Regions:     stringsToRegions(m.Regions),
 		Timeout:     m.Timeout,
 		Retry:       m.Retry,
 	}
+	monitor.SetDescription(m.Description)
+	monitor.SetActive(m.Active)
+	monitor.SetPublic(m.Public)
 
 	if m.DegradedAfter > 0 {
 		monitor.DegradedAt = &m.DegradedAfter
 	}
 
 	return monitor, nil
+}
+
+// configToICMPMonitor converts config.Monitor to SDK ICMPMonitor
+func configToICMPMonitor(m config.Monitor) (*monitorv1.ICMPMonitor, error) {
+	if m.Request.Host == "" {
+		return nil, fmt.Errorf("ICMP monitor %q: host is required", m.Name)
+	}
+
+	monitor := &monitorv1.ICMPMonitor{
+		Name:        m.Name,
+		Uri:         m.Request.Host,
+		Periodicity: stringToPeriodicity(m.Frequency),
+		Regions:     stringsToRegions(m.Regions),
+		Timeout:     m.Timeout,
+		Retry:       m.Retry,
+	}
+	monitor.SetDescription(m.Description)
+	monitor.SetActive(m.Active)
+	monitor.SetPublic(m.Public)
+
+	if m.DegradedAfter > 0 {
+		monitor.DegradedAt = &m.DegradedAfter
+	}
+
+	return monitor, nil
+}
+
+// icmpMonitorToLocal converts SDK ICMPMonitor to CLI display Monitor
+func icmpMonitorToLocal(m *monitorv1.ICMPMonitor) (Monitor, error) {
+	id, err := strconv.Atoi(m.GetId())
+	if err != nil {
+		return Monitor{}, fmt.Errorf("invalid monitor ID %q: %w", m.GetId(), err)
+	}
+	return Monitor{
+		ID:                 id,
+		Name:               m.GetName(),
+		Description:        m.GetDescription(),
+		URL:                m.GetUri(),
+		Periodicity:        periodicityToString(m.GetPeriodicity()),
+		Regions:            regionsToStrings(m.GetRegions()),
+		PrivateLocationIDs: m.GetPrivateLocationIds(),
+		Active:             m.GetActive(),
+		Public:             m.GetPublic(),
+		Timeout:            int(m.GetTimeout()),
+		DegradedAfter:      int(m.GetDegradedAt()),
+		Retry:              int(m.GetRetry()),
+		JobType:            "icmp",
+	}, nil
 }
 
 type Monitor struct {
@@ -531,6 +580,10 @@ type TCPRunResult struct {
 		TCPStart int64 `json:"tcpStart"`
 		TCPDone  int64 `json:"tcpDone"`
 	} `json:"timing"`
+}
+
+type ICMPRunResult struct {
+	ErrorMessage string `json:"errorMessage"`
 }
 
 func MonitorsCmd() *cli.Command {

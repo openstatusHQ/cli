@@ -44,7 +44,7 @@ Get started:
   openstatus pl list              List your private locations
 
 https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
-		Version: "v1.3.1",
+		Version: "v1.3.2",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "json",

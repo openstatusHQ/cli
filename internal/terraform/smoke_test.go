@@ -120,6 +120,16 @@ func smokeFixture() *WorkspaceData {
 	dnsRecord.SetComparator(monitorv1.RecordComparator_RECORD_COMPARATOR_EQUAL)
 	dnsMon.SetRecordAssertions([]*monitorv1.RecordAssertion{dnsRecord})
 
+	icmpMon := &monitorv1.ICMPMonitor{}
+	icmpMon.SetId("mon-icmp")
+	icmpMon.SetName("Gateway Ping")
+	icmpMon.SetUri("8.8.8.8")
+	icmpMon.SetPeriodicity(monitorv1.Periodicity_PERIODICITY_1M)
+	icmpMon.SetTimeout(45000)
+	icmpMon.SetRetry(3)
+	icmpMon.SetActive(true)
+	icmpMon.SetRegions([]monitorv1.Region{monitorv1.Region_REGION_FLY_IAD})
+
 	slackNotif := newNotification("notif-slack", "Slack Alerts", []string{"mon-http"}, func(d *notificationv1.NotificationData) {
 		sd := &notificationv1.SlackData{}
 		sd.SetWebhookUrl("https://hooks.example.com/slack")
@@ -205,6 +215,7 @@ func smokeFixture() *WorkspaceData {
 		HTTPMonitors:  []*monitorv1.HTTPMonitor{httpMon},
 		TCPMonitors:   []*monitorv1.TCPMonitor{tcpMon},
 		DNSMonitors:   []*monitorv1.DNSMonitor{dnsMon},
+		ICMPMonitors:  []*monitorv1.ICMPMonitor{icmpMon},
 		Notifications: []*notificationv1.Notification{slackNotif, teamsNotif, webhookNotif},
 		StatusPages: []StatusPageData{
 			{

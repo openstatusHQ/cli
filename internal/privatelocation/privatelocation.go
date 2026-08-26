@@ -237,6 +237,9 @@ func monitorNames(ctx context.Context, client monitorv1connect.MonitorServiceCli
 	for _, m := range resp.GetDnsMonitors() {
 		names[m.GetId()] = m.GetName()
 	}
+	for _, m := range resp.GetIcmpMonitors() {
+		names[m.GetId()] = m.GetName()
+	}
 	return names, nil
 }
 

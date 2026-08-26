@@ -27,6 +27,8 @@ func CreateMonitor(ctx context.Context, httpClient *http.Client, apiKey string, 
 		return CreateHTTPMonitor(ctx, client, monitor)
 	case config.TCP:
 		return CreateTCPMonitor(ctx, client, monitor)
+	case config.ICMP:
+		return CreateICMPMonitor(ctx, client, monitor)
 	default:
 		return Monitor{}, fmt.Errorf("unsupported monitor kind: %s", monitor.Kind)
 	}
@@ -62,6 +64,24 @@ func CreateTCPMonitor(ctx context.Context, client monitorv1connect.MonitorServic
 	}
 
 	return tcpMonitorToLocal(resp.GetMonitor())
+}
+
+// CreateICMPMonitor creates an ICMP monitor using the SDK
+func CreateICMPMonitor(ctx context.Context, client monitorv1connect.MonitorServiceClient, monitor config.Monitor) (Monitor, error) {
+	icmpMonitor, err := configToICMPMonitor(monitor)
+	if err != nil {
+		return Monitor{}, err
+	}
+	req := &monitorv1.CreateICMPMonitorRequest{
+		Monitor: icmpMonitor,
+	}
+
+	resp, err := client.CreateICMPMonitor(ctx, req)
+	if err != nil {
+		return Monitor{}, fmt.Errorf("failed to create ICMP monitor: %w", err)
+	}
+
+	return icmpMonitorToLocal(resp.GetMonitor())
 }
 
 func httpMonitorToLocal(m *monitorv1.HTTPMonitor) (Monitor, error) {

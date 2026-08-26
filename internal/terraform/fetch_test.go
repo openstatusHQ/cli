@@ -302,3 +302,21 @@ func TestFetchPrivateLocations_PartialResultsDiscarded(t *testing.T) {
 		t.Errorf("got %d private locations, want 0 — partial results must be discarded", len(data.PrivateLocations))
 	}
 }
+
+func TestFetchICMPMonitors(t *testing.T) {
+	client, _ := newFetchClient(map[string][]fakeResponse{
+		"/ListMonitors": {okResponse(`{"icmpMonitors":[{"id":"777","name":"Gateway Ping","uri":"8.8.8.8","periodicity":"PERIODICITY_1M","active":true}]}`)},
+	})
+
+	data, err := FetchWorkspaceDataWithHTTPClient(context.Background(), client, "test-token")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if got := len(data.ICMPMonitors); got != 1 {
+		t.Fatalf("got %d ICMP monitors, want 1", got)
+	}
+	if got := data.ICMPMonitors[0].GetName(); got != "Gateway Ping" {
+		t.Errorf("got name %q, want 'Gateway Ping'", got)
+	}
+}

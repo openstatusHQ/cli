@@ -115,6 +115,26 @@ func Test_GetPrivateLocationInfo(t *testing.T) {
 		}
 	})
 
+	t.Run("Resolves ICMP monitor names", func(t *testing.T) {
+		icmpBody := `{"privateLocation":{"id":"pl_1","name":"office-paris","monitorIds":["icmp-1"]}}`
+		icmpMonitors := `{"httpMonitors":[],"tcpMonitors":[],"dnsMonitors":[],"icmpMonitors":[{"id":"icmp-1","name":"gateway-ping","uri":"8.8.8.8","active":true}]}`
+
+		client := jsonResponder(map[string]string{
+			getProcedure:         icmpBody,
+			listMonitorProcedure: icmpMonitors,
+		}, nil)
+
+		out := captureStdout(t, func() {
+			if err := privatelocation.GetPrivateLocationInfoWithHTTPClient(context.Background(), client.GetHTTPClient(), "test-token", "pl_1", false); err != nil {
+				t.Errorf("Expected no error, got %v", err)
+			}
+		})
+
+		if !strings.Contains(out, "gateway-ping") {
+			t.Error("Expected the resolved ICMP monitor name")
+		}
+	})
+
 	t.Run("Gives a pl-specific hint when not found", func(t *testing.T) {
 		client := errorResponder(404, `{"code":"not_found","message":"missing"}`)
 

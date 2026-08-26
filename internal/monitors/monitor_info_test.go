@@ -119,6 +119,24 @@ func Test_getMonitorInfo(t *testing.T) {
 		}
 	})
 
+	t.Run("Should work with ICMP monitor and degradedAt", func(t *testing.T) {
+		interceptor := monitorInfoInterceptor([]routeEntry{
+			{"GetMonitor", `{"monitor":{"icmp":{"id":"4001","name":"Gateway Ping","uri":"8.8.8.8","periodicity":"PERIODICITY_5M","regions":["REGION_FLY_IAD"],"active":true,"public":false,"timeout":10000,"degradedAt":"5000"}}}`},
+			{"GetMonitorStatus", `{"id":"4001","regions":[{"region":"REGION_FLY_IAD","status":"MONITOR_STATUS_ACTIVE"}]}`},
+			{"GetMonitorSummary", `{"id":"4001","totalSuccessful":"500","totalDegraded":"0","totalFailed":"0","p50":"20","p75":"30","p90":"40","p95":"50","p99":"60","timeRange":"TIME_RANGE_1D"}`},
+		})
+
+		var bf bytes.Buffer
+		log.SetOutput(&bf)
+		t.Cleanup(func() {
+			log.SetOutput(os.Stdout)
+		})
+		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "4001", monitorv1.TimeRange_TIME_RANGE_1D, "1d", nil)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+	})
+
 	t.Run("Should gracefully degrade when status RPC fails", func(t *testing.T) {
 		interceptor := &interceptorHTTPClient{
 			f: func(req *http.Request) (*http.Response, error) {

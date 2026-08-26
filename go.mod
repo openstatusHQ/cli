@@ -5,8 +5,8 @@ go 1.25.0
 require github.com/urfave/cli/v3 v3.9.0 // direct
 
 require (
-	buf.build/gen/go/openstatus/api/connectrpc/gosimple v1.20.0-20260724145211-8d1b4f4069ec.1
-	buf.build/gen/go/openstatus/api/protocolbuffers/go v1.36.11-20260724145211-8d1b4f4069ec.1
+	buf.build/gen/go/openstatus/api/connectrpc/gosimple v1.20.0-20260826071311-8210bb95208b.1
+	buf.build/gen/go/openstatus/api/protocolbuffers/go v1.36.12-20260826071311-8210bb95208b.1
 	connectrpc.com/connect v1.20.0
 	github.com/briandowns/spinner v1.23.2
 	github.com/charmbracelet/huh v1.0.0
@@ -25,13 +25,13 @@ require (
 	github.com/zclconf/go-cty v1.18.1
 	golang.org/x/term v0.43.0
 	golang.org/x/text v0.37.0
-	google.golang.org/protobuf v1.36.11
+	google.golang.org/protobuf v1.36.12
 	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260415201107-50325440f8f2.1 // indirect
-	buf.build/gen/go/gnostic/gnostic/protocolbuffers/go v1.36.11-20230414000709-087bc8072ce4.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20251209175733-2a1774d88802.1 // indirect
+	buf.build/gen/go/gnostic/gnostic/protocolbuffers/go v1.36.12-20230414000709-087bc8072ce4.1 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect

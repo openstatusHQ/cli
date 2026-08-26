@@ -74,6 +74,18 @@ func ListMonitors(ctx context.Context, client monitorv1connect.MonitorServiceCli
 		}
 	}
 
+	for _, monitor := range resp.GetIcmpMonitors() {
+		if monitor.GetActive() || showAll {
+			entries = append(entries, monitorListEntry{
+				ID:                 monitor.GetId(),
+				Name:               monitor.GetName(),
+				URL:                monitor.GetUri(),
+				Kind:               "icmp",
+				privateLocationIDs: monitor.GetPrivateLocationIds(),
+			})
+		}
+	}
+
 	// The private-location column is only rendered when something is attached, so workspaces
 	// without the feature keep the original four-column output and pay for no extra request.
 	var allIDs []string

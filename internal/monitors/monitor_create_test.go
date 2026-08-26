@@ -104,6 +104,66 @@ func Test_CreateMonitor(t *testing.T) {
 		}
 	})
 
+	t.Run("Create ICMP monitor successfully", func(t *testing.T) {
+		body := `{"monitor":{"id":"789","name":"ICMP Monitor","uri":"8.8.8.8","periodicity":"PERIODICITY_5M","regions":["REGION_FLY_IAD"],"active":true}}`
+		r := io.NopCloser(bytes.NewReader([]byte(body)))
+
+		interceptor := &interceptorHTTPClient{
+			f: func(req *http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       r,
+					Header:     http.Header{"Content-Type": []string{"application/json"}},
+				}, nil
+			},
+		}
+
+		monitor := config.Monitor{
+			Name:      "ICMP Monitor",
+			Active:    true,
+			Frequency: config.The5M,
+			Kind:      config.ICMP,
+			Regions:   []config.Region{config.Iad},
+			Request: config.Request{
+				Host: "8.8.8.8",
+			},
+		}
+
+		result, err := monitors.CreateMonitor(context.Background(), interceptor.GetHTTPClient(), "test-api-key", monitor)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if result.ID != 789 {
+			t.Errorf("Expected ID 789, got %d", result.ID)
+		}
+		if result.Name != "ICMP Monitor" {
+			t.Errorf("Expected name 'ICMP Monitor', got %s", result.Name)
+		}
+		if result.URL != "8.8.8.8" {
+			t.Errorf("Expected URL '8.8.8.8', got %s", result.URL)
+		}
+		if result.JobType != "icmp" {
+			t.Errorf("Expected jobType 'icmp', got %s", result.JobType)
+		}
+	})
+
+	t.Run("Create ICMP monitor fails without host", func(t *testing.T) {
+		monitor := config.Monitor{
+			Name:   "ICMP Monitor",
+			Kind:   config.ICMP,
+			Active: true,
+			Request: config.Request{
+				Host: "",
+			},
+		}
+
+		_, err := monitors.CreateMonitor(context.Background(), &http.Client{}, "test-api-key", monitor)
+		if err == nil {
+			t.Error("Expected error for missing ICMP host, got nil")
+		}
+	})
+
 	t.Run("Create monitor fails with non-200 status", func(t *testing.T) {
 		body := `{"code":"internal","message":"internal error"}`
 		r := io.NopCloser(bytes.NewReader([]byte(body)))

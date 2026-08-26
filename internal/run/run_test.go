@@ -137,4 +137,76 @@ func Test_run(t *testing.T) {
 			t.Errorf("Monitor Trigger should return error")
 		}
 	})
+	t.Run("Successfully run icmp response", func(t *testing.T) {
+		body := `[
+		{
+    "jobType": "icmp",
+    "latency": 3,
+    "region": "ams",
+    "timestamp": 1730990324626,
+    "errorMessage": ""
+  }]`
+
+		r := io.NopCloser(bytes.NewReader([]byte(body)))
+
+		interceptor := &interceptorHTTPClient{
+			f: func(req *http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       r,
+				}, nil
+			},
+		}
+
+		var bf bytes.Buffer
+		log.SetOutput(&bf)
+		t.Cleanup(func() {
+			log.SetOutput(os.Stdout)
+		})
+		_, err := run.MonitorTrigger(context.Background(), interceptor.GetHTTPClient(), "", "1")
+		if err != nil {
+			t.Error(err)
+			t.Errorf("Monitor Trigger should return error")
+		}
+	})
+	t.Run("Fail on icmp errorMessage", func(t *testing.T) {
+		body := `[
+		{
+    "jobType": "icmp",
+    "latency": 3,
+    "region": "ams",
+    "timestamp": 1730990324626,
+    "errorMessage": "request timed out"
+  }]`
+
+		r := io.NopCloser(bytes.NewReader([]byte(body)))
+
+		interceptor := &interceptorHTTPClient{
+			f: func(req *http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       r,
+				}, nil
+			},
+		}
+
+		var bf bytes.Buffer
+		log.SetOutput(&bf)
+		t.Cleanup(func() {
+			log.SetOutput(os.Stdout)
+		})
+		res, err := run.MonitorTrigger(context.Background(), interceptor.GetHTTPClient(), "", "1")
+		if err != nil {
+			t.Fatalf("Monitor Trigger should not error: %v", err)
+		}
+		if len(res.Results) != 1 {
+			t.Fatalf("expected 1 result, got %d", len(res.Results))
+		}
+		if res.Results[0].Status != "fail" {
+			t.Errorf("expected status 'fail', got %q", res.Results[0].Status)
+		}
+		if res.Results[0].Error != "request timed out" {
+			t.Errorf("expected error message, got %q", res.Results[0].Error)
+		}
+	})
 }

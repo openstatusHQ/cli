@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
@@ -12,9 +13,26 @@ import (
 	output "github.com/openstatusHQ/cli/internal/cli"
 )
 
-const APIBaseURL = "https://api.openstatus.dev/v1"
+// DefaultBaseURL is the openstatus Cloud API origin.
+const DefaultBaseURL = "https://api.openstatus.dev"
 
-const ConnectBaseURL = "https://api.openstatus.dev/rpc"
+// BaseURL is the API origin. Set OPENSTATUS_API_URL to target a self-hosted
+// instance.
+var BaseURL = resolveBaseURL(os.Getenv("OPENSTATUS_API_URL"))
+
+var APIBaseURL = BaseURL + "/v1"
+
+var ConnectBaseURL = BaseURL + "/rpc"
+
+// resolveBaseURL also accepts a trailing /rpc, the form the Node SDK
+// documents for the same variable.
+func resolveBaseURL(v string) string {
+	v = strings.TrimSuffix(strings.TrimRight(v, "/"), "/rpc")
+	if v == "" {
+		return DefaultBaseURL
+	}
+	return v
+}
 
 // PlayCheckerURL is the public Speed Checker endpoint backing the `check`
 // command. The www. prefix is intentional: the bare openstatus.dev host

@@ -128,6 +128,17 @@ The CLI resolves your API token in this order:
 2. `OPENSTATUS_API_TOKEN` environment variable
 3. Saved token at `~/.config/openstatus/token` (written by `openstatus login`)
 
+## Self-Hosted
+
+Point the CLI at your own API server with `OPENSTATUS_API_URL` (default `https://api.openstatus.dev`):
+
+```bash
+export OPENSTATUS_API_URL=https://api.openstatus.example.com
+openstatus whoami
+```
+
+`openstatus terraform generate` then writes the matching `base_url` into `provider.tf`. The `check` command always uses the public speed checker.
+
 ## Development
 
 ### Run Tests

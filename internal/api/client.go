@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -16,22 +17,37 @@ import (
 // DefaultBaseURL is the openstatus Cloud API origin.
 const DefaultBaseURL = "https://api.openstatus.dev"
 
-// BaseURL is the API origin. Set OPENSTATUS_API_URL to target a self-hosted
-// instance.
-var BaseURL = resolveBaseURL(os.Getenv("OPENSTATUS_API_URL"))
+// BaseURL is the API origin; LoadBaseURL overrides it from OPENSTATUS_API_URL
+// to target a self-hosted instance.
+var (
+	BaseURL        = DefaultBaseURL
+	APIBaseURL     = DefaultBaseURL + "/v1"
+	ConnectBaseURL = DefaultBaseURL + "/rpc"
+)
 
-var APIBaseURL = BaseURL + "/v1"
-
-var ConnectBaseURL = BaseURL + "/rpc"
+// LoadBaseURL applies OPENSTATUS_API_URL. Call it after the .env file is
+// loaded so a value set there is honoured.
+func LoadBaseURL() error {
+	base, err := resolveBaseURL(os.Getenv("OPENSTATUS_API_URL"))
+	if err != nil {
+		return err
+	}
+	BaseURL, APIBaseURL, ConnectBaseURL = base, base+"/v1", base+"/rpc"
+	return nil
+}
 
 // resolveBaseURL also accepts a trailing /rpc, the form the Node SDK
 // documents for the same variable.
-func resolveBaseURL(v string) string {
-	v = strings.TrimSuffix(strings.TrimRight(v, "/"), "/rpc")
+func resolveBaseURL(v string) (string, error) {
+	v = strings.TrimSuffix(strings.TrimRight(strings.TrimSpace(v), "/"), "/rpc")
 	if v == "" {
-		return DefaultBaseURL
+		return DefaultBaseURL, nil
 	}
-	return v
+	u, err := url.Parse(v)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return "", fmt.Errorf("OPENSTATUS_API_URL must be an http(s) URL such as https://api.openstatus.example.com, got %q", v)
+	}
+	return v, nil
 }
 
 // PlayCheckerURL is the public Speed Checker endpoint backing the `check`

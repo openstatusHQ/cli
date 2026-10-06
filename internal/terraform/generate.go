@@ -8,6 +8,7 @@ import (
 
 	"github.com/urfave/cli/v3"
 
+	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
 )
@@ -70,7 +71,7 @@ func GetTerraformGenerateCmd() *cli.Command {
 			gen := NewGenerator(data)
 
 			// Always write provider.tf
-			if err := writeFile(filepath.Join(outputDir, "provider.tf"), GenerateProviderFile()); err != nil {
+			if err := writeFile(filepath.Join(outputDir, "provider.tf"), GenerateProviderFile(api.BaseURL)); err != nil {
 				return cli.Exit(fmt.Sprintf("failed to write provider.tf: %v", err), 1)
 			}
 

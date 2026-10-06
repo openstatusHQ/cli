@@ -8,14 +8,23 @@ import (
 	notificationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/notification/v1"
 	private_locationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/private_location/v1"
 	status_pagev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_page/v1"
+
+	"github.com/openstatusHQ/cli/internal/api"
 )
 
 func TestGenerateProviderFile(t *testing.T) {
-	content := string(GenerateProviderFile())
+	content := string(GenerateProviderFile(api.DefaultBaseURL))
 	mustContain(t, content, `source  = "openstatusHQ/openstatus"`)
 	mustContain(t, content, `version = "~> 0.4"`)
 	mustContain(t, content, `provider "openstatus" {}`)
 	mustContain(t, content, `OPENSTATUS_API_TOKEN`)
+	mustNotContain(t, content, `base_url`)
+}
+
+func TestGenerateProviderFile_SelfHosted(t *testing.T) {
+	content := string(GenerateProviderFile("https://openstatus.example.com"))
+	mustContain(t, content, `base_url = "https://openstatus.example.com/rpc"`)
+	mustNotContain(t, content, `provider "openstatus" {}`)
 }
 
 func TestGenerateMonitorsFile_HTTP(t *testing.T) {

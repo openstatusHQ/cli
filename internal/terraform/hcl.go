@@ -11,6 +11,8 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
+
+	"github.com/openstatusHQ/cli/internal/api"
 )
 
 type resourceRef struct {
@@ -109,7 +111,13 @@ func NewGenerator(data *WorkspaceData) *Generator {
 	return g
 }
 
-func GenerateProviderFile() []byte {
+// GenerateProviderFile pins base_url when baseURL is not openstatus Cloud,
+// since the provider does not read OPENSTATUS_API_URL.
+func GenerateProviderFile(baseURL string) []byte {
+	provider := `provider "openstatus" {}`
+	if baseURL != api.DefaultBaseURL {
+		provider = fmt.Sprintf("provider \"openstatus\" {\n  base_url = %q\n}", baseURL+"/rpc")
+	}
 	return []byte(`terraform {
   required_providers {
     openstatus = {
@@ -120,8 +128,7 @@ func GenerateProviderFile() []byte {
 }
 
 # Set OPENSTATUS_API_TOKEN environment variable or configure api_token below
-provider "openstatus" {}
-`)
+` + provider + "\n")
 }
 
 func (g *Generator) GenerateMonitorsFile() *hclwrite.File {

@@ -35,16 +35,16 @@ func FormatError(err error, resource string, id string) error {
 
 	var dnsErr *net.DNSError
 	if errors.As(err, &dnsErr) {
-		return fmt.Errorf("could not reach api.openstatus.dev. Check your internet connection")
+		return fmt.Errorf("could not reach the openstatus API. Check your internet connection and OPENSTATUS_API_URL")
 	}
 
 	var netErr *net.OpError
 	if errors.As(err, &netErr) {
-		return fmt.Errorf("could not reach api.openstatus.dev. Check your internet connection")
+		return fmt.Errorf("could not reach the openstatus API. Check your internet connection and OPENSTATUS_API_URL")
 	}
 
 	if strings.Contains(err.Error(), "connection refused") || strings.Contains(err.Error(), "no such host") {
-		return fmt.Errorf("could not reach api.openstatus.dev. Check your internet connection")
+		return fmt.Errorf("could not reach the openstatus API. Check your internet connection and OPENSTATUS_API_URL")
 	}
 
 	return err

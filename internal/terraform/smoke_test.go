@@ -22,6 +22,8 @@ import (
 	notificationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/notification/v1"
 	private_locationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/private_location/v1"
 	status_pagev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_page/v1"
+
+	"github.com/openstatusHQ/cli/internal/api"
 )
 
 func TestSmokeValidate(t *testing.T) {
@@ -34,7 +36,7 @@ func TestSmokeValidate(t *testing.T) {
 	gen := NewGenerator(data)
 
 	files := map[string][]byte{
-		"provider.tf":          GenerateProviderFile(),
+		"provider.tf":          GenerateProviderFile(api.DefaultBaseURL),
 		"monitors.tf":          gen.GenerateMonitorsFile().Bytes(),
 		"notifications.tf":     gen.GenerateNotificationsFile().Bytes(),
 		"status_pages.tf":      gen.GenerateStatusPagesFile().Bytes(),
@@ -42,7 +44,7 @@ func TestSmokeValidate(t *testing.T) {
 		"imports.tf":           gen.GenerateImportsFile().Bytes(),
 	}
 	for name, content := range files {
-		if err := os.WriteFile(filepath.Join(dir, name), content, 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(dir, name), content, 0o644); err != nil {
 			t.Fatalf("writing %s: %v", name, err)
 		}
 	}
@@ -51,7 +53,7 @@ func TestSmokeValidate(t *testing.T) {
 	// a legacy ~/.terraform.d/plugins mirror would otherwise resolve the provider
 	// locally and validate the config against a stale schema.
 	cliConfig := filepath.Join(dir, "registry.tfrc")
-	if err := os.WriteFile(cliConfig, []byte("provider_installation {\n  direct {}\n}\n"), 0644); err != nil {
+	if err := os.WriteFile(cliConfig, []byte("provider_installation {\n  direct {}\n}\n"), 0o644); err != nil {
 		t.Fatalf("writing terraform CLI config: %v", err)
 	}
 	env := append(os.Environ(), "TF_CLI_CONFIG_FILE="+cliConfig)

@@ -56,7 +56,8 @@ func resolveBaseURL(v string) (string, error) {
 const PlayCheckerURL = "https://www.openstatus.dev/play/checker/api"
 
 var DefaultHTTPClient = &http.Client{
-	Timeout: 30 * time.Second,
+	Timeout:   30 * time.Second,
+	Transport: NewTransport(nil),
 }
 
 func NewAuthInterceptor(apiKey string) connect.UnaryInterceptorFunc {

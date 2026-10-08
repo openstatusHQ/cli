@@ -4,10 +4,12 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/urfave/cli/v3"
 
+	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/check"
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/login"
@@ -19,6 +21,7 @@ import (
 	"github.com/openstatusHQ/cli/internal/statuspage"
 	"github.com/openstatusHQ/cli/internal/statusreport"
 	"github.com/openstatusHQ/cli/internal/terraform"
+	"github.com/openstatusHQ/cli/internal/version"
 	"github.com/openstatusHQ/cli/internal/whoami"
 )
 
@@ -44,7 +47,7 @@ Get started:
   openstatus pl list              List your private locations
 
 https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
-		Version: "v1.3.2",
+		Version: version.Version,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "json",
@@ -86,7 +89,29 @@ https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
 			terraform.TerraformCmd(),
 		},
 	}
+	trackInvocation(app.Commands)
 	return app
+}
+
+// trackInvocation records the canonical command path (aliases resolve to the
+// full name) for API requests. It hooks each runnable command's Before, which
+// urfave/cli runs after its parents' Before hooks and ahead of flag actions and
+// the command's own Action, so requests made from any of those carry it.
+func trackInvocation(cmds []*cli.Command) {
+	for _, c := range cmds {
+		trackInvocation(c.Commands)
+		if c.Action == nil {
+			continue
+		}
+		before := c.Before
+		c.Before = func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+			api.SetCommand(strings.TrimPrefix(cmd.FullName(), cmd.Root().Name+" "))
+			if before == nil {
+				return ctx, nil
+			}
+			return before(ctx, cmd)
+		}
+	}
 }
 
 func RunApp(app *cli.Command) error {

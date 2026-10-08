@@ -139,6 +139,22 @@ openstatus whoami
 
 `openstatus terraform generate` then writes the matching `base_url` into `provider.tf`. The `check` command always uses the public speed checker.
 
+## Usage Data
+
+Requests to the API carry a `User-Agent` with the CLI version and platform, plus the command being run (`x-openstatus-cli-command`, e.g. `monitors list`) and a random per-run ID (`x-openstatus-cli-invocation`). We use them to understand which commands are used. No arguments, flag values or file contents are sent.
+
+To stop sending the command and run ID, set either variable (`0`, `false`, `no` and `off` leave it enabled):
+
+```bash
+export DO_NOT_TRACK=1
+# or
+export OPENSTATUS_NO_TELEMETRY=1
+```
+
+Opting out does not remove the `User-Agent`: like any HTTP client, the CLI still identifies itself with its version and platform (e.g. `openstatus-cli/v1.3.2 (darwin; arm64)`).
+
+When `OPENSTATUS_API_URL` points at a self-hosted instance, the command and run ID only go to that instance; `check` does not send them to openstatus.dev.
+
 ## Development
 
 ### Run Tests

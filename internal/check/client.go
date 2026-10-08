@@ -28,7 +28,7 @@ func Run(ctx context.Context, client *http.Client, payload Payload, onRow OnRow)
 		onRow = func(RegionResult) {}
 	}
 	if client == nil {
-		client = &http.Client{Timeout: defaultTimeout}
+		client = &http.Client{Timeout: defaultTimeout, Transport: api.NewTransport(nil)}
 	}
 
 	body, err := json.Marshal(payload)

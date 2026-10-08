@@ -4,10 +4,12 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/urfave/cli/v3"
 
+	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/check"
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/login"
@@ -86,7 +88,25 @@ https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
 			terraform.TerraformCmd(),
 		},
 	}
+	trackInvocation(app.Commands)
 	return app
+}
+
+// trackInvocation wraps every command action so API requests carry the CLI
+// version and the canonical command path (aliases resolve to the full name).
+func trackInvocation(cmds []*cli.Command) {
+	for _, c := range cmds {
+		trackInvocation(c.Commands)
+		if c.Action == nil {
+			continue
+		}
+		action := c.Action
+		c.Action = func(ctx context.Context, cmd *cli.Command) error {
+			root := cmd.Root()
+			api.SetInvocation(root.Version, strings.TrimPrefix(cmd.FullName(), root.Name+" "))
+			return action(ctx, cmd)
+		}
+	}
 }
 
 func RunApp(app *cli.Command) error {

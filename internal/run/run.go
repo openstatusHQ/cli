@@ -214,7 +214,7 @@ tests:
 				wg.Add(1)
 				go func(idx, id int) {
 					defer wg.Done()
-					res, err := MonitorTrigger(ctx, http.DefaultClient, apiKey, fmt.Sprintf("%d", id))
+					res, err := MonitorTrigger(ctx, api.DefaultHTTPClient, apiKey, fmt.Sprintf("%d", id))
 					mu.Lock()
 					results[idx] = indexedResult{index: idx, result: res, err: err}
 					mu.Unlock()

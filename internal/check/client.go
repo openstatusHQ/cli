@@ -28,7 +28,12 @@ func Run(ctx context.Context, client *http.Client, payload Payload, onRow OnRow)
 		onRow = func(RegionResult) {}
 	}
 	if client == nil {
-		client = &http.Client{Timeout: defaultTimeout, Transport: api.NewTransport(nil)}
+		client = &http.Client{Timeout: defaultTimeout}
+		// The speed checker is always hosted on openstatus.dev, so only tag it
+		// with CLI usage headers when the CLI targets openstatus Cloud too.
+		if api.BaseURL == api.DefaultBaseURL {
+			client.Transport = api.NewTransport(nil)
+		}
 	}
 
 	body, err := json.Marshal(payload)

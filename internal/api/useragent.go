@@ -4,44 +4,41 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"net/http"
+	"os"
 	"runtime"
-	"sync"
+	"sync/atomic"
+
+	"github.com/openstatusHQ/cli/internal/version"
 )
 
 // Headers sent on every request so the API can attribute usage to CLI
-// versions and commands without the CLI making any extra call.
+// commands without the CLI making any extra call.
 const (
 	HeaderCLICommand    = "x-openstatus-cli-command"
 	HeaderCLIInvocation = "x-openstatus-cli-invocation"
 )
 
+// userAgent identifies the CLI, e.g. "openstatus-cli/v1.3.2 (darwin; arm64)".
+var userAgent = "openstatus-cli/" + version.Version + " (" + runtime.GOOS + "; " + runtime.GOARCH + ")"
+
 var (
-	invocationMu sync.RWMutex
-	cliVersion   = "dev"
-	cliCommand   string
+	command atomic.Pointer[string]
 	// invocationID is random per process: it lets the API count one command
 	// run once even when it makes several requests.
 	invocationID = newInvocationID()
 )
 
-// SetInvocation records the CLI version and the command being run, e.g.
-// "monitors apply". Call it before the command makes any request.
-func SetInvocation(version, command string) {
-	invocationMu.Lock()
-	defer invocationMu.Unlock()
-	cliVersion, cliCommand = version, command
+// SetCommand records the command being run, e.g. "monitors apply". Call it
+// before the command makes any request.
+func SetCommand(name string) { command.Store(&name) }
+
+// UsageOptOut reports whether the user asked not to share command usage, via
+// DO_NOT_TRACK or OPENSTATUS_NO_TELEMETRY.
+func UsageOptOut() bool {
+	return isSet(os.Getenv("DO_NOT_TRACK")) || isSet(os.Getenv("OPENSTATUS_NO_TELEMETRY"))
 }
 
-// UserAgent identifies the CLI, e.g. "openstatus-cli/v1.3.2 (darwin; arm64)".
-func UserAgent() string {
-	invocationMu.RLock()
-	defer invocationMu.RUnlock()
-	return userAgent(cliVersion)
-}
-
-func userAgent(version string) string {
-	return "openstatus-cli/" + version + " (" + runtime.GOOS + "; " + runtime.GOARCH + ")"
-}
+func isSet(v string) bool { return v != "" && v != "0" && v != "false" }
 
 func newInvocationID() string {
 	b := make([]byte, 16)
@@ -55,7 +52,8 @@ type cliTransport struct {
 }
 
 // NewTransport wraps base (http.DefaultTransport when nil) so every request
-// carries the CLI user agent, command and invocation ID.
+// carries the CLI user agent and, unless the user opted out, the command and
+// invocation ID.
 func NewTransport(base http.RoundTripper) http.RoundTripper {
 	if base == nil {
 		base = http.DefaultTransport
@@ -64,16 +62,21 @@ func NewTransport(base http.RoundTripper) http.RoundTripper {
 }
 
 func (t cliTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	invocationMu.RLock()
-	version, command := cliVersion, cliCommand
-	invocationMu.RUnlock()
-
 	// A RoundTripper must not modify the caller's request.
 	req = req.Clone(req.Context())
-	req.Header.Set("User-Agent", userAgent(version))
-	req.Header.Set(HeaderCLIInvocation, invocationID)
-	if command != "" {
-		req.Header.Set(HeaderCLICommand, command)
+
+	// Keep any existing agent (e.g. connect-go's) after ours.
+	ua := userAgent
+	if existing := req.Header.Get("User-Agent"); existing != "" {
+		ua += " " + existing
+	}
+	req.Header.Set("User-Agent", ua)
+
+	if !UsageOptOut() {
+		req.Header.Set(HeaderCLIInvocation, invocationID)
+		if name := command.Load(); name != nil && *name != "" {
+			req.Header.Set(HeaderCLICommand, *name)
+		}
 	}
 	return t.base.RoundTrip(req)
 }

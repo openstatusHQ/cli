@@ -17,7 +17,9 @@ func Test_trackInvocation(t *testing.T) {
 		gotCommand = r.Header.Get(api.HeaderCLICommand)
 	}))
 	defer srv.Close()
-	t.Cleanup(func() { api.SetInvocation("dev", "") })
+	t.Setenv("DO_NOT_TRACK", "")
+	t.Setenv("OPENSTATUS_NO_TELEMETRY", "")
+	t.Cleanup(func() { api.SetCommand("") })
 
 	app := &cli.Command{
 		Name:    "openstatus",

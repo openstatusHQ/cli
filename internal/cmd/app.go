@@ -21,6 +21,7 @@ import (
 	"github.com/openstatusHQ/cli/internal/statuspage"
 	"github.com/openstatusHQ/cli/internal/statusreport"
 	"github.com/openstatusHQ/cli/internal/terraform"
+	"github.com/openstatusHQ/cli/internal/version"
 	"github.com/openstatusHQ/cli/internal/whoami"
 )
 
@@ -46,7 +47,7 @@ Get started:
   openstatus pl list              List your private locations
 
 https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
-		Version: "v1.3.2",
+		Version: version.Version,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "json",
@@ -92,8 +93,8 @@ https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
 	return app
 }
 
-// trackInvocation wraps every command action so API requests carry the CLI
-// version and the canonical command path (aliases resolve to the full name).
+// trackInvocation wraps every command action so API requests carry the
+// canonical command path (aliases resolve to the full name).
 func trackInvocation(cmds []*cli.Command) {
 	for _, c := range cmds {
 		trackInvocation(c.Commands)
@@ -102,8 +103,7 @@ func trackInvocation(cmds []*cli.Command) {
 		}
 		action := c.Action
 		c.Action = func(ctx context.Context, cmd *cli.Command) error {
-			root := cmd.Root()
-			api.SetInvocation(root.Version, strings.TrimPrefix(cmd.FullName(), root.Name+" "))
+			api.SetCommand(strings.TrimPrefix(cmd.FullName(), cmd.Root().Name+" "))
 			return action(ctx, cmd)
 		}
 	}

@@ -93,18 +93,23 @@ https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
 	return app
 }
 
-// trackInvocation wraps every command action so API requests carry the
-// canonical command path (aliases resolve to the full name).
+// trackInvocation records the canonical command path (aliases resolve to the
+// full name) for API requests. It hooks each runnable command's Before, which
+// urfave/cli runs after its parents' Before hooks and ahead of flag actions and
+// the command's own Action, so requests made from any of those carry it.
 func trackInvocation(cmds []*cli.Command) {
 	for _, c := range cmds {
 		trackInvocation(c.Commands)
 		if c.Action == nil {
 			continue
 		}
-		action := c.Action
-		c.Action = func(ctx context.Context, cmd *cli.Command) error {
+		before := c.Before
+		c.Before = func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
 			api.SetCommand(strings.TrimPrefix(cmd.FullName(), cmd.Root().Name+" "))
-			return action(ctx, cmd)
+			if before == nil {
+				return ctx, nil
+			}
+			return before(ctx, cmd)
 		}
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/openstatusHQ/cli/internal/cmd"
+	"github.com/openstatusHQ/cli/internal/version"
 )
 
 func Test_NewApp(t *testing.T) {
@@ -20,8 +21,8 @@ func Test_NewApp(t *testing.T) {
 			t.Errorf("Expected app name 'openstatus', got %s", app.Name)
 		}
 
-		if app.Version != "v1.3.2" {
-			t.Errorf("Expected version 'v1.3.2', got %s", app.Version)
+		if app.Version != version.Version {
+			t.Errorf("Expected version %q, got %s", version.Version, app.Version)
 		}
 
 		if !app.Suggest {

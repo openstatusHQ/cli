@@ -2,4 +2,6 @@
 // and the API client's User-Agent.
 package version
 
-const Version = "v1.3.2"
+// Version is overridden at release time via
+// -ldflags "-X github.com/openstatusHQ/cli/internal/version.Version=<tag>".
+var Version = "v1.3.2"

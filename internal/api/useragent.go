@@ -4,8 +4,11 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"net/http"
+	"net/url"
 	"os"
 	"runtime"
+	"strconv"
+	"strings"
 	"sync/atomic"
 
 	"github.com/openstatusHQ/cli/internal/version"
@@ -38,7 +41,40 @@ func UsageOptOut() bool {
 	return isSet(os.Getenv("DO_NOT_TRACK")) || isSet(os.Getenv("OPENSTATUS_NO_TELEMETRY"))
 }
 
-func isSet(v string) bool { return v != "" && v != "0" && v != "false" }
+// isSet treats empty and falsy values (0, false, no, off, any case) as unset,
+// and anything else as an opt-out.
+func isSet(v string) bool {
+	v = strings.TrimSpace(v)
+	if v == "" || strings.EqualFold(v, "no") || strings.EqualFold(v, "off") {
+		return false
+	}
+	if b, err := strconv.ParseBool(v); err == nil {
+		return b
+	}
+	return true
+}
+
+// sendsUsage reports whether a request to u may carry the command and
+// invocation ID: only requests to the configured API, plus the hosted speed
+// checker when the CLI targets openstatus Cloud. A self-hosted setup never
+// sends them to openstatus.dev.
+func sendsUsage(u *url.URL) bool {
+	if UsageOptOut() {
+		return false
+	}
+	if u.Host == hostOf(BaseURL) {
+		return true
+	}
+	return BaseURL == DefaultBaseURL && u.Host == hostOf(PlayCheckerURL)
+}
+
+func hostOf(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return ""
+	}
+	return u.Host
+}
 
 func newInvocationID() string {
 	b := make([]byte, 16)
@@ -52,7 +88,7 @@ type cliTransport struct {
 }
 
 // NewTransport wraps base (http.DefaultTransport when nil) so every request
-// carries the CLI user agent and, unless the user opted out, the command and
+// carries the CLI user agent and, when sendsUsage allows it, the command and
 // invocation ID.
 func NewTransport(base http.RoundTripper) http.RoundTripper {
 	if base == nil {
@@ -72,7 +108,7 @@ func (t cliTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 	req.Header.Set("User-Agent", ua)
 
-	if !UsageOptOut() {
+	if sendsUsage(req.URL) {
 		req.Header.Set(HeaderCLIInvocation, invocationID)
 		if name := command.Load(); name != nil && *name != "" {
 			req.Header.Set(HeaderCLICommand, *name)

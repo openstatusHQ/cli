@@ -12,29 +12,40 @@ import (
 )
 
 func Test_trackInvocation(t *testing.T) {
-	var gotCommand string
+	var gotCommands []string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotCommand = r.Header.Get(api.HeaderCLICommand)
+		gotCommands = append(gotCommands, r.Header.Get(api.HeaderCLICommand))
 	}))
 	defer srv.Close()
 	t.Setenv("DO_NOT_TRACK", "")
 	t.Setenv("OPENSTATUS_NO_TELEMETRY", "")
-	t.Cleanup(func() { api.SetCommand("") })
+	prevBase := api.BaseURL
+	api.BaseURL = srv.URL
+	t.Cleanup(func() {
+		api.BaseURL = prevBase
+		api.SetCommand("")
+	})
 
+	call := func() error {
+		resp, err := (&http.Client{Transport: api.NewTransport(nil)}).Get(srv.URL)
+		if err != nil {
+			return err
+		}
+		return resp.Body.Close()
+	}
 	app := &cli.Command{
-		Name:    "openstatus",
-		Version: "v9.9.9",
+		Name: "openstatus",
 		Commands: []*cli.Command{{
 			Name:    "private-locations",
 			Aliases: []string{"pl"},
 			Commands: []*cli.Command{{
 				Name: "list",
+				// A request from the command's own Before hook must be tagged too.
+				Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+					return ctx, call()
+				},
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					resp, err := (&http.Client{Transport: api.NewTransport(nil)}).Get(srv.URL)
-					if err != nil {
-						return err
-					}
-					return resp.Body.Close()
+					return call()
 				},
 			}},
 		}},
@@ -44,7 +55,8 @@ func Test_trackInvocation(t *testing.T) {
 	if err := app.Run(context.Background(), []string{"openstatus", "pl", "list"}); err != nil {
 		t.Fatal(err)
 	}
-	if gotCommand != "private-locations list" {
-		t.Errorf("command header = %q, want %q", gotCommand, "private-locations list")
+	want := []string{"private-locations list", "private-locations list"}
+	if len(gotCommands) != len(want) || gotCommands[0] != want[0] || gotCommands[1] != want[1] {
+		t.Errorf("command headers = %q, want %q", gotCommands, want)
 	}
 }

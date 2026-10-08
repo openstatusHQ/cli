@@ -18,6 +18,8 @@ builds:
       - CGO_ENABLED=0
     id: openstatus
     main: ./cmd/openstatus
+    ldflags:
+      - -s -w -X github.com/openstatusHQ/cli/internal/version.Version={{ .Tag }}
     goos:
       - linux
       - windows

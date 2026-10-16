@@ -123,3 +123,79 @@ func Test_StatusReport_IncidentIDInJSON(t *testing.T) {
 		}
 	})
 }
+
+func Test_CreateStatusReport_IncidentNotFound(t *testing.T) {
+	t.Parallel()
+
+	client := &interceptorHTTPClient{
+		f: func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusNotFound,
+				Body:       io.NopCloser(bytes.NewReader([]byte(`{"code":"not_found","message":"incident 999 not found"}`))),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
+			}, nil
+		},
+	}
+	_, err := statusreport.CreateStatusReportWithHTTPClient(
+		context.Background(), client.GetHTTPClient(), "test-token",
+		statusreport.CreateStatusReportParams{
+			Title:      "DB Down",
+			Status:     "investigating",
+			Message:    "Looking",
+			Date:       "2026-03-20T10:00:00Z",
+			PageID:     "page-1",
+			IncidentID: "999",
+		},
+	)
+	if err == nil || err.Error() != "incident 999 not found" {
+		t.Errorf("unexpected error %v", err)
+	}
+}
+
+func Test_RenderCreated_JSON(t *testing.T) {
+	report := &status_reportv1.StatusReport{}
+	report.SetId("44")
+	report.SetTitle("DB Down")
+	report.SetIncidentId("42")
+
+	var err error
+	out := captureJSONStdout(t, func() {
+		err = statusreport.RenderCreated(report, "42")
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	var got struct {
+		ID         string `json:"id"`
+		IncidentID string `json:"incident_id"`
+	}
+	if err := json.Unmarshal(out, &got); err != nil {
+		t.Fatalf("output is not JSON: %v\n%s", err, out)
+	}
+	if got.ID != "44" || got.IncidentID != "42" {
+		t.Errorf("unexpected output %+v", got)
+	}
+}
+
+func Test_RenderCreated_Quiet(t *testing.T) {
+	report := &status_reportv1.StatusReport{}
+	report.SetId("44")
+
+	output.SetQuietMode(true)
+	defer output.SetQuietMode(false)
+
+	r, w, _ := os.Pipe()
+	original := os.Stdout
+	os.Stdout = w
+	err := statusreport.RenderCreated(report, "")
+	w.Close()
+	os.Stdout = original
+	out, _ := io.ReadAll(r)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if string(out) != "44\n" {
+		t.Errorf("unexpected output %q", out)
+	}
+}

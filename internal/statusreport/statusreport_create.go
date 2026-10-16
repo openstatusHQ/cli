@@ -2,6 +2,7 @@ package statusreport
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,6 +11,7 @@ import (
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/status_report/v1/status_reportv1connect"
 	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
+	"connectrpc.com/connect"
 	"github.com/urfave/cli/v3"
 
 	"github.com/openstatusHQ/cli/internal/auth"
@@ -68,10 +70,24 @@ func createStatusReport(ctx context.Context, client status_reportv1connect.Statu
 
 	resp, err := client.CreateStatusReport(ctx, req)
 	if err != nil {
-		return nil, output.FormatError(err, "status-report", "")
+		return nil, formatCreateError(err, p.IncidentID)
 	}
 
 	return resp.GetStatusReport(), nil
+}
+
+// formatCreateError keeps the server message on NotFound when an incident is
+// linked, since it names the missing resource (page or incident); the generic
+// mapping would always blame the status report.
+func formatCreateError(err error, incidentID string) error {
+	var connectErr *connect.Error
+	if incidentID != "" && errors.As(err, &connectErr) && connectErr.Code() == connect.CodeNotFound {
+		if msg := strings.TrimSuffix(connectErr.Message(), "."); msg != "" {
+			return errors.New(msg)
+		}
+		return fmt.Errorf("incident %s not found. Run 'openstatus incident list' to see available incidents", incidentID)
+	}
+	return output.FormatError(err, "status-report", "")
 }
 
 func CreateStatusReportWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, p CreateStatusReportParams) (string, error) {
@@ -213,18 +229,30 @@ func GetStatusReportCreateCmd() *cli.Command {
 				return cli.Exit(err.Error(), 1)
 			}
 
-			id := report.GetId()
-			fmt.Printf("Status report created successfully (ID: %s)\n", id)
-			if incidentID := cmd.String("incident-id"); incidentID != "" {
-				if report.HasIncidentId() {
-					fmt.Printf("Linked to incident %s\n", report.GetIncidentId())
-				} else {
-					fmt.Fprintf(os.Stderr, "Warning: the report was not linked to incident %s. Link it with: openstatus inc link-report %s %s\n", incidentID, incidentID, id)
-				}
-			}
-			fmt.Printf("To add updates, run: openstatus status-report add-update %s --status identified --message '...'\n", id)
-			fmt.Println("Tip: pass --impact <component>=<level> to update per-component impact.")
-			return nil
+			return renderCreated(report, cmd.String("incident-id"))
 		},
 	}
+}
+
+// renderCreated prints the created report. requestedIncidentID is the
+// --incident-id the user passed, so a silently dropped link can be flagged.
+func renderCreated(report *status_reportv1.StatusReport, requestedIncidentID string) error {
+	id := report.GetId()
+	if requestedIncidentID != "" && !report.HasIncidentId() {
+		fmt.Fprintf(os.Stderr, "Warning: the report was not linked to incident %s. Link it with: openstatus inc link-report %s %s\n", requestedIncidentID, requestedIncidentID, id)
+	}
+	if output.IsJSONOutput() {
+		return output.PrintJSON(toStatusReportDetail(report, affectedOrder(report), currentImpacts(report.GetUpdates())))
+	}
+	if output.IsQuiet() {
+		fmt.Println(id)
+		return nil
+	}
+	fmt.Printf("Status report created successfully (ID: %s)\n", id)
+	if report.HasIncidentId() {
+		fmt.Printf("Linked to incident %s\n", report.GetIncidentId())
+	}
+	fmt.Printf("To add updates, run: openstatus status-report add-update %s --status identified --message '...'\n", id)
+	fmt.Println("Tip: pass --impact <component>=<level> to update per-component impact.")
+	return nil
 }

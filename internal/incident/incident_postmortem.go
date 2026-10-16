@@ -104,6 +104,11 @@ func renderPostmortem(id string, pm *incidentv1.Postmortem) error {
 		return output.PrintJSON(toPostmortemJSON(pm))
 	}
 	if pm == nil {
+		// Piped output is a postmortem body by contract; never let the hint
+		// end up in a file that 'pm edit --file' would upload.
+		if !output.IsTerminal() || output.IsQuiet() {
+			return fmt.Errorf("no postmortem yet for incident %s. Write one: openstatus inc postmortem edit %s --file postmortem.md", id, id)
+		}
 		fmt.Printf("No postmortem yet for incident %s\n", id)
 		fmt.Printf("Write one: openstatus inc postmortem edit %s --file postmortem.md\n", id)
 		return nil

@@ -63,15 +63,17 @@ func Test_ShowPostmortem(t *testing.T) {
 		}
 	})
 
-	t.Run("none yet", func(t *testing.T) {
+	t.Run("none yet when piped fails and keeps stdout empty", func(t *testing.T) {
 		srv := newServer(http.StatusOK, `{}`)
+		var err error
 		out := captureStdout(t, func() {
-			if err := incident.ShowPostmortemWithHTTPClient(context.Background(), srv.client(), "token", "42"); err != nil {
-				t.Errorf("unexpected error: %v", err)
-			}
+			err = incident.ShowPostmortemWithHTTPClient(context.Background(), srv.client(), "token", "42")
 		})
-		if !strings.Contains(out, "No postmortem yet for incident 42") || !strings.Contains(out, "postmortem edit 42") {
-			t.Errorf("unexpected output %q", out)
+		if err == nil || !strings.Contains(err.Error(), "no postmortem yet for incident 42") || !strings.Contains(err.Error(), "postmortem edit 42") {
+			t.Errorf("unexpected error %v", err)
+		}
+		if out != "" {
+			t.Errorf("expected empty stdout, got %q", out)
 		}
 	})
 

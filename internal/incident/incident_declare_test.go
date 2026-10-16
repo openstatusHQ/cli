@@ -86,6 +86,24 @@ func Test_MissingDeclareFlags(t *testing.T) {
 	}
 }
 
+func Test_ValidateDeclareFlags(t *testing.T) {
+	t.Parallel()
+
+	if err := incident.ValidateDeclareFlags(incident.DeclareParams{}); err != nil {
+		t.Errorf("empty params should be valid before the wizard, got %v", err)
+	}
+	for _, p := range []incident.DeclareParams{
+		{Severity: "foo"},
+		{Commander: "not-an-email"},
+		{StartedAt: "yesterday"},
+		{Title: "   "},
+	} {
+		if err := incident.ValidateDeclareFlags(p); err == nil {
+			t.Errorf("expected error for %+v", p)
+		}
+	}
+}
+
 func Test_DeclareIncident(t *testing.T) {
 	t.Run("sends request and prints hint", func(t *testing.T) {
 		srv := newServer(http.StatusOK, incidentResponse())

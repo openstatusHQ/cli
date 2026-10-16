@@ -17,6 +17,7 @@ var (
 	BuildListRequest         = buildListRequest
 	BuildDeclareRequest      = buildDeclareRequest
 	MissingDeclareFlags      = missingDeclareFlags
+	ValidateDeclareFlags     = validateProvidedDeclareFlags
 	BuildUpdateRequest       = buildUpdateRequest
 	BuildSetStatusRequest    = buildSetStatusRequest
 	BuildNoteRequest         = buildNoteRequest

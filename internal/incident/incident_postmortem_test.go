@@ -130,7 +130,7 @@ func Test_ResolvePostmortemContent(t *testing.T) {
 		want       string
 		wantErr    string
 	}{
-		{name: "file", file: path, fileSet: true, want: "# From file\n"},
+		{name: "file", file: path, fileSet: true, want: "# From file"},
 		{name: "stdin", file: "-", fileSet: true, stdin: "# From stdin\n", want: "# From stdin"},
 		{name: "content", content: "# Inline", contentSet: true, want: "# Inline"},
 		{name: "neither", wantErr: "exactly one of --file or --content"},
@@ -240,6 +240,22 @@ func Test_ApprovePostmortem(t *testing.T) {
 		srv := errorServer(http.StatusForbidden, "permission_denied", "forbidden")
 		err := incident.ApprovePostmortemWithHTTPClient(context.Background(), srv.client(), "token", "42", false)
 		if err == nil || !strings.Contains(err.Error(), "or the incident commander") {
+			t.Errorf("unexpected error %v", err)
+		}
+	})
+
+	t.Run("missing incident is not reported as missing postmortem", func(t *testing.T) {
+		srv := errorServer(http.StatusNotFound, "not_found", "incident not found")
+		err := incident.ApprovePostmortemWithHTTPClient(context.Background(), srv.client(), "token", "42", false)
+		if err == nil || !strings.Contains(err.Error(), "incident 42 not found") {
+			t.Errorf("unexpected error %v", err)
+		}
+	})
+
+	t.Run("permission denied keeps the server reason", func(t *testing.T) {
+		srv := errorServer(http.StatusForbidden, "permission_denied", "api key lacks the incidents scope")
+		err := incident.ApprovePostmortemWithHTTPClient(context.Background(), srv.client(), "token", "42", false)
+		if err == nil || !strings.Contains(err.Error(), "api key lacks the incidents scope") || !strings.Contains(err.Error(), "or the incident commander") {
 			t.Errorf("unexpected error %v", err)
 		}
 	})

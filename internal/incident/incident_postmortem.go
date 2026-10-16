@@ -147,7 +147,7 @@ func resolvePostmortemContent(file, content string, fileSet, contentSet bool, st
 			if err != nil {
 				return "", fmt.Errorf("read postmortem file %q: %w", file, err)
 			}
-			text = string(data)
+			text = trimTrailingNewline(string(data))
 		}
 	}
 

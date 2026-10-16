@@ -58,6 +58,35 @@ func missingDeclareFlags(p DeclareParams) []string {
 	return missing
 }
 
+// validateProvidedDeclareFlags checks the flags that were passed so the wizard
+// does not prompt for the rest before rejecting a bad value.
+func validateProvidedDeclareFlags(p DeclareParams) error {
+	if p.Title != "" {
+		if err := validateTitle(p.Title); err != nil {
+			return err
+		}
+	}
+	if p.Severity != "" {
+		if _, err := severityToSDK(p.Severity); err != nil {
+			return err
+		}
+	}
+	if err := validateSummary(p.Summary); err != nil {
+		return err
+	}
+	if p.Commander != "" {
+		if err := validateEmail("--commander", p.Commander); err != nil {
+			return err
+		}
+	}
+	if p.StartedAt != "" {
+		if err := validateTimestamp("--started-at", p.StartedAt); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func buildDeclareRequest(p DeclareParams) (*incidentv1.DeclareIncidentRequest, error) {
 	if err := validateTitle(p.Title); err != nil {
 		return nil, err
@@ -179,6 +208,9 @@ In scripts, pass every required flag.`,
 			if missing := missingDeclareFlags(p); len(missing) > 0 {
 				if output.IsJSONOutput() || !output.IsStdinTerminal() {
 					return fmt.Errorf("missing required flags: %s", strings.Join(missing, ", "))
+				}
+				if err := validateProvidedDeclareFlags(p); err != nil {
+					return err
 				}
 				var err error
 				p, err = runDeclareWizard(p)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -28,9 +29,17 @@ type CreateStatusReportParams struct {
 }
 
 func CreateStatusReport(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, p CreateStatusReportParams) (string, error) {
-	sdkStatus, err := statusToSDK(p.Status)
+	report, err := createStatusReport(ctx, client, p)
 	if err != nil {
 		return "", err
+	}
+	return report.GetId(), nil
+}
+
+func createStatusReport(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, p CreateStatusReportParams) (*status_reportv1.StatusReport, error) {
+	sdkStatus, err := statusToSDK(p.Status)
+	if err != nil {
+		return nil, err
 	}
 
 	req := &status_reportv1.CreateStatusReportRequest{
@@ -59,10 +68,10 @@ func CreateStatusReport(ctx context.Context, client status_reportv1connect.Statu
 
 	resp, err := client.CreateStatusReport(ctx, req)
 	if err != nil {
-		return "", output.FormatError(err, "status-report", "")
+		return nil, output.FormatError(err, "status-report", "")
 	}
 
-	return resp.GetStatusReport().GetId(), nil
+	return resp.GetStatusReport(), nil
 }
 
 func CreateStatusReportWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, p CreateStatusReportParams) (string, error) {
@@ -188,7 +197,7 @@ func GetStatusReportCreateCmd() *cli.Command {
 
 			client := NewStatusReportClient(apiKey)
 			s := output.StartSpinner("Creating status report...")
-			id, err := CreateStatusReport(ctx, client, CreateStatusReportParams{
+			report, err := createStatusReport(ctx, client, CreateStatusReportParams{
 				Title:            inputs.Title,
 				Status:           inputs.Status,
 				Message:          inputs.Message,
@@ -204,9 +213,14 @@ func GetStatusReportCreateCmd() *cli.Command {
 				return cli.Exit(err.Error(), 1)
 			}
 
+			id := report.GetId()
 			fmt.Printf("Status report created successfully (ID: %s)\n", id)
 			if incidentID := cmd.String("incident-id"); incidentID != "" {
-				fmt.Printf("Linked to incident %s\n", incidentID)
+				if report.HasIncidentId() {
+					fmt.Printf("Linked to incident %s\n", report.GetIncidentId())
+				} else {
+					fmt.Fprintf(os.Stderr, "Warning: the report was not linked to incident %s. Link it with: openstatus inc link-report %s %s\n", incidentID, incidentID, id)
+				}
 			}
 			fmt.Printf("To add updates, run: openstatus status-report add-update %s --status identified --message '...'\n", id)
 			fmt.Println("Tip: pass --impact <component>=<level> to update per-component impact.")

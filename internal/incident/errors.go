@@ -41,18 +41,20 @@ func formatIncidentError(err error, id string, o op) error {
 	case connect.CodeNotFound:
 		switch o {
 		case opApprove:
-			return fmt.Errorf("no postmortem written yet for incident %s. Write one first: openstatus inc postmortem edit %s --file postmortem.md", id, id)
+			if strings.Contains(strings.ToLower(msg), "postmortem") {
+				return fmt.Errorf("no postmortem written yet for incident %s. Write one first: openstatus inc postmortem edit %s --file postmortem.md", id, id)
+			}
 		case opLink, opDeclare:
 			if msg != "" {
 				return errors.New(msg)
 			}
 		}
 	case connect.CodePermissionDenied:
-		switch o {
-		case opClose, opApprove:
-			return errors.New("permission denied: requires a workspace owner or admin, or the incident commander. API keys without a creator cannot perform this action")
-		case opDelete:
-			return errors.New("permission denied: requires a workspace owner or admin. API keys without a creator cannot perform this action")
+		if hint := permissionHint(o); hint != "" {
+			if msg == "" {
+				return fmt.Errorf("permission denied. %s", hint)
+			}
+			return fmt.Errorf("permission denied: %s. %s", msg, hint)
 		}
 	}
 
@@ -67,6 +69,17 @@ func preconditionHint(id string, o op) string {
 		return fmt.Sprintf("Only incidents that are still open and were never mitigated can be deleted; use 'openstatus inc cancel %s' instead.", id)
 	case opClose:
 		return "Close requires a resolved incident and an approved postmortem (or --skip-postmortem)."
+	default:
+		return ""
+	}
+}
+
+func permissionHint(o op) string {
+	switch o {
+	case opClose, opApprove:
+		return "This action requires a workspace owner or admin, or the incident commander. API keys without a creator cannot perform it."
+	case opDelete:
+		return "This action requires a workspace owner or admin. API keys without a creator cannot perform it."
 	default:
 		return ""
 	}

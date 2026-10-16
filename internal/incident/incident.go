@@ -8,13 +8,16 @@ import (
 	"net/http"
 	"net/mail"
 	"os"
+	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/incident/v1/incidentv1connect"
 	incidentv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/incident/v1"
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
+	"github.com/mattn/go-isatty"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
@@ -360,15 +363,29 @@ func readTextArg(value string, stdin io.Reader) (string, error) {
 	if value != "-" {
 		return value, nil
 	}
+	if f, ok := stdin.(*os.File); ok && (isatty.IsTerminal(f.Fd()) || isatty.IsCygwinTerminal(f.Fd())) {
+		fmt.Fprintln(os.Stderr, "Reading from stdin, press Ctrl-D to finish.")
+	}
 	data, err := io.ReadAll(stdin)
 	if err != nil {
 		return "", fmt.Errorf("failed to read stdin: %w", err)
 	}
-	text := strings.TrimSuffix(strings.TrimSuffix(string(data), "\n"), "\r")
+	text := trimTrailingNewline(string(data))
 	if strings.TrimSpace(text) == "" {
 		return "", errors.New("no input received on stdin")
 	}
 	return text, nil
+}
+
+func trimTrailingNewline(s string) string {
+	return strings.TrimSuffix(strings.TrimSuffix(s, "\n"), "\r")
+}
+
+var ansiEscape = regexp.MustCompile(`\x1b\[[0-9;]*m`)
+
+// visibleWidth ignores ANSI color codes so colored table cells stay aligned.
+func visibleWidth(s string) int {
+	return utf8.RuneCountInString(ansiEscape.ReplaceAllString(s, ""))
 }
 
 func nextStepHint(inc *incidentv1.Incident) string {

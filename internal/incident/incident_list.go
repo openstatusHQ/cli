@@ -105,7 +105,7 @@ func ListIncidents(ctx context.Context, client incidentv1connect.IncidentService
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
 
 	tbl := table.New("ID", "Title", "Severity", "Status", "Commander", "Declared", "Report")
-	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt).WithWidthFunc(visibleWidth)
 
 	for _, inc := range incidents {
 		report := "—"

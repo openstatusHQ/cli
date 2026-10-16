@@ -25,6 +25,7 @@ type statusReportDetail struct {
 	Status         string                `json:"status"`
 	Components     []string              `json:"components,omitempty"`
 	CurrentImpacts []componentImpactJSON `json:"current_impacts,omitempty"`
+	IncidentID     string                `json:"incident_id,omitempty"`
 	CreatedAt      string                `json:"created_at"`
 	UpdatedAt      string                `json:"updated_at"`
 	Updates        []statusReportUpdate  `json:"updates,omitempty"`
@@ -40,6 +41,39 @@ type statusReportUpdate struct {
 type componentImpactJSON struct {
 	ComponentID string `json:"component_id"`
 	Impact      string `json:"impact"`
+}
+
+func toStatusReportDetail(report *status_reportv1.StatusReport, affected []string, current map[string]status_reportv1.PageComponentImpact) statusReportDetail {
+	detail := statusReportDetail{
+		ID:         report.GetId(),
+		Title:      report.GetTitle(),
+		Status:     statusToString(report.GetStatus()),
+		Components: report.GetPageComponentIds(),
+		IncidentID: report.GetIncidentId(),
+		CreatedAt:  report.GetCreatedAt(),
+		UpdatedAt:  report.GetUpdatedAt(),
+	}
+	for _, id := range affected {
+		detail.CurrentImpacts = append(detail.CurrentImpacts, componentImpactJSON{
+			ComponentID: id,
+			Impact:      impactToString(current[id]),
+		})
+	}
+	for _, u := range report.GetUpdates() {
+		ue := statusReportUpdate{
+			Date:    u.GetDate(),
+			Status:  statusToString(u.GetStatus()),
+			Message: u.GetMessage(),
+		}
+		for _, ci := range u.GetComponentImpacts() {
+			ue.Impacts = append(ue.Impacts, componentImpactJSON{
+				ComponentID: ci.GetPageComponentId(),
+				Impact:      impactToString(ci.GetImpact()),
+			})
+		}
+		detail.Updates = append(detail.Updates, ue)
+	}
+	return detail
 }
 
 func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, reportId string, s *output.Spinner) error {
@@ -65,35 +99,7 @@ func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.Stat
 	current := currentImpacts(report.GetUpdates())
 
 	if output.IsJSONOutput() {
-		detail := statusReportDetail{
-			ID:         report.GetId(),
-			Title:      report.GetTitle(),
-			Status:     statusToString(report.GetStatus()),
-			Components: report.GetPageComponentIds(),
-			CreatedAt:  report.GetCreatedAt(),
-			UpdatedAt:  report.GetUpdatedAt(),
-		}
-		for _, id := range affected {
-			detail.CurrentImpacts = append(detail.CurrentImpacts, componentImpactJSON{
-				ComponentID: id,
-				Impact:      impactToString(current[id]),
-			})
-		}
-		for _, u := range report.GetUpdates() {
-			ue := statusReportUpdate{
-				Date:    u.GetDate(),
-				Status:  statusToString(u.GetStatus()),
-				Message: u.GetMessage(),
-			}
-			for _, ci := range u.GetComponentImpacts() {
-				ue.Impacts = append(ue.Impacts, componentImpactJSON{
-					ComponentID: ci.GetPageComponentId(),
-					Impact:      impactToString(ci.GetImpact()),
-				})
-			}
-			detail.Updates = append(detail.Updates, ue)
-		}
-		return output.PrintJSON(detail)
+		return output.PrintJSON(toStatusReportDetail(report, affected, current))
 	}
 
 	fmt.Println(aurora.Bold("Status Report:"))
@@ -128,6 +134,9 @@ func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.Stat
 		{"Status", statusColor(statusToString(report.GetStatus()))},
 		{"Created", output.FormatTimestamp(report.GetCreatedAt())},
 		{"Updated", output.FormatTimestamp(report.GetUpdatedAt())},
+	}
+	if report.HasIncidentId() {
+		data = append(data, []string{"Incident", fmt.Sprintf("%s (openstatus inc info %s)", report.GetIncidentId(), report.GetIncidentId())})
 	}
 
 	table.Bulk(data)

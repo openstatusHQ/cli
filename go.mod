@@ -1,13 +1,13 @@
 module github.com/openstatusHQ/cli
 
-go 1.25.0
+go 1.26.0
 
 require github.com/urfave/cli/v3 v3.9.0 // direct
 
 require (
-	buf.build/gen/go/openstatus/api/connectrpc/gosimple v1.20.0-20260826071311-8210bb95208b.1
-	buf.build/gen/go/openstatus/api/protocolbuffers/go v1.36.12-20260826071311-8210bb95208b.1
-	connectrpc.com/connect v1.20.0
+	buf.build/gen/go/openstatus/api/connectrpc/gosimple v1.21.1-20261016131942-404d544bfc59.1
+	buf.build/gen/go/openstatus/api/protocolbuffers/go v1.36.12-20261016131942-404d544bfc59.2
+	connectrpc.com/connect v1.21.1
 	github.com/briandowns/spinner v1.23.2
 	github.com/charmbracelet/huh v1.0.0
 	github.com/fatih/color v1.19.0
@@ -30,8 +30,8 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20251209175733-2a1774d88802.1 // indirect
-	buf.build/gen/go/gnostic/gnostic/protocolbuffers/go v1.36.12-20230414000709-087bc8072ce4.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20251209175733-2a1774d88802.2 // indirect
+	buf.build/gen/go/gnostic/gnostic/protocolbuffers/go v1.36.12-20230414000709-087bc8072ce4.2 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect

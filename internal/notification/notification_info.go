@@ -93,7 +93,7 @@ func extractNotificationData(data *notificationv1.NotificationData) (map[string]
 		return map[string]any{"ntfy": jsonMap}, rows
 
 	case *notificationv1.NotificationData_Sms:
-		phone := d.Sms.GetPhoneNumber()
+		phone := d.Sms.GetPhoneNumber() //nolint:staticcheck // deprecated values still exist on older resources
 		return map[string]any{"sms": map[string]any{"phone_number": phone}},
 			[][]string{{"Phone Number", phone}}
 

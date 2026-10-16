@@ -11,7 +11,7 @@ func regionToTerraform(r monitorv1.Region) string {
 		return "fly-ams"
 	case monitorv1.Region_REGION_FLY_ARN:
 		return "fly-arn"
-	case monitorv1.Region_REGION_FLY_BOM:
+	case monitorv1.Region_REGION_FLY_BOM: //nolint:staticcheck // deprecated values still exist on older resources
 		return "fly-bom"
 	case monitorv1.Region_REGION_FLY_CDG:
 		return "fly-cdg"

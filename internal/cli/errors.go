@@ -30,6 +30,11 @@ func FormatError(err error, resource string, id string) error {
 			return fmt.Errorf("rate limited. Wait a moment and try again")
 		case connect.CodeInvalidArgument:
 			return fmt.Errorf("invalid request: %s", connectErr.Message())
+		case connect.CodeFailedPrecondition:
+			if connectErr.Message() == "" {
+				return errors.New("request conflicts with the current state of the resource")
+			}
+			return errors.New(connectErr.Message())
 		}
 	}
 

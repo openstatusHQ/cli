@@ -12,6 +12,7 @@ import (
 	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/check"
 	output "github.com/openstatusHQ/cli/internal/cli"
+	"github.com/openstatusHQ/cli/internal/incident"
 	"github.com/openstatusHQ/cli/internal/login"
 	"github.com/openstatusHQ/cli/internal/maintenance"
 	"github.com/openstatusHQ/cli/internal/monitors"
@@ -32,13 +33,15 @@ func NewApp() *cli.Command {
 		EnableShellCompletion: true,
 		Usage:                 "Manage status pages, monitors, and incidents from the terminal",
 		Description: `OpenStatus CLI lets you manage your status pages and uptime monitors
-from the command line. Report and track incidents, define monitors as code,
-and run on-demand checks.
+from the command line. Declare and run incidents, post public status updates,
+define monitors as code, and run on-demand checks.
 
 Get started:
   openstatus login                Save your API token
-  openstatus status-report create Report an incident
-  openstatus status-report list   View active incidents
+  openstatus incident declare     Declare an incident
+  openstatus incident list        View incidents
+  openstatus status-report create Post a public status update
+  openstatus status-report list   View status reports
   openstatus maintenance create   Schedule a maintenance window
   openstatus maintenance list     View maintenance windows
   openstatus monitors apply       Sync monitors from config
@@ -78,6 +81,7 @@ https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
 			check.CheckCmd(),
 			monitors.MonitorsCmd(),
 			statusreport.StatusReportCmd(),
+			incident.IncidentCmd(),
 			maintenance.MaintenanceCmd(),
 			statuspage.StatusPageCmd(),
 			notification.NotificationCmd(),

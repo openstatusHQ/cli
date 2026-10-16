@@ -47,7 +47,7 @@ func providerToString(p notificationv1.NotificationProvider) string {
 		return "opsgenie"
 	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_SLACK:
 		return "slack"
-	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_SMS:
+	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_SMS: //nolint:staticcheck // deprecated values still exist on older resources
 		return "sms"
 	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_TELEGRAM:
 		return "telegram"

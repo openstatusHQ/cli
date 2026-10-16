@@ -33,14 +33,15 @@ func Test_NewApp(t *testing.T) {
 	t.Run("Has expected commands", func(t *testing.T) {
 		app := cmd.NewApp()
 
-		if len(app.Commands) != 12 {
-			t.Errorf("Expected 12 commands, got %d", len(app.Commands))
+		if len(app.Commands) != 13 {
+			t.Errorf("Expected 13 commands, got %d", len(app.Commands))
 		}
 
 		expectedCommands := map[string]bool{
 			"check":             false,
 			"monitors":          false,
 			"status-report":     false,
+			"incident":          false,
 			"maintenance":       false,
 			"status-page":       false,
 			"notification":      false,

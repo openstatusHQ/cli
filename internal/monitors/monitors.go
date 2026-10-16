@@ -90,7 +90,7 @@ func regionToString(r monitorv1.Region) string {
 		return "ams"
 	case monitorv1.Region_REGION_FLY_ARN:
 		return "arn"
-	case monitorv1.Region_REGION_FLY_BOM:
+	case monitorv1.Region_REGION_FLY_BOM: //nolint:staticcheck // deprecated values still exist on older resources
 		return "bom"
 	case monitorv1.Region_REGION_FLY_CDG:
 		return "cdg"
@@ -231,7 +231,7 @@ func stringToRegion(r config.Region) monitorv1.Region {
 	case config.Arn:
 		return monitorv1.Region_REGION_FLY_ARN
 	case config.BOM:
-		return monitorv1.Region_REGION_FLY_BOM
+		return monitorv1.Region_REGION_FLY_BOM //nolint:staticcheck // deprecated values still exist on older resources
 	case config.Cdg:
 		return monitorv1.Region_REGION_FLY_CDG
 	case config.Dfw:

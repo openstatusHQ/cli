@@ -30,7 +30,7 @@ func Test_IncidentCmd(t *testing.T) {
 	expected := []string{
 		"list", "info", "declare", "update", "set-status",
 		"mitigate", "resolve", "reopen", "cancel",
-		"note", "link-report", "unlink-report", "close", "delete",
+		"note", "link-report", "unlink-report", "close", "delete", "postmortem",
 	}
 	if len(cmd.Commands) != len(expected) {
 		t.Errorf("expected %d subcommands, got %d", len(expected), len(cmd.Commands))

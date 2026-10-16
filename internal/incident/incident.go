@@ -511,6 +511,7 @@ Use 'openstatus status-report' for the public communication on a status page.`,
 			GetIncidentUnlinkReportCmd(),
 			GetIncidentCloseCmd(),
 			GetIncidentDeleteCmd(),
+			postmortemCmd(),
 		},
 	}
 }

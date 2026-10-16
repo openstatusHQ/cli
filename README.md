@@ -40,7 +40,18 @@ openstatus monitors info 123
 # Trigger an on-demand check
 openstatus monitors trigger 123
 
-# Report an incident
+# Declare an incident, then publish a linked public status report
+ID=$(openstatus incident declare --title "Checkout API returns 502" --severity major -q)
+openstatus status-report create --title "Checkout issues" --status investigating \
+  --message "We are investigating failed payments" --page-id 1 --incident-id "$ID"
+
+# Run the incident: notes, status changes, postmortem
+openstatus inc note "$ID" --message "Rolled back the deploy"
+openstatus inc resolve "$ID" --note "Error rate back to normal"
+openstatus inc postmortem edit "$ID" --file postmortem.md
+openstatus inc postmortem approve "$ID" --close -y
+
+# Post a public status update
 openstatus status-report create --title "API degradation" --status investigating --page-id 1
 
 # Report an incident with per-component impact
@@ -78,7 +89,8 @@ Rate limit: 3 requests per 60 seconds.
 | `login` / `logout` | | Authenticate with the OpenStatus API |
 | `whoami` | `w` | Show current workspace info |
 | `monitors` | `m` | List, inspect, trigger, import, and apply monitors |
-| `status-report` | `sr` | Create and manage incident reports |
+| `incident` | `inc`, `incidents` | Declare and run incidents (lifecycle, notes, status report link, postmortem) |
+| `status-report` | `sr` | Post and manage public status reports |
 | `maintenance` | `mt` | Schedule and manage maintenance windows |
 | `status-page` | `sp` | View status pages and components |
 | `notification` | `n` | View notification channels |

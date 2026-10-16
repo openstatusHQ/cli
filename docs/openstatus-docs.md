@@ -2,7 +2,7 @@
 
 ## CLI interface - openstatus
 
-OpenStatus CLI lets you manage your status pages and uptime monitors from the command line. Report and track incidents, define monitors as code, and run on-demand checks.  Get started:   openstatus login                Save your API token   openstatus status-report create Report an incident   openstatus status-report list   View active incidents   openstatus maintenance create   Schedule a maintenance window   openstatus maintenance list     View maintenance windows   openstatus monitors apply       Sync monitors from config   openstatus monitors list        List your monitors   openstatus run                  Run synthetic tests   openstatus pl list              List your private locations  https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new.
+OpenStatus CLI lets you manage your status pages and uptime monitors from the command line. Declare and run incidents, post public status updates, define monitors as code, and run on-demand checks.  Get started:   openstatus login                Save your API token   openstatus incident declare     Declare an incident   openstatus incident list        View incidents   openstatus status-report create Post a public status update   openstatus status-report list   View status reports   openstatus maintenance create   Schedule a maintenance window   openstatus maintenance list     View maintenance windows   openstatus monitors apply       Sync monitors from config   openstatus monitors list        List your monitors   openstatus run                  Run synthetic tests   openstatus pl list              List your private locations  https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new.
 
 Manage status pages, monitors, and incidents from the terminal.
 
@@ -339,6 +339,7 @@ The following flags are supported:
 | `--impact="…"`              | Per-component impact, repeatable: --impact <component_id>=<level> (level: operational, degraded, partial_outage, major_outage). Mutually exclusive with --component-ids | string |               |         *none*         |
 | `--notify`                  | Notify subscribers about this status report                                                                                                                             | bool   |    `false`    |         *none*         |
 | `--date="…"`                | Date when the event occurred (RFC 3339 format, defaults to now)                                                                                                         | string |               |         *none*         |
+| `--incident-id="…"`         | ID of an incident to link the report to                                                                                                                                 | string |               |         *none*         |
 
 ### `status-report update` subcommand
 
@@ -402,6 +403,403 @@ The following flags are supported:
 | `--date="…"`                | Date for the update (RFC 3339 format, defaults to now)                                                                                                               | string |               |         *none*         |
 | `--impact="…"`              | Per-component impact, repeatable: --impact <component_id>=<level> (level: operational, degraded, partial_outage, major_outage). Can also add new affected components | string |               |         *none*         |
 | `--notify`                  | Notify subscribers about this update                                                                                                                                 | bool   |    `false`    |         *none*         |
+
+### `incident` command (aliases: `inc`, `incidents`)
+
+Declare and run incidents.
+
+Incidents are the internal response to an outage: severity, commander, lifecycle (open -> mitigated -> resolved, or canceled), timeline notes, a linked public status report and the postmortem.  Use 'openstatus status-report' for the public communication on a status page.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident [ARGUMENTS...]
+```
+
+### `incident list` subcommand
+
+List incidents.
+
+> openstatus incident list
+>   openstatus inc list --active
+>   openstatus inc list --status open,mitigated --limit 10
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident list [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                                             | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                             | string |               | `OPENSTATUS_API_TOKEN` |
+| `--status="…"`              | Filter by status, comma-separated (open, mitigated, resolved, canceled) | string |               |         *none*         |
+| `--active`                  | Only incidents that are not closed                                      | bool   |    `false`    |         *none*         |
+| `--closed`                  | Only closed incidents                                                   | bool   |    `false`    |         *none*         |
+| `--limit="…"`               | Maximum number of incidents to return (1-100, defaults to 50)           | int    |      `0`      |         *none*         |
+| `--offset="…"`              | Number of incidents to skip                                             | int    |      `0`      |         *none*         |
+
+### `incident info` subcommand
+
+Get incident details and timeline.
+
+> openstatus incident info <IncidentID>
+>   openstatus inc info 42
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident info [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
+
+### `incident declare` subcommand (aliases: `create`)
+
+Declare a new incident.
+
+> openstatus incident declare --title "Checkout API returns 502" --severity major
+>   openstatus inc declare --title "Database down" --severity critical --commander jane@example.com --slack
+>   ID=$(openstatus inc declare --title "Login errors" --severity minor -q)
+
+Declare a new incident in the open status.  Run without --title or --severity in an interactive terminal to be prompted. In scripts, pass every required flag.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident declare [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                            | Type   | Default value |  Environment variables |
+|-----------------------------|--------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                            | string |               | `OPENSTATUS_API_TOKEN` |
+| `--title="…"`               | Title of the incident (1-256 characters)               | string |               |         *none*         |
+| `--severity="…"`            | Severity of the incident (critical, major, minor)      | string |               |         *none*         |
+| `--summary="…"`             | Short human summary                                    | string |               |         *none*         |
+| `--commander="…"`           | Email of the workspace member leading the response     | string |               |         *none*         |
+| `--started-at="…"`          | When the impact began (RFC 3339, defaults to now)      | string |               |         *none*         |
+| `--status-report-id="…"`    | ID of an existing status report to link                | string |               |         *none*         |
+| `--slack`                   | Open a dedicated Slack channel when Slack is connected | bool   |    `false`    |         *none*         |
+
+### `incident update` subcommand
+
+Edit an incident's title, severity, summary, commander or start time.
+
+> openstatus incident update <IncidentID> [flags]
+>   openstatus inc update 42 --severity critical
+>   openstatus inc update 42 --commander jane@example.com
+>   openstatus inc update 42 --clear-summary
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident update [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                           | Type   | Default value |  Environment variables |
+|-----------------------------|---------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token           | string |               | `OPENSTATUS_API_TOKEN` |
+| `--title="…"`               | New title (1-256 characters)          | string |               |         *none*         |
+| `--severity="…"`            | New severity (critical, major, minor) | string |               |         *none*         |
+| `--summary="…"`             | New summary                           | string |               |         *none*         |
+| `--clear-summary`           | Remove the summary                    | bool   |    `false`    |         *none*         |
+| `--commander="…"`           | Email of the new commander            | string |               |         *none*         |
+| `--clear-commander`         | Unassign the commander                | bool   |    `false`    |         *none*         |
+| `--started-at="…"`          | New start of impact (RFC 3339)        | string |               |         *none*         |
+
+### `incident set-status` subcommand
+
+Move an incident to a new status.
+
+> openstatus incident set-status <IncidentID> --status <open|mitigated|resolved|canceled> [--note "..."]
+>   openstatus inc set-status 42 --status mitigated --note "Rolled back the deploy"
+
+Allowed transitions: open -> mitigated, resolved or canceled; mitigated -> resolved, open or canceled; resolved -> open. Canceled is terminal and closes the incident. A linked status report is not updated: post the public update with 'openstatus status-report add-update'.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident set-status [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                         | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                         | string |               | `OPENSTATUS_API_TOKEN` |
+| `--status="…"`              | Target status (open, mitigated, resolved, canceled) | string |               |         *none*         |
+| `--note="…"`                | Note recorded on the timeline with the change       | string |               |         *none*         |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt                     | bool   |    `false`    |         *none*         |
+
+### `incident mitigate` subcommand
+
+Mark an incident as mitigated.
+
+> openstatus incident mitigate <IncidentID> [--note "..."]
+>   openstatus inc mitigate 42 --note "..."
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident mitigate [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                   | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                   | string |               | `OPENSTATUS_API_TOKEN` |
+| `--note="…"`                | Note recorded on the timeline with the change | string |               |         *none*         |
+
+### `incident resolve` subcommand
+
+Mark an incident as resolved.
+
+> openstatus incident resolve <IncidentID> [--note "..."]
+>   openstatus inc resolve 42 --note "..."
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident resolve [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                   | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                   | string |               | `OPENSTATUS_API_TOKEN` |
+| `--note="…"`                | Note recorded on the timeline with the change | string |               |         *none*         |
+
+### `incident reopen` subcommand
+
+Reopen a mitigated or resolved incident.
+
+> openstatus incident reopen <IncidentID> [--note "..."]
+>   openstatus inc reopen 42 --note "..."
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident reopen [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                   | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                   | string |               | `OPENSTATUS_API_TOKEN` |
+| `--note="…"`                | Note recorded on the timeline with the change | string |               |         *none*         |
+
+### `incident cancel` subcommand
+
+Cancel an incident (closes it).
+
+> openstatus incident cancel <IncidentID> [--note "..."]
+>   openstatus inc cancel 42 --note "..."
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident cancel [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                   | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                   | string |               | `OPENSTATUS_API_TOKEN` |
+| `--note="…"`                | Note recorded on the timeline with the change | string |               |         *none*         |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt               | bool   |    `false`    |         *none*         |
+
+### `incident note` subcommand
+
+Add a note to an incident timeline.
+
+> openstatus incident note <IncidentID> --message "Rolled back the deploy"
+>   echo "multi-line markdown" | openstatus inc note 42 --message -
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident note [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                                          | Type   | Default value |  Environment variables |
+|-----------------------------|----------------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                          | string |               | `OPENSTATUS_API_TOKEN` |
+| `--message="…"` (`-m`)      | Note text in markdown (1-10000 characters); use - to read from stdin | string |               |         *none*         |
+
+### `incident link-report` subcommand
+
+Link a public status report to an incident.
+
+> openstatus incident link-report <IncidentID> <StatusReportID>
+>   openstatus inc link-report 42 123
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident link-report [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
+
+### `incident unlink-report` subcommand
+
+Remove the link to an incident's status report.
+
+> openstatus incident unlink-report <IncidentID>
+>   openstatus inc unlink-report 42
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident unlink-report [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
+
+### `incident close` subcommand
+
+Close a resolved incident.
+
+> openstatus incident close <IncidentID>
+>   openstatus inc close 42 --skip-postmortem -y
+
+Close a resolved incident. A closed incident is read-only except for its postmortem. Requires an approved postmortem, or --skip-postmortem.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident close [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                          | Type   | Default value |  Environment variables |
+|-----------------------------|--------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token          | string |               | `OPENSTATUS_API_TOKEN` |
+| `--skip-postmortem`         | Close without an approved postmortem | bool   |    `false`    |         *none*         |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt      | bool   |    `false`    |         *none*         |
+
+### `incident delete` subcommand
+
+Delete an incident declared by mistake.
+
+> openstatus incident delete <IncidentID>
+>   openstatus inc delete 42 -y
+
+Delete an incident declared by mistake. Only allowed while the incident is open and was never mitigated, resolved or closed; cancel it otherwise.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident delete [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                     | Type   | Default value |  Environment variables |
+|-----------------------------|---------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token     | string |               | `OPENSTATUS_API_TOKEN` |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt | bool   |    `false`    |         *none*         |
+
+### `incident postmortem` subcommand (aliases: `pm`)
+
+Read, write and approve an incident's postmortem.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident postmortem [ARGUMENTS...]
+```
+
+### `incident postmortem show` subcommand
+
+Show the postmortem of an incident.
+
+> openstatus incident postmortem show <IncidentID>
+>   openstatus inc pm show 42 > postmortem.md
+
+In a terminal, prints the review status and the markdown body through your pager. When piped, prints only the markdown body, so it can be edited and sent back with 'openstatus inc pm edit <ID> --file postmortem.md'.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident postmortem show [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
+
+### `incident postmortem edit` subcommand
+
+Write or replace the postmortem of a resolved incident.
+
+> openstatus incident postmortem edit <IncidentID> --file postmortem.md
+>   cat postmortem.md | openstatus inc pm edit 42 --file -
+>   openstatus inc pm edit 42 --content "## Summary ..."
+
+Replaces the whole markdown body. An approved postmortem stays approved.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident postmortem edit [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                       | Type   | Default value |  Environment variables |
+|-----------------------------|---------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                       | string |               | `OPENSTATUS_API_TOKEN` |
+| `--file="…"`                | Markdown file to upload; use - to read from stdin | string |               |         *none*         |
+| `--content="…"`             | Markdown body passed inline                       | string |               |         *none*         |
+
+### `incident postmortem approve` subcommand
+
+Approve the postmortem, optionally closing the incident.
+
+> openstatus incident postmortem approve <IncidentID>
+>   openstatus inc pm approve 42 --close -y
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] incident postmortem approve [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                     | Type   | Default value |  Environment variables |
+|-----------------------------|---------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token     | string |               | `OPENSTATUS_API_TOKEN` |
+| `--close`                   | Also close the incident         | bool   |    `false`    |         *none*         |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt | bool   |    `false`    |         *none*         |
 
 ### `maintenance` command (aliases: `mt`)
 

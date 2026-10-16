@@ -1,14 +1,14 @@
 ---
 name: openstatus-cli
 description: |
-  OpenStatus CLI for managing uptime monitors, incident reports, status pages, notifications, maintenance windows, synthetic tests, monitor response logs, and ad-hoc global HTTP checks. Use this skill whenever the user wants to monitor a website or API, set up uptime checks, create or manage monitors, inspect monitor response logs or debug why a check failed, report an incident, update a status page, view notifications, schedule maintenance, run synthetic tests, check latency or availability from around the world, run an ad-hoc speed check, define monitors as code, generate Terraform configuration, export to Terraform, log in or out, or use the openstatus command. Also trigger when the user says "is my site up", "check my endpoint", "speed check", "global latency", "latency from regions", "ad-hoc check", "test from multiple regions", "show monitor logs", "response logs", "why did my monitor fail", "see the failed requests", "create a status report", "set component impact", "monitor this URL", "run uptime tests", "set up monitoring", "our API is down", "schedule maintenance", "maintenance window", "planned downtime", "terraform", "generate terraform", "export to terraform", "infrastructure as code", "list notifications", "notification channels", "log in to openstatus", "save my api token", or mentions openstatus in any context. This skill knows the full CLI — commands, flags, config format, and workflows — so Claude can act without guessing.
+  OpenStatus CLI for managing uptime monitors, incidents (declare, run, postmortem), public status reports, status pages, notifications, maintenance windows, synthetic tests, monitor response logs, and ad-hoc global HTTP checks. Use this skill whenever the user wants to monitor a website or API, set up uptime checks, create or manage monitors, inspect monitor response logs or debug why a check failed, declare or run an incident, write or approve a postmortem, report an incident publicly, update a status page, view notifications, schedule maintenance, run synthetic tests, check latency or availability from around the world, run an ad-hoc speed check, define monitors as code, generate Terraform configuration, export to Terraform, log in or out, or use the openstatus command. Also trigger when the user says "is my site up", "check my endpoint", "speed check", "global latency", "latency from regions", "ad-hoc check", "test from multiple regions", "show monitor logs", "response logs", "why did my monitor fail", "see the failed requests", "create a status report", "set component impact", "monitor this URL", "run uptime tests", "set up monitoring", "our API is down", "we have an incident", "declare an incident", "open an incident", "incident commander", "mitigate", "resolve the incident", "close the incident", "postmortem", "post-mortem", "schedule maintenance", "maintenance window", "planned downtime", "terraform", "generate terraform", "export to terraform", "infrastructure as code", "list notifications", "notification channels", "log in to openstatus", "save my api token", or mentions openstatus in any context. This skill knows the full CLI — commands, flags, config format, and workflows — so Claude can act without guessing.
 allowed-tools:
   - Bash(openstatus *)
 ---
 
 # OpenStatus CLI
 
-Manage uptime monitors, incident reports, status pages, notifications, and maintenance windows from the terminal. The CLI supports monitors-as-code via YAML config files.
+Manage uptime monitors, incidents, public status reports, status pages, notifications, and maintenance windows from the terminal. The CLI supports monitors-as-code via YAML config files.
 
 Run `openstatus --help` or `openstatus <command> --help` for full option details.
 
@@ -42,12 +42,22 @@ Token resolution order:
 | Trigger a monitor now | `monitors trigger <ID>` | Run an on-demand check across all regions |
 | Delete a monitor | `monitors delete <ID>` | Remove a monitor |
 | Export monitors to YAML | `monitors import` | Pull existing monitors into an `openstatus.yaml` + lock file |
-| Create incident report | `status-report create` | Something is broken, notify users |
-| Add update to incident | `status-report add-update <ID>` | Post a progress update on an ongoing incident |
-| List incidents | `status-report list` | See active/recent incidents |
-| Get incident details | `status-report info <ID>` | View full incident timeline |
-| Update incident metadata | `status-report update <ID>` | Change title or components |
-| Delete incident | `status-report delete <ID>` | Remove a status report |
+| Declare an incident | `incident declare` | Something is broken — start the internal response first |
+| List incidents | `incident list` | See open/recent incidents (`--active`, `--closed`, `--status`) |
+| Get incident details + timeline | `incident info <ID>` | Severity, commander, allowed transitions, timeline |
+| Edit an incident | `incident update <ID>` | Change title, severity, summary, commander or start time |
+| Change incident status | `incident mitigate/resolve/reopen/cancel <ID>` or `incident set-status <ID> --status …` | Move through the lifecycle, optionally with `--note` |
+| Add a timeline note | `incident note <ID> --message …` | Record what happened or what was tried |
+| Link a status report | `incident link-report <ID> <ReportID>` / `unlink-report <ID>` | Connect the public report to the incident |
+| Close an incident | `incident close <ID>` | After it is resolved and the postmortem is approved (or `--skip-postmortem`) |
+| Delete an incident | `incident delete <ID>` | Only for incidents declared by mistake (still open, never mitigated) |
+| Read/write/approve the postmortem | `incident postmortem show/edit/approve <ID>` | After the incident is resolved |
+| Create public status report | `status-report create` | Users are affected — publish on the status page (link with `--incident-id`) |
+| Add update to status report | `status-report add-update <ID>` | Post a public progress update |
+| List status reports | `status-report list` | See active/recent public reports |
+| Get status report details | `status-report info <ID>` | View the public update timeline |
+| Update status report metadata | `status-report update <ID>` | Change title or components |
+| Delete status report | `status-report delete <ID>` | Remove a status report |
 | List status pages | `status-page list` | See all your status pages |
 | Get status page details | `status-page info <ID>` | View page config, components, theme |
 | List notifications | `notification list` | See all notification channels in the workspace |
@@ -63,7 +73,7 @@ Token resolution order:
 | Save API token | `login` | Authenticate — paste your token from the dashboard |
 | Remove saved token | `logout` | Sign out (deletes the saved token) |
 
-Command aliases: `check` = `c`, `monitors` = `m`, `status-report` = `sr`, `status-page` = `sp`, `notification` = `n`, `maintenance` = `mt`, `terraform` = `tf` (and `terraform generate` = `gen`), `run` = `r`, `whoami` = `w`. `login` and `logout` have no aliases.
+Command aliases: `check` = `c`, `monitors` = `m`, `incident` = `inc` / `incidents` (and `incident declare` = `create`, `incident postmortem` = `pm`), `status-report` = `sr`, `status-page` = `sp`, `notification` = `n`, `maintenance` = `mt`, `terraform` = `tf` (and `terraform generate` = `gen`), `run` = `r`, `whoami` = `w`. `login` and `logout` have no aliases.
 
 ## Workflows
 
@@ -119,9 +129,94 @@ This is the primary way to manage monitors. Write a YAML config, then let the CL
 
 **The apply workflow** compares your `openstatus.yaml` against the lock file and the API, then creates, updates, or deletes monitors to match. Use `--dry-run` to preview, `-y` to skip the confirmation prompt.
 
-### Incident lifecycle
+### Running an incident
 
-Use status reports for **unplanned** outages and incidents.
+**Incident vs. status report:** an **incident** is the internal response — severity, commander, lifecycle, timeline notes and the postmortem. A **status report** is the public communication on a status page. When something is broken ("our API is down", "we have an incident"), **declare an incident first**; then, if users are affected, publish a status report linked to it with `--incident-id`. Changing the incident status never updates the public report — post public updates with `status-report add-update`.
+
+Severities: `critical`, `major`, `minor`. Statuses: `open` -> `mitigated` -> `resolved`, or `canceled`.
+
+| From | Allowed transitions |
+|------|---------------------|
+| `open` | `mitigated`, `resolved`, `canceled` |
+| `mitigated` | `resolved`, `open`, `canceled` |
+| `resolved` | `open` |
+
+`canceled` is terminal and closes the incident. "Closed" is not a status: a closed incident keeps its last status, has a `closed_at` timestamp, and is read-only except for its postmortem. `incident info <ID>` lists the allowed transitions from the current state.
+
+**1. Declare:**
+```bash
+openstatus incident declare \
+  --title "Checkout API returns 502" \
+  --severity major \
+  --summary "Payments failing for EU customers" \
+  --commander jane@example.com
+```
+
+Prints `Incident declared (ID: 42)` and the next step. Use `-q` to print only the ID: `ID=$(openstatus inc declare --title "…" --severity major -q)`.
+
+**`declare` flags:**
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--title` | yes | 1-256 characters |
+| `--severity` | yes | `critical`, `major` or `minor` |
+| `--summary` | no | Short human summary |
+| `--commander` | no | Email of the workspace member leading the response (emailed when assigned) |
+| `--started-at` | no | RFC 3339 start of impact, defaults to now; can be in the past |
+| `--status-report-id` | no | Link an existing status report |
+| `--slack` | no | Open a dedicated Slack channel when Slack is connected |
+
+> **Interactive vs. scripted:** without `--title` or `--severity`, `declare` prompts on a terminal; with `--json` or a non-TTY stdin it fails with `missing required flags: …`. Always pass both when scripting.
+
+**2. Publish the public status report, linked to the incident** (only if users are affected — see [Public status reports](#public-status-reports)):
+```bash
+openstatus status-report create --title "Checkout issues" --status investigating \
+  --message "We are investigating failed payments" --page-id 123 --incident-id 42
+```
+Or link an existing report: `openstatus incident link-report 42 456` (`unlink-report 42` removes it).
+
+**3. Record what happens and move the status:**
+```bash
+openstatus incident note 42 --message "Rolled back deploy 2026-10-16.3"
+echo "multi-line markdown" | openstatus incident note 42 --message -
+openstatus incident mitigate 42 --note "Traffic shifted to the healthy region"
+openstatus incident resolve 42 --note "Error rate back to baseline"
+openstatus incident reopen 42 --note "Errors are back"
+openstatus incident set-status 42 --status resolved      # generic form, for scripts
+openstatus incident cancel 42 -y                          # declared in error but already mitigated: closes it
+```
+
+Edit metadata with `incident update 42 [--title …] [--severity …] [--summary … | --clear-summary] [--commander … | --clear-commander] [--started-at …]`.
+
+**4. Postmortem (after it is resolved), then close:**
+```bash
+openstatus incident postmortem edit 42 --file postmortem.md   # or --file - (stdin), or --content "…"
+openstatus incident postmortem show 42                        # piped: raw markdown only
+openstatus incident postmortem approve 42 --close -y          # approve and close in one step
+openstatus incident close 42 --skip-postmortem -y             # close without a postmortem
+```
+
+`postmortem show 42 > pm.md`, edit, then `postmortem edit 42 --file pm.md` round-trips the body.
+
+**5. Inspect and list:**
+```bash
+openstatus incident info 42                          # details + timeline, newest first
+openstatus incident list                             # everything, newest declared first
+openstatus incident list --active                    # not closed
+openstatus incident list --status open,mitigated --limit 10 --offset 10
+```
+
+**Rules agents must know:**
+- `cancel` (and `set-status --status canceled`), `close`, `delete` and `postmortem approve --close` ask for confirmation; pass `-y` when not on a terminal.
+- `delete` only works while the incident is open and was never mitigated; otherwise `cancel` it.
+- `close` needs a resolved incident and an approved postmortem, or `--skip-postmortem`.
+- `close`, `delete` and `postmortem approve` act as the API key's creator: they need a workspace owner/admin (or the incident commander for close/approve). API keys without a creator get `permission denied`.
+- Every command that changes an incident prints the incident as JSON with `--json`, and only its ID with `-q`.
+- A refused change (wrong transition, closed incident, report already linked) prints the server's reason plus a hint.
+
+### Public status reports
+
+Use status reports to communicate **unplanned** outages publicly on a status page. When there is an incident, link the report to it with `--incident-id`.
 
 Status reports follow a progression: `investigating` -> `identified` -> `monitoring` -> `resolved`. These are the only valid status values — the CLI rejects anything else.
 
@@ -162,6 +257,7 @@ To add updates, run: openstatus status-report add-update 456 --status identified
 | `--component-ids` | no | **Legacy.** Comma-separated component IDs in a single string: `"id1,id2"` — marks them all affected without a specific impact level. Prefer `--impact`. Mutually exclusive with `--impact`. |
 | `--notify` | no | Send notification to status page subscribers |
 | `--date` | no | RFC 3339 timestamp (e.g. `2026-03-25T10:00:00Z`), defaults to now (UTC) |
+| `--incident-id` | no | Link the report to an incident (fails if the incident is closed or already linked) |
 
 The four impact levels are `operational`, `degraded`, `partial_outage`, `major_outage` (`degraded_performance` is also accepted as an alias for `degraded`). Pass `--impact` once per component, e.g. `--impact comp-1=major_outage --impact comp-2=degraded`.
 

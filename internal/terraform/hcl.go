@@ -426,7 +426,7 @@ func (g *Generator) writeNotificationProvider(b *hclwrite.Body, n *notificationv
 		pb.SetAttributeValue("chat_id", cty.StringVal(d.Telegram.GetChatId()))
 	case *notificationv1.NotificationData_Sms:
 		pb := b.AppendNewBlock("sms", nil).Body()
-		pb.SetAttributeValue("phone_number", cty.StringVal(d.Sms.GetPhoneNumber()))
+		pb.SetAttributeValue("phone_number", cty.StringVal(d.Sms.GetPhoneNumber())) //nolint:staticcheck // deprecated values still exist on older resources
 	case *notificationv1.NotificationData_Whatsapp:
 		pb := b.AppendNewBlock("whatsapp", nil).Body()
 		pb.SetAttributeValue("phone_number", cty.StringVal(d.Whatsapp.GetPhoneNumber()))

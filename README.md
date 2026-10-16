@@ -163,7 +163,7 @@ export DO_NOT_TRACK=1
 export OPENSTATUS_NO_TELEMETRY=1
 ```
 
-Opting out does not remove the `User-Agent`: like any HTTP client, the CLI still identifies itself with its version and platform (e.g. `openstatus-cli/v1.3.2 (darwin; arm64)`).
+Opting out does not remove the `User-Agent`: like any HTTP client, the CLI still identifies itself with its version and platform (e.g. `openstatus-cli/v1.4.0 (darwin; arm64)`).
 
 When `OPENSTATUS_API_URL` points at a self-hosted instance, the command and run ID only go to that instance; `check` does not send them to openstatus.dev.
 

@@ -12,6 +12,7 @@ import (
 	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/check"
 	output "github.com/openstatusHQ/cli/internal/cli"
+	"github.com/openstatusHQ/cli/internal/incident"
 	"github.com/openstatusHQ/cli/internal/login"
 	"github.com/openstatusHQ/cli/internal/maintenance"
 	"github.com/openstatusHQ/cli/internal/monitors"
@@ -78,6 +79,7 @@ https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
 			check.CheckCmd(),
 			monitors.MonitorsCmd(),
 			statusreport.StatusReportCmd(),
+			incident.IncidentCmd(),
 			maintenance.MaintenanceCmd(),
 			statuspage.StatusPageCmd(),
 			notification.NotificationCmd(),

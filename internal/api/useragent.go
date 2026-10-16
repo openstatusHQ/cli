@@ -21,7 +21,7 @@ const (
 	HeaderCLIInvocation = "x-openstatus-cli-invocation"
 )
 
-// userAgent identifies the CLI, e.g. "openstatus-cli/v1.3.2 (darwin; arm64)".
+// userAgent identifies the CLI, e.g. "openstatus-cli/v1.4.0 (darwin; arm64)".
 var userAgent = "openstatus-cli/" + version.Version + " (" + runtime.GOOS + "; " + runtime.GOARCH + ")"
 
 var (

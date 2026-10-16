@@ -16,11 +16,12 @@ import (
 )
 
 type statusReportListEntry struct {
-	ID        string `json:"id"`
-	Title     string `json:"title"`
-	Status    string `json:"status"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	ID         string `json:"id"`
+	Title      string `json:"title"`
+	Status     string `json:"status"`
+	IncidentID string `json:"incident_id,omitempty"`
+	CreatedAt  string `json:"created_at"`
+	UpdatedAt  string `json:"updated_at"`
 }
 
 func ListStatusReports(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, statusFilter string, limit int, s *output.Spinner) error {
@@ -52,11 +53,12 @@ func ListStatusReports(ctx context.Context, client status_reportv1connect.Status
 		entries := make([]statusReportListEntry, 0, len(reports))
 		for _, r := range reports {
 			entries = append(entries, statusReportListEntry{
-				ID:        r.GetId(),
-				Title:     r.GetTitle(),
-				Status:    statusToString(r.GetStatus()),
-				CreatedAt: r.GetCreatedAt(),
-				UpdatedAt: r.GetUpdatedAt(),
+				ID:         r.GetId(),
+				Title:      r.GetTitle(),
+				Status:     statusToString(r.GetStatus()),
+				IncidentID: r.GetIncidentId(),
+				CreatedAt:  r.GetCreatedAt(),
+				UpdatedAt:  r.GetUpdatedAt(),
 			})
 		}
 		return output.PrintJSON(entries)

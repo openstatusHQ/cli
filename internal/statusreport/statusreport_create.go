@@ -24,6 +24,7 @@ type CreateStatusReportParams struct {
 	ComponentIDs     []string
 	ComponentImpacts []*status_reportv1.ComponentImpact
 	Notify           bool
+	IncidentID       string
 }
 
 func CreateStatusReport(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, p CreateStatusReportParams) (string, error) {
@@ -50,6 +51,10 @@ func CreateStatusReport(ctx context.Context, client status_reportv1connect.Statu
 
 	if p.Notify {
 		req.SetNotify(true)
+	}
+
+	if p.IncidentID != "" {
+		req.SetIncidentId(p.IncidentID)
 	}
 
 	resp, err := client.CreateStatusReport(ctx, req)
@@ -108,6 +113,10 @@ func GetStatusReportCreateCmd() *cli.Command {
 			&cli.StringFlag{
 				Name:  "date",
 				Usage: "Date when the event occurred (RFC 3339 format, defaults to now)",
+			},
+			&cli.StringFlag{
+				Name:  "incident-id",
+				Usage: "ID of an incident to link the report to",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
@@ -188,6 +197,7 @@ func GetStatusReportCreateCmd() *cli.Command {
 				ComponentIDs:     componentIDs,
 				ComponentImpacts: componentImpacts,
 				Notify:           inputs.Notify,
+				IncidentID:       cmd.String("incident-id"),
 			})
 			output.StopSpinner(s)
 			if err != nil {
@@ -195,6 +205,9 @@ func GetStatusReportCreateCmd() *cli.Command {
 			}
 
 			fmt.Printf("Status report created successfully (ID: %s)\n", id)
+			if incidentID := cmd.String("incident-id"); incidentID != "" {
+				fmt.Printf("Linked to incident %s\n", incidentID)
+			}
 			fmt.Printf("To add updates, run: openstatus status-report add-update %s --status identified --message '...'\n", id)
 			fmt.Println("Tip: pass --impact <component>=<level> to update per-component impact.")
 			return nil

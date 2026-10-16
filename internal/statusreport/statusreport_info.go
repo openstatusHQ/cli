@@ -25,6 +25,7 @@ type statusReportDetail struct {
 	Status         string                `json:"status"`
 	Components     []string              `json:"components,omitempty"`
 	CurrentImpacts []componentImpactJSON `json:"current_impacts,omitempty"`
+	IncidentID     string                `json:"incident_id,omitempty"`
 	CreatedAt      string                `json:"created_at"`
 	UpdatedAt      string                `json:"updated_at"`
 	Updates        []statusReportUpdate  `json:"updates,omitempty"`
@@ -70,6 +71,7 @@ func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.Stat
 			Title:      report.GetTitle(),
 			Status:     statusToString(report.GetStatus()),
 			Components: report.GetPageComponentIds(),
+			IncidentID: report.GetIncidentId(),
 			CreatedAt:  report.GetCreatedAt(),
 			UpdatedAt:  report.GetUpdatedAt(),
 		}
@@ -128,6 +130,9 @@ func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.Stat
 		{"Status", statusColor(statusToString(report.GetStatus()))},
 		{"Created", output.FormatTimestamp(report.GetCreatedAt())},
 		{"Updated", output.FormatTimestamp(report.GetUpdatedAt())},
+	}
+	if report.HasIncidentId() {
+		data = append(data, []string{"Incident", fmt.Sprintf("%s (openstatus inc info %s)", report.GetIncidentId(), report.GetIncidentId())})
 	}
 
 	table.Bulk(data)

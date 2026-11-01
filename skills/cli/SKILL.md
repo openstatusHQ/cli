@@ -34,14 +34,12 @@ Token resolution order:
 | Task | Command | When to use |
 |------|---------|-------------|
 | Ad-hoc global speed check (no auth) | `check <URL>` | One-shot HTTP check from 28 regions — no saved monitor needed |
-| Sync monitors from config | `monitors apply` | You have an `openstatus.yaml` and want to create/update/delete monitors |
 | List all monitors | `monitors list` | See what monitors exist in the workspace |
 | Get monitor details + metrics | `monitors info <ID>` | Check latency, status, and config for a specific monitor |
 | List monitor response logs | `monitors logs <ID>` | See recent HTTP responses (14-day retention) to debug failures |
 | Get a single log's full detail | `monitors log-info <ID> <LogID>` | Inspect timing phases, response headers, and assertion results for one request |
 | Trigger a monitor now | `monitors trigger <ID>` | Run an on-demand check across all regions |
 | Delete a monitor | `monitors delete <ID>` | Remove a monitor |
-| Export monitors to YAML | `monitors import` | Pull existing monitors into an `openstatus.yaml` + lock file |
 | Declare an incident | `incident declare` | Something is broken — start the internal response first |
 | List incidents | `incident list` | See open/recent incidents (`--active`, `--closed`, `--status`) |
 | Get incident details + timeline | `incident info <ID>` | Severity, commander, allowed transitions, timeline |
@@ -109,25 +107,8 @@ openstatus check https://openstat.us --json | jq '.summary'
 
 **When NOT to use `check`:**
 
-- Recurring uptime monitoring → use `monitors apply` with an `openstatus.yaml`.
+- Recurring uptime monitoring → manage monitors with Terraform (`terraform generate`).
 - Tests that need to run from monitor-configured regions (or with saved assertions) → use `monitors trigger <ID>` or `run`.
-
-### Setting up monitors (monitors-as-code)
-
-This is the primary way to manage monitors. Write a YAML config, then let the CLI sync it.
-
-**Starting from scratch:**
-1. Create an `openstatus.yaml` file — see [references/monitor-config.md](references/monitor-config.md) for the full schema
-2. Preview changes: `openstatus monitors apply --dry-run`
-3. Apply: `openstatus monitors apply`
-4. The CLI creates a `openstatus.lock` file to track state — commit this alongside your config
-
-**Starting from existing monitors:**
-1. Export: `openstatus monitors import` (creates `openstatus.yaml` + `openstatus.lock`)
-2. Edit the YAML as needed
-3. Apply changes: `openstatus monitors apply`
-
-**The apply workflow** compares your `openstatus.yaml` against the lock file and the API, then creates, updates, or deletes monitors to match. Use `--dry-run` to preview, `-y` to skip the confirmation prompt.
 
 ### Running an incident
 
@@ -513,12 +494,10 @@ Use `--json` when you need to parse output programmatically or pipe it to `jq`.
 ## Best Practices
 
 - **Reach for `check` for one-off probes** — if the user just wants to know "how fast is this URL from around the world?", `openstatus check <URL>` is the right tool. No auth, no setup, 28 regions, done in 2–5s. Don't create a throwaway monitor for this.
-- **Use `apply`, not `create`** — `monitors apply` is the declarative, idempotent way to manage monitors. `monitors create` exists but `apply` handles creates, updates, and deletes in one command.
-- **Always `--dry-run` first** — preview what `apply` will change before committing.
+- **Manage monitors as code with Terraform** — run `openstatus terraform generate` to export your workspace, then use `terraform plan` / `terraform apply` to manage monitors declaratively.
 - **Get the page ID before creating reports** — `status-report create` requires `--page-id`. Run `status-page list` first. Then use `status-page info <ID>` to find component IDs if you need `--component-ids`.
 - **Prefer `--impact` over `--component-ids` for status reports** — `--impact comp-1=major_outage` records a specific per-component impact level; `--component-ids` is the legacy flag that only marks components affected without a level. They're mutually exclusive. `--component-ids` is still a single comma-separated string (`"id1,id2,id3"`, not multiple flags), and on `status-report update` it replaces the full list.
 - **Provide all required flags when scripting** — `status-report create`, `status-report add-update`, and `maintenance create` fall back to an interactive wizard when required flags are missing, but in non-interactive/JSON contexts they error with `missing required flags: …`. Always pass them explicitly.
 - **Status values are strict** — only `investigating`, `identified`, `monitoring`, `resolved`. The CLI rejects anything else.
 - **Use `--notify` deliberately** — it emails all subscribers. Useful for `create` and `resolved`, but you may want to skip it for intermediate updates.
-- **Commit your lock file** — `openstatus.lock` tracks the mapping between your YAML and the API. Without it, `apply` can't diff properly.
 - **Use `-y` in scripts** — skip interactive confirmations with `--auto-accept` / `-y` for CI/CD pipelines.

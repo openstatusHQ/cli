@@ -49,7 +49,7 @@ func TestCLITransport(t *testing.T) {
 	t.Setenv("DO_NOT_TRACK", "")
 	t.Setenv("OPENSTATUS_NO_TELEMETRY", "")
 	t.Cleanup(func() { SetCommand("") })
-	SetCommand("monitors apply")
+	SetCommand("monitors create")
 
 	req, _ := http.NewRequest(http.MethodGet, "http://placeholder", http.NoBody)
 	req.Header.Set("x-openstatus-key", "secret")
@@ -58,8 +58,8 @@ func TestCLITransport(t *testing.T) {
 	if want := "openstatus-cli/" + version.Version + " (" + runtime.GOOS + "; " + runtime.GOARCH + ")"; got.Get("User-Agent") != want {
 		t.Errorf("User-Agent = %q, want %q", got.Get("User-Agent"), want)
 	}
-	if got.Get(HeaderCLICommand) != "monitors apply" {
-		t.Errorf("%s = %q, want %q", HeaderCLICommand, got.Get(HeaderCLICommand), "monitors apply")
+	if got.Get(HeaderCLICommand) != "monitors create" {
+		t.Errorf("%s = %q, want %q", HeaderCLICommand, got.Get(HeaderCLICommand), "monitors create")
 	}
 	if id := got.Get(HeaderCLIInvocation); len(id) != 32 || id != invocationID {
 		t.Errorf("%s = %q, want the process invocation ID", HeaderCLIInvocation, id)
@@ -96,7 +96,7 @@ func TestCLITransportWithoutCommand(t *testing.T) {
 
 func TestCLITransportOptOut(t *testing.T) {
 	t.Cleanup(func() { SetCommand("") })
-	SetCommand("monitors apply")
+	SetCommand("monitors create")
 
 	for _, env := range []string{"DO_NOT_TRACK", "OPENSTATUS_NO_TELEMETRY"} {
 		t.Run(env, func(t *testing.T) {

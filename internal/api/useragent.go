@@ -31,7 +31,7 @@ var (
 	invocationID = newInvocationID()
 )
 
-// SetCommand records the command being run, e.g. "monitors apply". Call it
+// SetCommand records the command being run, e.g. "monitors create". Call it
 // before the command makes any request.
 func SetCommand(name string) { command.Store(&name) }
 

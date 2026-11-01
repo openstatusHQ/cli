@@ -44,7 +44,6 @@ Get started:
   openstatus status-report list   View status reports
   openstatus maintenance create   Schedule a maintenance window
   openstatus maintenance list     View maintenance windows
-  openstatus monitors apply       Sync monitors from config
   openstatus monitors list        List your monitors
   openstatus run                  Run synthetic tests
   openstatus pl list              List your private locations

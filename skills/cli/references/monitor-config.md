@@ -1,6 +1,6 @@
 # Monitor Configuration Reference
 
-This is the full schema for `openstatus.yaml`, used by `openstatus monitors apply`.
+This is the full schema for `openstatus.yaml`, used by `openstatus monitors create`.
 
 ## File Structure
 

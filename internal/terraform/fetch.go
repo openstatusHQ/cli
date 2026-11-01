@@ -19,8 +19,6 @@ import (
 	"github.com/openstatusHQ/cli/internal/api"
 )
 
-const privateLocationPageSize = 100
-
 type StatusPageData struct {
 	Page       *status_pagev1.StatusPage
 	Components []*status_pagev1.PageComponent
@@ -28,10 +26,13 @@ type StatusPageData struct {
 }
 
 type WorkspaceData struct {
-	HTTPMonitors     []*monitorv1.HTTPMonitor
-	TCPMonitors      []*monitorv1.TCPMonitor
-	DNSMonitors      []*monitorv1.DNSMonitor
-	ICMPMonitors     []*monitorv1.ICMPMonitor
+	HTTPMonitors []*monitorv1.HTTPMonitor
+	TCPMonitors  []*monitorv1.TCPMonitor
+	DNSMonitors  []*monitorv1.DNSMonitor
+	ICMPMonitors []*monitorv1.ICMPMonitor
+	// GRPCMonitors are fetched only to warn about them: the Terraform provider
+	// has no gRPC monitor resource yet.
+	GRPCMonitors     []*monitorv1.GRPCMonitor
 	Notifications    []*notificationv1.Notification
 	StatusPages      []StatusPageData
 	PrivateLocations []*private_locationv1.PrivateLocation
@@ -49,7 +50,7 @@ func FetchWorkspaceDataWithHTTPClient(ctx context.Context, httpClient *http.Clie
 
 	// Monitors
 	monitorClient := monitorv1connect.NewMonitorServiceClient(httpClient, api.ConnectBaseURL, interceptor, protoJSON)
-	monitorResp, err := monitorClient.ListMonitors(ctx, &monitorv1.ListMonitorsRequest{})
+	monitorResp, err := api.ListAllMonitors(ctx, monitorClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list monitors: %w", err)
 	}
@@ -57,14 +58,15 @@ func FetchWorkspaceDataWithHTTPClient(ctx context.Context, httpClient *http.Clie
 	data.TCPMonitors = monitorResp.GetTcpMonitors()
 	data.DNSMonitors = monitorResp.GetDnsMonitors()
 	data.ICMPMonitors = monitorResp.GetIcmpMonitors()
+	data.GRPCMonitors = monitorResp.GetGrpcMonitors()
 
 	// Notifications
 	notifClient := notificationv1connect.NewNotificationServiceClient(httpClient, api.ConnectBaseURL, interceptor, protoJSON)
-	notifResp, err := notifClient.ListNotifications(ctx, &notificationv1.ListNotificationsRequest{})
+	notifSummaries, err := api.ListAllNotifications(ctx, notifClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list notifications: %w", err)
 	}
-	for _, summary := range notifResp.GetNotifications() {
+	for _, summary := range notifSummaries {
 		req := &notificationv1.GetNotificationRequest{}
 		req.SetId(summary.GetId())
 		resp, err := notifClient.GetNotification(ctx, req)
@@ -76,11 +78,11 @@ func FetchWorkspaceDataWithHTTPClient(ctx context.Context, httpClient *http.Clie
 
 	// Status Pages
 	pageClient := status_pagev1connect.NewStatusPageServiceClient(httpClient, api.ConnectBaseURL, interceptor, protoJSON)
-	pageResp, err := pageClient.ListStatusPages(ctx, &status_pagev1.ListStatusPagesRequest{})
+	pageSummaries, err := api.ListAllStatusPages(ctx, pageClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list status pages: %w", err)
 	}
-	for _, summary := range pageResp.GetStatusPages() {
+	for _, summary := range pageSummaries {
 		req := &status_pagev1.GetStatusPageContentRequest{}
 		req.SetId(summary.GetId())
 		resp, err := pageClient.GetStatusPageContent(ctx, req)
@@ -115,39 +117,21 @@ func FetchWorkspaceDataWithHTTPClient(ctx context.Context, httpClient *http.Clie
 // ListPrivateLocations only reports monitor_count, so each summary needs a Get.
 // Errors are returned unwrapped so the caller can inspect the Connect code.
 func fetchPrivateLocations(ctx context.Context, client private_locationv1connect.PrivateLocationServiceClient) ([]*private_locationv1.PrivateLocation, error) {
-	var locations []*private_locationv1.PrivateLocation
+	summaries, err := api.ListAllPrivateLocations(ctx, client)
+	if err != nil {
+		return nil, err
+	}
 
-	for offset := int32(0); ; {
-		listReq := &private_locationv1.ListPrivateLocationsRequest{}
-		listReq.SetLimit(privateLocationPageSize)
-		listReq.SetOffset(offset)
-
-		listResp, err := client.ListPrivateLocations(ctx, listReq)
+	locations := make([]*private_locationv1.PrivateLocation, 0, len(summaries))
+	for _, summary := range summaries {
+		getReq := &private_locationv1.GetPrivateLocationRequest{}
+		getReq.SetId(summary.GetId())
+		getResp, err := client.GetPrivateLocation(ctx, getReq)
 		if err != nil {
 			return nil, err
 		}
-
-		summaries := listResp.GetPrivateLocations()
-		if len(summaries) == 0 {
-			break
-		}
-
-		for _, summary := range summaries {
-			getReq := &private_locationv1.GetPrivateLocationRequest{}
-			getReq.SetId(summary.GetId())
-			getResp, err := client.GetPrivateLocation(ctx, getReq)
-			if err != nil {
-				return nil, err
-			}
-			locations = append(locations, getResp.GetPrivateLocation())
-		}
-
-		offset += int32(len(summaries))
-		if offset >= listResp.GetTotalSize() {
-			break
-		}
+		locations = append(locations, getResp.GetPrivateLocation())
 	}
-
 	return locations, nil
 }
 

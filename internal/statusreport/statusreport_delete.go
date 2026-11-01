@@ -84,9 +84,7 @@ func GetStatusReportDeleteCmd() *cli.Command {
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
-			fmt.Printf("Status report %s deleted successfully\n", reportId)
-			fmt.Println("Run 'openstatus status-report list' to see remaining reports")
-			return nil
+			return output.RenderDeleted(reportId, fmt.Sprintf("Status report %s deleted successfully", reportId), "Run 'openstatus status-report list' to see remaining reports")
 		},
 	}
 }

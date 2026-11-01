@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/openstatusHQ/cli/internal/run"
@@ -207,6 +208,26 @@ func Test_run(t *testing.T) {
 		}
 		if res.Results[0].Error != "request timed out" {
 			t.Errorf("expected error message, got %q", res.Results[0].Error)
+		}
+	})
+	t.Run("Error includes HTTP status and hints", func(t *testing.T) {
+		for _, tc := range []struct {
+			status int
+			want   string
+		}{
+			{http.StatusUnauthorized, "authentication failed"},
+			{http.StatusNotFound, "monitor 1 not found"},
+			{http.StatusBadGateway, "HTTP 502"},
+		} {
+			interceptor := &interceptorHTTPClient{
+				f: func(req *http.Request) (*http.Response, error) {
+					return &http.Response{StatusCode: tc.status, Body: http.NoBody}, nil
+				},
+			}
+			_, err := run.MonitorTrigger(context.Background(), interceptor.GetHTTPClient(), "", "1")
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Errorf("status %d: expected error containing %q, got %v", tc.status, tc.want, err)
+			}
 		}
 	})
 }

@@ -10,7 +10,6 @@ import (
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/private_location/v1/private_locationv1connect"
-	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	private_locationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/private_location/v1"
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
@@ -128,28 +127,35 @@ func Resolve(ctx context.Context, client private_locationv1connect.PrivateLocati
 		return refs, nil
 	}
 
-	resp, err := client.ListPrivateLocations(ctx, &private_locationv1.ListPrivateLocationsRequest{})
-	if err != nil {
-		return refs, err
-	}
-
 	wanted := make(map[string]struct{}, len(ids))
 	for _, id := range ids {
 		wanted[id] = struct{}{}
 	}
 
-	for _, l := range resp.GetPrivateLocations() {
-		if _, ok := wanted[l.GetId()]; !ok {
-			continue
+	err := api.FetchAll(ctx, func(ctx context.Context, limit, offset int32) (int, error) {
+		req := &private_locationv1.ListPrivateLocationsRequest{}
+		req.SetLimit(limit)
+		req.SetOffset(offset)
+		resp, err := client.ListPrivateLocations(ctx, req)
+		if err != nil {
+			return 0, err
 		}
-		refs[l.GetId()] = Ref{
-			ID:     l.GetId(),
-			Name:   l.GetName(),
-			Status: statusToString(l.GetStatus()),
+		for _, l := range resp.GetPrivateLocations() {
+			if _, ok := wanted[l.GetId()]; !ok {
+				continue
+			}
+			refs[l.GetId()] = Ref{
+				ID:     l.GetId(),
+				Name:   l.GetName(),
+				Status: statusToString(l.GetStatus()),
+			}
 		}
-	}
-
-	return refs, nil
+		if len(refs) == len(wanted) {
+			return 0, api.ErrStopPaging
+		}
+		return len(resp.GetPrivateLocations()), nil
+	})
+	return refs, err
 }
 
 // ResolveWithHTTPClient is the entry point used by internal/monitors.
@@ -222,7 +228,7 @@ func newBlueprintTable() *tablewriter.Table {
 
 // monitorNames returns an ID to name map for every monitor in the workspace.
 func monitorNames(ctx context.Context, client monitorv1connect.MonitorServiceClient) (map[string]string, error) {
-	resp, err := client.ListMonitors(ctx, &monitorv1.ListMonitorsRequest{})
+	resp, err := api.ListAllMonitors(ctx, client)
 	if err != nil {
 		return nil, err
 	}
@@ -238,6 +244,9 @@ func monitorNames(ctx context.Context, client monitorv1connect.MonitorServiceCli
 		names[m.GetId()] = m.GetName()
 	}
 	for _, m := range resp.GetIcmpMonitors() {
+		names[m.GetId()] = m.GetName()
+	}
+	for _, m := range resp.GetGrpcMonitors() {
 		names[m.GetId()] = m.GetName()
 	}
 	return names, nil

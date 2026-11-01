@@ -14,7 +14,7 @@ import (
 	output "github.com/openstatusHQ/cli/internal/cli"
 )
 
-func CreateMaintenance(ctx context.Context, client maintenancev1connect.MaintenanceServiceClient, title, message, from, to, pageId string, componentIds []string, notify bool) (string, error) {
+func CreateMaintenance(ctx context.Context, client maintenancev1connect.MaintenanceServiceClient, title, message, from, to, pageId string, componentIds []string, notify bool) (*maintenancev1.Maintenance, error) {
 	req := &maintenancev1.CreateMaintenanceRequest{
 		Title:   title,
 		Message: message,
@@ -33,15 +33,19 @@ func CreateMaintenance(ctx context.Context, client maintenancev1connect.Maintena
 
 	resp, err := client.CreateMaintenance(ctx, req)
 	if err != nil {
-		return "", output.FormatError(err, "maintenance", "")
+		return nil, output.FormatError(err, "maintenance", "")
 	}
 
-	return resp.GetMaintenance().GetId(), nil
+	return resp.GetMaintenance(), nil
 }
 
 func CreateMaintenanceWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, title, message, from, to, pageId string, componentIds []string, notify bool) (string, error) {
 	client := NewMaintenanceClientWithHTTPClient(httpClient, apiKey)
-	return CreateMaintenance(ctx, client, title, message, from, to, pageId, componentIds, notify)
+	m, err := CreateMaintenance(ctx, client, title, message, from, to, pageId, componentIds, notify)
+	if err != nil {
+		return "", err
+	}
+	return m.GetId(), nil
 }
 
 func GetMaintenanceCreateCmd() *cli.Command {
@@ -100,7 +104,7 @@ func GetMaintenanceCreateCmd() *cli.Command {
 				Notify:  cmd.Bool("notify"),
 			}
 			if ids := cmd.String("component-ids"); ids != "" {
-				inputs.ComponentIDs = strings.Split(ids, ",")
+				inputs.ComponentIDs = output.SplitList(ids)
 			}
 
 			needsWizard := inputs.Title == "" || inputs.Message == "" ||
@@ -134,7 +138,7 @@ func GetMaintenanceCreateCmd() *cli.Command {
 
 			client := NewMaintenanceClient(apiKey)
 			s := output.StartSpinner("Creating maintenance...")
-			id, err := CreateMaintenance(
+			m, err := CreateMaintenance(
 				ctx,
 				client,
 				inputs.Title,
@@ -150,9 +154,7 @@ func GetMaintenanceCreateCmd() *cli.Command {
 				return cli.Exit(err.Error(), 1)
 			}
 
-			fmt.Printf("Maintenance created successfully (ID: %s)\n", id)
-			fmt.Printf("Run 'openstatus maintenance info %s' to see details\n", id)
-			return nil
+			return renderMaintenanceResult(m, "created")
 		},
 	}
 }

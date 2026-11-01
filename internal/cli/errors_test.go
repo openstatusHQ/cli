@@ -1,7 +1,9 @@
 package cli_test
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -31,6 +33,16 @@ func Test_FormatError(t *testing.T) {
 			want: "request conflicts with the current state of the resource",
 		},
 		{
+			name: "cancelled request",
+			err:  connect.NewError(connect.CodeCanceled, context.Canceled),
+			want: "operation cancelled",
+		},
+		{
+			name: "timed out request",
+			err:  fmt.Errorf("call: %w", context.DeadlineExceeded),
+			want: "request timed out",
+		},
+		{
 			name: "unauthenticated",
 			err:  connect.NewError(connect.CodeUnauthenticated, errors.New("nope")),
 			want: "authentication failed",
@@ -46,6 +58,20 @@ func Test_FormatError(t *testing.T) {
 			resource: "incident",
 			id:       "42",
 			want:     "incident 42 not found. Run 'openstatus incident list' to see available incidents",
+		},
+		{
+			name:     "not found hint uses the real list command",
+			err:      connect.NewError(connect.CodeNotFound, errors.New("nope")),
+			resource: "monitor",
+			id:       "7",
+			want:     "monitor 7 not found. Run 'openstatus monitors list' to see available monitors",
+		},
+		{
+			name:     "not found without a list command has no hint",
+			err:      connect.NewError(connect.CodeNotFound, errors.New("nope")),
+			resource: "response log",
+			id:       "abc",
+			want:     "response log abc not found",
 		},
 		{
 			name:     "not found without id",

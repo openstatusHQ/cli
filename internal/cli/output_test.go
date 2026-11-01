@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/openstatusHQ/cli/internal/cli"
@@ -38,4 +39,38 @@ func Test_FormatTimestamp(t *testing.T) {
 			t.Errorf("expected empty string, got %q", result)
 		}
 	})
+}
+
+func TestSplitList(t *testing.T) {
+	t.Parallel()
+	for in, want := range map[string][]string{
+		"":         nil,
+		"1":        {"1"},
+		"1, 2":     {"1", "2"},
+		" 1 ,, 2,": {"1", "2"},
+	} {
+		got := cli.SplitList(in)
+		if !slices.Equal(got, want) {
+			t.Errorf("SplitList(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestParseIDList(t *testing.T) {
+	t.Parallel()
+	for in, want := range map[string]struct {
+		ids      []string
+		provided bool
+		err      bool
+	}{
+		"":      {nil, false, false},
+		"a, b":  {[]string{"a", "b"}, true, false},
+		",":     {nil, false, true},
+		" , , ": {nil, false, true},
+	} {
+		ids, provided, err := cli.ParseIDList("component-ids", in)
+		if !slices.Equal(ids, want.ids) || provided != want.provided || (err != nil) != want.err {
+			t.Errorf("ParseIDList(%q) = %q, %v, %v; want %q, %v, err=%v", in, ids, provided, err, want.ids, want.provided, want.err)
+		}
+	}
 }

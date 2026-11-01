@@ -6,11 +6,11 @@ import (
 	"net/http"
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/private_location/v1/private_locationv1connect"
-	private_locationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/private_location/v1"
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
 
+	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
 )
@@ -26,18 +26,11 @@ type listEntry struct {
 }
 
 func ListPrivateLocations(ctx context.Context, client private_locationv1connect.PrivateLocationServiceClient, limit int, s *output.Spinner) error {
-	req := &private_locationv1.ListPrivateLocationsRequest{}
-	if limit > 0 {
-		req.SetLimit(int32(limit))
-	}
-
-	resp, err := client.ListPrivateLocations(ctx, req)
+	locations, total, err := api.List(ctx, int32(limit), api.PrivateLocationsPage(client))
 	output.StopSpinner(s)
 	if err != nil {
 		return output.FormatError(err, "private location", "")
 	}
-
-	locations := resp.GetPrivateLocations()
 
 	if output.IsJSONOutput() {
 		entries := make([]listEntry, 0, len(locations))
@@ -80,7 +73,7 @@ func ListPrivateLocations(ctx context.Context, client private_locationv1connect.
 
 	tbl.Print()
 
-	if total := int(resp.GetTotalSize()); total > len(locations) && !output.IsQuiet() {
+	if total := int(total); total > len(locations) && !output.IsQuiet() {
 		fmt.Printf("\nShowing %d of %d. Use --limit to see more.\n", len(locations), total)
 	}
 
@@ -110,7 +103,7 @@ and the number of monitors it runs.`,
 			},
 			&cli.IntFlag{
 				Name:  "limit",
-				Usage: "Maximum number of private locations to return (1-100)",
+				Usage: "Maximum number of private locations to return (1-100; all when omitted)",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {

@@ -11,6 +11,7 @@ import (
 	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
 
+	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
 )
@@ -29,24 +30,23 @@ type maintenanceListEntry struct {
 }
 
 func ListMaintenances(ctx context.Context, client maintenancev1connect.MaintenanceServiceClient, pageId string, limit int, s *output.Spinner) error {
-	req := &maintenancev1.ListMaintenancesRequest{}
-
-	if limit > 0 {
-		l := int32(limit)
-		req.SetLimit(l)
-	}
-
-	if pageId != "" {
-		req.SetPageId(pageId)
-	}
-
-	resp, err := client.ListMaintenances(ctx, req)
+	maintenances, _, err := api.List(ctx, int32(limit), func(ctx context.Context, limit, offset int32) ([]*maintenancev1.MaintenanceSummary, int32, error) {
+		req := &maintenancev1.ListMaintenancesRequest{}
+		req.SetLimit(limit)
+		req.SetOffset(offset)
+		if pageId != "" {
+			req.SetPageId(pageId)
+		}
+		resp, err := client.ListMaintenances(ctx, req)
+		if err != nil {
+			return nil, 0, err
+		}
+		return resp.GetMaintenances(), resp.GetTotalSize(), nil
+	})
 	output.StopSpinner(s)
 	if err != nil {
 		return output.FormatError(err, "maintenance", "")
 	}
-
-	maintenances := resp.GetMaintenances()
 
 	if output.IsJSONOutput() {
 		entries := make([]maintenanceListEntry, 0, len(maintenances))
@@ -116,7 +116,7 @@ func GetMaintenanceListCmd() *cli.Command {
 			},
 			&cli.IntFlag{
 				Name:  "limit",
-				Usage: "Maximum number of maintenances to return (1-100)",
+				Usage: "Maximum number of maintenances to return (1-100; all when omitted)",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {

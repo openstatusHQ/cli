@@ -3,7 +3,9 @@ package monitors
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -352,8 +354,8 @@ func configCompareToStringComparator(c config.Compare) monitorv1.StringComparato
 func configToHTTPMonitor(m config.Monitor) *monitorv1.HTTPMonitor {
 	// Convert headers
 	headers := make([]*monitorv1.Headers, 0, len(m.Request.Headers))
-	for k, v := range m.Request.Headers {
-		headers = append(headers, &monitorv1.Headers{Key: k, Value: v})
+	for _, k := range slices.Sorted(maps.Keys(m.Request.Headers)) {
+		headers = append(headers, &monitorv1.Headers{Key: k, Value: m.Request.Headers[k]})
 	}
 
 	// Convert assertions to separate types

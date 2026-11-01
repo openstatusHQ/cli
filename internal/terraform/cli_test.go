@@ -70,7 +70,7 @@ func TestCheckExistingFiles_NonexistentDir(t *testing.T) {
 
 func TestPrintSummary_IncludesInitUpgradeHint(t *testing.T) {
 	out := captureStdout(t, func() {
-		printSummary("/tmp/out", &WorkspaceData{})
+		printSummary("/tmp/out", NewGenerator(&WorkspaceData{}))
 	})
 	if !strings.Contains(out, "terraform init -upgrade") {
 		t.Errorf("expected init-upgrade hint, got:\n%s", out)
@@ -86,9 +86,9 @@ func TestPrintSummary_CountsPrivateLocations(t *testing.T) {
 	l.SetName("office-paris")
 
 	out := captureStdout(t, func() {
-		printSummary("/tmp/out", &WorkspaceData{
+		printSummary("/tmp/out", NewGenerator(&WorkspaceData{
 			PrivateLocations: []*private_locationv1.PrivateLocation{l},
-		})
+		}))
 	})
 
 	if !strings.Contains(out, "1 private locations") {
@@ -105,9 +105,9 @@ func TestPrintSummary_CountsICMPMonitors(t *testing.T) {
 	m.SetName("Gateway Ping")
 
 	out := captureStdout(t, func() {
-		printSummary("/tmp/out", &WorkspaceData{
+		printSummary("/tmp/out", NewGenerator(&WorkspaceData{
 			ICMPMonitors: []*monitorv1.ICMPMonitor{m},
-		})
+		}))
 	})
 
 	if !strings.Contains(out, "1 monitors (0 HTTP, 0 TCP, 0 DNS, 1 ICMP)") {

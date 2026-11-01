@@ -56,6 +56,22 @@ func TestGenerateMonitorsFile_HTTP(t *testing.T) {
 	mustNotContain(t, content, "follow_redirects")
 }
 
+func TestGenerateMonitorsFile_FollowRedirects(t *testing.T) {
+	render := func(m *monitorv1.HTTPMonitor) string {
+		m.SetId("1")
+		m.SetName("API")
+		m.SetUrl("https://api.example.com")
+		return string(NewGenerator(&WorkspaceData{HTTPMonitors: []*monitorv1.HTTPMonitor{m}}).GenerateMonitorsFile().Bytes())
+	}
+
+	// Unset means the API default (true), so nothing should be emitted.
+	mustNotContain(t, render(&monitorv1.HTTPMonitor{}), "follow_redirects")
+
+	disabled := &monitorv1.HTTPMonitor{}
+	disabled.SetFollowRedirects(false)
+	mustContain(t, render(disabled), "follow_redirects = false")
+}
+
 func TestGenerateMonitorsFile_DNS(t *testing.T) {
 	m := &monitorv1.DNSMonitor{}
 	m.SetId("456")

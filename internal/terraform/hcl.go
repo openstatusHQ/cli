@@ -78,6 +78,9 @@ func NewGenerator(data *WorkspaceData) *Generator {
 		g.icmpMonitorNames[m.GetId()] = name
 		g.monitorRefs[m.GetId()] = resourceRef{"openstatus_icmp_monitor", name}
 	}
+	for _, m := range data.GRPCMonitors {
+		fmt.Fprintf(os.Stderr, "warning: skipping gRPC monitor %q (ID: %s) — the Terraform provider does not support gRPC monitors yet; references to it are kept as raw IDs\n", m.GetName(), m.GetId())
+	}
 	for _, n := range data.Notifications {
 		if _, ok := renderableNotification(n); !ok {
 			g.skippedNotifications[n.GetId()] = true
@@ -159,7 +162,8 @@ func (g *Generator) GenerateMonitorsFile() *hclwrite.File {
 		if m.GetRetry() != 3 {
 			b.SetAttributeValue("retry", cty.NumberIntVal(m.GetRetry()))
 		}
-		if !m.GetFollowRedirects() {
+		// Unset means the API default (true), not false.
+		if m.HasFollowRedirects() && !m.GetFollowRedirects() {
 			b.SetAttributeValue("follow_redirects", cty.BoolVal(false))
 		}
 		b.SetAttributeValue("active", cty.BoolVal(m.GetActive()))
@@ -642,7 +646,7 @@ func (g *Generator) GenerateImportsFile() *hclwrite.File {
 }
 
 func (g *Generator) TotalResourceCount() int {
-	count := len(g.data.HTTPMonitors) + len(g.data.TCPMonitors) + len(g.data.DNSMonitors) + len(g.data.ICMPMonitors) + len(g.data.Notifications)
+	count := len(g.data.HTTPMonitors) + len(g.data.TCPMonitors) + len(g.data.DNSMonitors) + len(g.data.ICMPMonitors) + len(g.notifNames)
 	for _, sp := range g.data.StatusPages {
 		count += 1 + len(sp.Components) + len(sp.Groups)
 	}
@@ -654,8 +658,15 @@ func (g *Generator) HasMonitors() bool {
 	return len(g.data.HTTPMonitors) > 0 || len(g.data.TCPMonitors) > 0 || len(g.data.DNSMonitors) > 0 || len(g.data.ICMPMonitors) > 0
 }
 
+// NotificationCount is the number of notifications that will be rendered.
+func (g *Generator) NotificationCount() int {
+	return len(g.notifNames)
+}
+
+// HasNotifications reports whether any notification will be rendered;
+// skipped (unknown provider) ones don't count.
 func (g *Generator) HasNotifications() bool {
-	return len(g.data.Notifications) > 0
+	return len(g.notifNames) > 0
 }
 
 func (g *Generator) HasStatusPages() bool {

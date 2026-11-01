@@ -14,11 +14,6 @@ import (
 
 const deleteUsage = "openstatus incident delete <incident-id> [-y]"
 
-type deleteOutput struct {
-	ID      string `json:"id"`
-	Deleted bool   `json:"deleted"`
-}
-
 func DeleteIncident(ctx context.Context, client incidentv1connect.IncidentServiceClient, id string) error {
 	if _, err := client.DeleteIncident(ctx, &incidentv1.DeleteIncidentRequest{Id: id}); err != nil {
 		return formatIncidentError(err, id, opDelete)
@@ -27,16 +22,7 @@ func DeleteIncident(ctx context.Context, client incidentv1connect.IncidentServic
 }
 
 func renderDeleted(id string) error {
-	if output.IsJSONOutput() {
-		return output.PrintJSON(deleteOutput{ID: id, Deleted: true})
-	}
-	if output.IsQuiet() {
-		fmt.Println(id)
-		return nil
-	}
-	fmt.Printf("Incident %s deleted\n", id)
-	fmt.Println("Run 'openstatus inc list' to see remaining incidents")
-	return nil
+	return output.RenderDeleted(id, fmt.Sprintf("Incident %s deleted", id), "Run 'openstatus inc list' to see remaining incidents")
 }
 
 func DeleteIncidentWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, id string) error {

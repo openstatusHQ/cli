@@ -18,11 +18,11 @@ func FetchStatusPages(ctx context.Context, apiKey string) ([]*status_pagev1.Stat
 		connect.WithInterceptors(api.NewAuthInterceptor(apiKey)),
 		connect.WithProtoJSON(),
 	)
-	resp, err := client.ListStatusPages(ctx, &status_pagev1.ListStatusPagesRequest{})
+	pages, err := api.ListAllStatusPages(ctx, client)
 	if err != nil {
 		return nil, output.FormatError(err, "status-page", "")
 	}
-	return resp.GetStatusPages(), nil
+	return pages, nil
 }
 
 func FetchPageComponents(ctx context.Context, apiKey string, pageID string) ([]*status_pagev1.PageComponent, []*status_pagev1.PageComponentGroup, error) {

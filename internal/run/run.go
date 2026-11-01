@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -34,6 +36,19 @@ type runRegionResult struct {
 type runMonitorResult struct {
 	MonitorID string            `json:"monitor_id"`
 	Results   []runRegionResult `json:"results"`
+	Error     string            `json:"error,omitempty"`
+}
+
+// failed reports whether a region did not pass. "unknown" counts as a failure:
+// an unverified check must not let the run succeed.
+func (r runRegionResult) failed() bool {
+	return r.Status != "pass"
+}
+
+// failed reports whether the monitor could not be triggered or any region did
+// not pass.
+func (r runMonitorResult) failed() bool {
+	return r.Error != "" || slices.ContainsFunc(r.Results, runRegionResult.failed)
 }
 
 // MonitorTrigger triggers a monitor run and returns the results without printing.
@@ -62,8 +77,13 @@ func MonitorTrigger(ctx context.Context, httpClient *http.Client, apiKey string,
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode != http.StatusOK {
-		return runMonitorResult{}, fmt.Errorf("failed to trigger monitor test")
+	switch {
+	case res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden:
+		return runMonitorResult{}, fmt.Errorf("authentication failed (HTTP %d). Check your API token", res.StatusCode)
+	case res.StatusCode == http.StatusNotFound:
+		return runMonitorResult{}, fmt.Errorf("monitor %s not found", monitorId)
+	case res.StatusCode != http.StatusOK:
+		return runMonitorResult{}, fmt.Errorf("failed to trigger monitor test (HTTP %d)", res.StatusCode)
 	}
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -76,7 +96,7 @@ func MonitorTrigger(ctx context.Context, httpClient *http.Client, apiKey string,
 		return runMonitorResult{}, err
 	}
 
-	var regionResults []runRegionResult
+	regionResults := []runRegionResult{}
 	for _, r := range result {
 		rr := monitors.RunResult{}
 
@@ -133,8 +153,7 @@ func MonitorTrigger(ctx context.Context, httpClient *http.Client, apiKey string,
 }
 
 // printMonitorResult prints a single monitor's results to stdout.
-func printMonitorResult(res runMonitorResult) bool {
-	var inError bool
+func printMonitorResult(res runMonitorResult) {
 	fmt.Println(aurora.Bold(fmt.Sprintf("Monitor: %s", res.MonitorID)))
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
@@ -143,22 +162,23 @@ func printMonitorResult(res runMonitorResult) bool {
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
 	for _, entry := range res.Results {
-		if entry.Status == "fail" {
+		switch entry.Status {
+		case "fail":
 			tbl.AddRow(entry.Region, entry.Latency, color.RedString("fail"))
-			inError = true
-		} else {
+		case "pass":
 			tbl.AddRow(entry.Region, entry.Latency, color.GreenString("pass"))
+		default:
+			tbl.AddRow(entry.Region, entry.Latency, color.YellowString(entry.Status))
 		}
 	}
 	tbl.Print()
 
-	if inError {
-		fmt.Println(color.RedString("Some regions failed"))
+	if res.failed() {
+		fmt.Println(color.RedString("Some regions failed or could not be verified"))
 	} else {
 		fmt.Println(color.GreenString("All regions passed"))
 	}
 	fmt.Println()
-	return inError
 }
 
 func RunCmd() *cli.Command {
@@ -200,53 +220,40 @@ tests:
 				fmt.Print("Tests are running\n\n")
 			}
 
-			type indexedResult struct {
-				index  int
-				result runMonitorResult
-				err    error
-			}
-
-			results := make([]indexedResult, size)
+			// Each goroutine writes only its own index, so no locking is needed.
+			results := make([]runMonitorResult, size)
 			var wg sync.WaitGroup
-			var mu sync.Mutex
-
 			for i, id := range conf.Tests.Ids {
-				wg.Add(1)
-				go func(idx, id int) {
-					defer wg.Done()
-					res, err := MonitorTrigger(ctx, api.DefaultHTTPClient, apiKey, fmt.Sprintf("%d", id))
-					mu.Lock()
-					results[idx] = indexedResult{index: idx, result: res, err: err}
-					mu.Unlock()
-				}(i, id)
+				wg.Go(func() {
+					monitorID := strconv.Itoa(id)
+					res, err := MonitorTrigger(ctx, api.DefaultHTTPClient, apiKey, monitorID)
+					if err != nil {
+						res = runMonitorResult{MonitorID: monitorID, Results: []runRegionResult{}, Error: err.Error()}
+					}
+					results[i] = res
+				})
 			}
 			wg.Wait()
 
-			// Print results sequentially to avoid interleaved output
 			var hasErrors bool
-
-			if output.IsJSONOutput() {
-				var allResults []runMonitorResult
-				for _, r := range results {
-					if r.err != nil {
-						hasErrors = true
-						continue
-					}
-					allResults = append(allResults, r.result)
+			for _, r := range results {
+				if r.failed() {
+					hasErrors = true
 				}
-				if err := output.PrintJSON(allResults); err != nil {
+			}
+
+			// Print results sequentially to avoid interleaved output
+			if output.IsJSONOutput() {
+				if err := output.PrintJSON(results); err != nil {
 					return err
 				}
 			} else {
 				for _, r := range results {
-					if r.err != nil {
-						hasErrors = true
-						fmt.Printf("Monitor %d: %v\n\n", conf.Tests.Ids[r.index], r.err)
+					if r.Error != "" {
+						fmt.Printf("Monitor %s: %s\n\n", r.MonitorID, r.Error)
 						continue
 					}
-					if printMonitorResult(r.result) {
-						hasErrors = true
-					}
+					printMonitorResult(r)
 				}
 			}
 

@@ -90,9 +90,7 @@ func GetMonitorDeleteCmd() *cli.Command {
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
-			fmt.Printf("Monitor deleted successfully\n")
-			fmt.Println("Run 'openstatus monitors list' to see remaining monitors")
-			return nil
+			return output.RenderDeleted(monitorId, "Monitor deleted successfully", "Run 'openstatus monitors list' to see remaining monitors")
 		},
 	}
 	return &monitorsCmd

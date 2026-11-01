@@ -11,6 +11,7 @@ import (
 	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
 
+	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
 )
@@ -24,30 +25,40 @@ type statusReportListEntry struct {
 	UpdatedAt  string `json:"updated_at"`
 }
 
-func ListStatusReports(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, statusFilter string, limit int, s *output.Spinner) error {
-	req := &status_reportv1.ListStatusReportsRequest{}
-
-	if limit > 0 {
-		l := int32(limit)
-		req.SetLimit(l)
+// statusReportsPage fetches one page of status reports, optionally filtered by
+// status.
+func statusReportsPage(client status_reportv1connect.StatusReportServiceClient, statuses []status_reportv1.StatusReportStatus) api.PageFunc[*status_reportv1.StatusReportSummary] {
+	return func(ctx context.Context, limit, offset int32) ([]*status_reportv1.StatusReportSummary, int32, error) {
+		req := &status_reportv1.ListStatusReportsRequest{}
+		req.SetLimit(limit)
+		req.SetOffset(offset)
+		if len(statuses) > 0 {
+			req.SetStatuses(statuses)
+		}
+		resp, err := client.ListStatusReports(ctx, req)
+		if err != nil {
+			return nil, 0, err
+		}
+		return resp.GetStatusReports(), resp.GetTotalSize(), nil
 	}
+}
 
+func ListStatusReports(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, statusFilter string, limit int, s *output.Spinner) error {
+	var statuses []status_reportv1.StatusReportStatus
 	if statusFilter != "" {
 		sdkStatus, err := statusToSDK(statusFilter)
 		if err != nil {
 			output.StopSpinner(s)
 			return err
 		}
-		req.SetStatuses([]status_reportv1.StatusReportStatus{sdkStatus})
+		statuses = []status_reportv1.StatusReportStatus{sdkStatus}
 	}
 
-	resp, err := client.ListStatusReports(ctx, req)
+	reports, _, err := api.List(ctx, int32(limit), statusReportsPage(client, statuses))
 	output.StopSpinner(s)
 	if err != nil {
 		return output.FormatError(err, "status-report", "")
 	}
-
-	reports := resp.GetStatusReports()
 
 	if output.IsJSONOutput() {
 		entries := make([]statusReportListEntry, 0, len(reports))
@@ -113,7 +124,7 @@ func GetStatusReportListCmd() *cli.Command {
 			},
 			&cli.IntFlag{
 				Name:  "limit",
-				Usage: "Maximum number of reports to return (1-100)",
+				Usage: "Maximum number of reports to return (1-100; all when omitted)",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {

@@ -3,6 +3,7 @@ package whoami
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,30 +21,47 @@ type Whoami struct {
 	Plan string `json:"plan"`
 }
 
-func GetWhoamiCmd(ctx context.Context, httpClient *http.Client, apiKey string, s *output.Spinner) error {
+// ErrUnauthorized is returned by Fetch when the API rejects the token.
+var ErrUnauthorized = errors.New("API token was rejected")
+
+// Fetch returns the workspace the API token belongs to.
+func Fetch(ctx context.Context, httpClient *http.Client, apiKey string) (Whoami, error) {
 	url := fmt.Sprintf("%s/whoami", api.APIBaseURL)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return Whoami{}, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Add("x-openstatus-key", apiKey)
 	res, err := httpClient.Do(req)
-	output.StopSpinner(s)
 	if err != nil {
-		return err
+		return Whoami{}, err
 	}
-
 	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to get workspace information. Check your API token with OPENSTATUS_API_TOKEN env var")
+
+	switch {
+	case res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden:
+		return Whoami{}, ErrUnauthorized
+	case res.StatusCode != http.StatusOK:
+		return Whoami{}, fmt.Errorf("failed to get workspace information (HTTP %d)", res.StatusCode)
 	}
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
+		return Whoami{}, fmt.Errorf("failed to read response body: %w", err)
 	}
 	var whoami Whoami
-	err = json.Unmarshal(body, &whoami)
+	if err := json.Unmarshal(body, &whoami); err != nil {
+		return Whoami{}, fmt.Errorf("failed to decode workspace information: %w", err)
+	}
+	return whoami, nil
+}
+
+func GetWhoamiCmd(ctx context.Context, httpClient *http.Client, apiKey string, s *output.Spinner) error {
+	whoami, err := Fetch(ctx, httpClient, apiKey)
+	output.StopSpinner(s)
+	if errors.Is(err, ErrUnauthorized) {
+		return fmt.Errorf("authentication failed. Check your API token via OPENSTATUS_API_TOKEN env var or --access-token flag")
+	}
 	if err != nil {
 		return err
 	}

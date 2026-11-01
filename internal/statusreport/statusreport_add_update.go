@@ -65,6 +65,13 @@ func AddStatusReportUpdate(ctx context.Context, client status_reportv1connect.St
 	}
 
 	report := resp.GetStatusReport()
+	if output.IsJSONOutput() {
+		return output.PrintJSON(toStatusReportDetail(report, affectedOrder(report), currentImpacts(report.GetUpdates())))
+	}
+	if output.IsQuiet() {
+		fmt.Println(report.GetId())
+		return nil
+	}
 	fmt.Printf("Status report %s updated to %s\n", report.GetId(), statusColor(statusToString(report.GetStatus())))
 
 	printImpactsDiff(report)

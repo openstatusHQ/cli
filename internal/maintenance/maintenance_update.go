@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/maintenance/v1/maintenancev1connect"
 	maintenancev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/maintenance/v1"
@@ -15,16 +14,16 @@ import (
 	output "github.com/openstatusHQ/cli/internal/cli"
 )
 
-func UpdateMaintenance(ctx context.Context, client maintenancev1connect.MaintenanceServiceClient, id, title, message, from, to string, componentIds []string, hasTitle, hasMessage, hasFrom, hasTo, hasComponents bool) error {
+func UpdateMaintenance(ctx context.Context, client maintenancev1connect.MaintenanceServiceClient, id, title, message, from, to string, componentIds []string, hasTitle, hasMessage, hasFrom, hasTo, hasComponents bool) (*maintenancev1.Maintenance, error) {
 	if id == "" {
 		fmt.Fprintln(os.Stderr, "Usage: openstatus maintenance update <maintenance-id> [--title ...] [--message ...] [--from ...] [--to ...]")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus maintenance update 12345 --title \"Updated title\"")
-		return fmt.Errorf("maintenance ID is required")
+		return nil, fmt.Errorf("maintenance ID is required")
 	}
 
 	if !hasTitle && !hasMessage && !hasFrom && !hasTo && !hasComponents {
-		return fmt.Errorf("at least one of --title, --message, --from, --to, or --component-ids must be provided")
+		return nil, fmt.Errorf("at least one of --title, --message, --from, --to, or --component-ids must be provided")
 	}
 
 	req := &maintenancev1.UpdateMaintenanceRequest{
@@ -47,17 +46,18 @@ func UpdateMaintenance(ctx context.Context, client maintenancev1connect.Maintena
 		req.SetPageComponentIds(componentIds)
 	}
 
-	_, err := client.UpdateMaintenance(ctx, req)
+	resp, err := client.UpdateMaintenance(ctx, req)
 	if err != nil {
-		return output.FormatError(err, "maintenance", id)
+		return nil, output.FormatError(err, "maintenance", id)
 	}
 
-	return nil
+	return resp.GetMaintenance(), nil
 }
 
 func UpdateMaintenanceWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, id, title, message, from, to string, componentIds []string, hasTitle, hasMessage, hasFrom, hasTo, hasComponents bool) error {
 	client := NewMaintenanceClientWithHTTPClient(httpClient, apiKey)
-	return UpdateMaintenance(ctx, client, id, title, message, from, to, componentIds, hasTitle, hasMessage, hasFrom, hasTo, hasComponents)
+	_, err := UpdateMaintenance(ctx, client, id, title, message, from, to, componentIds, hasTitle, hasMessage, hasFrom, hasTo, hasComponents)
+	return err
 }
 
 func GetMaintenanceUpdateCmd() *cli.Command {
@@ -104,23 +104,19 @@ func GetMaintenanceUpdateCmd() *cli.Command {
 			hasMessage := cmd.IsSet("message")
 			hasFrom := cmd.IsSet("from")
 			hasTo := cmd.IsSet("to")
-			hasComponents := cmd.IsSet("component-ids") && cmd.String("component-ids") != ""
-
-			var componentIds []string
-			if ids := cmd.String("component-ids"); ids != "" {
-				componentIds = strings.Split(ids, ",")
+			componentIds, hasComponents, err := output.ParseIDList("component-ids", cmd.String("component-ids"))
+			if err != nil {
+				return cli.Exit(err.Error(), 1)
 			}
 
 			client := NewMaintenanceClient(apiKey)
 			s := output.StartSpinner("Updating maintenance...")
-			err = UpdateMaintenance(ctx, client, maintenanceId, cmd.String("title"), cmd.String("message"), cmd.String("from"), cmd.String("to"), componentIds, hasTitle, hasMessage, hasFrom, hasTo, hasComponents)
+			m, err := UpdateMaintenance(ctx, client, maintenanceId, cmd.String("title"), cmd.String("message"), cmd.String("from"), cmd.String("to"), componentIds, hasTitle, hasMessage, hasFrom, hasTo, hasComponents)
 			output.StopSpinner(s)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
-			fmt.Printf("Maintenance %s updated successfully\n", maintenanceId)
-			fmt.Println("Run 'openstatus maintenance info " + maintenanceId + "' to see the maintenance")
-			return nil
+			return renderMaintenanceResult(m, "updated")
 		},
 	}
 }

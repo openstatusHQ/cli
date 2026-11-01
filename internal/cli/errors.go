@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -9,9 +10,28 @@ import (
 	"connectrpc.com/connect"
 )
 
+// listCommands maps a resource name to the command that lists it, for the
+// "not found" hint. Resources without a list command get no hint.
+var listCommands = map[string]string{
+	"incident":         "incident",
+	"maintenance":      "maintenance",
+	"monitor":          "monitors",
+	"notification":     "notification",
+	"private location": "private-locations",
+	"status-page":      "status-page",
+	"status-report":    "status-report",
+}
+
 func FormatError(err error, resource string, id string) error {
 	if err == nil {
 		return nil
+	}
+
+	if errors.Is(err, context.Canceled) {
+		return errors.New("operation cancelled")
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return errors.New("request timed out. The openstatus API did not respond in time; try again")
 	}
 
 	var connectErr *connect.Error
@@ -22,10 +42,13 @@ func FormatError(err error, resource string, id string) error {
 		case connect.CodePermissionDenied:
 			return fmt.Errorf("permission denied. Check that your API token has access to this workspace")
 		case connect.CodeNotFound:
-			if id != "" {
-				return fmt.Errorf("%s %s not found. Run 'openstatus %s list' to see available %ss", resource, id, resource, resource)
+			if id == "" {
+				return fmt.Errorf("%s not found", resource)
 			}
-			return fmt.Errorf("%s not found", resource)
+			if cmd, ok := listCommands[resource]; ok {
+				return fmt.Errorf("%s %s not found. Run 'openstatus %s list' to see available %ss", resource, id, cmd, resource)
+			}
+			return fmt.Errorf("%s %s not found", resource, id)
 		case connect.CodeResourceExhausted:
 			return fmt.Errorf("rate limited. Wait a moment and try again")
 		case connect.CodeInvalidArgument:

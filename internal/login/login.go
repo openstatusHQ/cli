@@ -57,16 +57,19 @@ Get your API token from the OpenStatus dashboard.`,
 			}
 
 			fmt.Fprintln(os.Stderr, "Verifying token...")
-			err := whoami.GetWhoamiCmd(ctx, api.DefaultHTTPClient, token, nil)
-			if err != nil {
+			workspace, err := whoami.Fetch(ctx, api.DefaultHTTPClient, token)
+			if errors.Is(err, whoami.ErrUnauthorized) {
 				return cli.Exit("Invalid token. Could not authenticate with OpenStatus API", 1)
+			}
+			if err != nil {
+				return cli.Exit(fmt.Sprintf("Could not verify token: %v", err), 1)
 			}
 
 			if err := auth.SaveToken(token); err != nil {
 				return cli.Exit(fmt.Sprintf("Failed to save token: %v", err), 1)
 			}
 
-			fmt.Println("Token saved successfully. You can now use openstatus commands without --access-token")
+			fmt.Printf("Logged in to workspace %s (%s). You can now use openstatus commands without --access-token\n", workspace.Name, workspace.Slug)
 			return nil
 		},
 	}

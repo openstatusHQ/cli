@@ -6,11 +6,11 @@ import (
 	"net/http"
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/notification/v1/notificationv1connect"
-	notificationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/notification/v1"
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
 
+	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
 )
@@ -25,20 +25,11 @@ type notificationListEntry struct {
 }
 
 func ListNotifications(ctx context.Context, client notificationv1connect.NotificationServiceClient, limit int, s *output.Spinner) error {
-	req := &notificationv1.ListNotificationsRequest{}
-
-	if limit > 0 {
-		l := int32(limit)
-		req.SetLimit(l)
-	}
-
-	resp, err := client.ListNotifications(ctx, req)
+	notifications, _, err := api.List(ctx, int32(limit), api.NotificationsPage(client))
 	output.StopSpinner(s)
 	if err != nil {
 		return output.FormatError(err, "notification", "")
 	}
-
-	notifications := resp.GetNotifications()
 
 	if output.IsJSONOutput() {
 		entries := make([]notificationListEntry, 0, len(notifications))
@@ -101,7 +92,7 @@ func GetNotificationListCmd() *cli.Command {
 			},
 			&cli.IntFlag{
 				Name:  "limit",
-				Usage: "Maximum number of notifications to return (1-100)",
+				Usage: "Maximum number of notifications to return (1-100; all when omitted)",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {

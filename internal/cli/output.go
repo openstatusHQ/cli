@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -56,4 +57,50 @@ func InitColorSettings(noColorFlag bool) {
 	if noColorFlag || os.Getenv("NO_COLOR") != "" || os.Getenv("TERM") == "dumb" || !IsTerminal() {
 		color.NoColor = true
 	}
+}
+
+// RenderDeleted reports a deleted resource: {"id","deleted"} in JSON mode,
+// the bare ID in quiet mode, and the given lines otherwise.
+func RenderDeleted(id string, lines ...string) error {
+	if IsJSONOutput() {
+		return PrintJSON(struct {
+			ID      string `json:"id"`
+			Deleted bool   `json:"deleted"`
+		}{id, true})
+	}
+	if IsQuiet() {
+		fmt.Println(id)
+		return nil
+	}
+	for _, l := range lines {
+		fmt.Println(l)
+	}
+	return nil
+}
+
+// SplitList splits a comma-separated flag value, trimming spaces and dropping
+// empty entries, so "1, 2," yields ["1" "2"].
+func SplitList(raw string) []string {
+	var out []string
+	for _, part := range strings.Split(raw, ",") {
+		if part = strings.TrimSpace(part); part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
+}
+
+// ParseIDList parses an optional comma-separated ID flag. An empty value means
+// the flag was not provided; a value with only separators (e.g. ",") is an
+// error rather than an empty list, since update endpoints treat an empty list
+// as "remove all".
+func ParseIDList(flag, raw string) (ids []string, provided bool, err error) {
+	if raw == "" {
+		return nil, false, nil
+	}
+	ids = SplitList(raw)
+	if len(ids) == 0 {
+		return nil, false, fmt.Errorf("--%s must contain at least one ID", flag)
+	}
+	return ids, true, nil
 }

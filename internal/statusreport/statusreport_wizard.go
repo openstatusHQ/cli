@@ -3,12 +3,15 @@ package statusreport
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
+	"slices"
 	"strings"
 
 	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
 	"github.com/charmbracelet/huh"
 
+	"github.com/openstatusHQ/cli/internal/api"
 	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/statuspage"
 	"github.com/openstatusHQ/cli/internal/wizard"
@@ -55,10 +58,9 @@ func mapToImpacts(in map[string]string, order []string) ([]*status_reportv1.Comp
 	}
 	out := make([]*status_reportv1.ComponentImpact, 0, len(in))
 	if len(order) == 0 {
-		order = make([]string, 0, len(in))
-		for k := range in {
-			order = append(order, k)
-		}
+		// Sort so requests (and the "Affected" order in `sr info`) don't vary
+		// with map iteration order.
+		order = slices.Sorted(maps.Keys(in))
 	}
 	for _, id := range order {
 		token, ok := in[id]
@@ -98,32 +100,25 @@ func impactSelectOptions() []huh.Option[string] {
 func fetchStatusReports(ctx context.Context, apiKey string) ([]*status_reportv1.StatusReportSummary, error) {
 	client := NewStatusReportClient(apiKey)
 
-	req := &status_reportv1.ListStatusReportsRequest{}
-	l := int32(20)
-	req.SetLimit(l)
-	req.SetStatuses([]status_reportv1.StatusReportStatus{
+	// Every active report is offered; only when there are none does the wizard
+	// fall back to the most recent reports.
+	reports, err := api.ListAll(ctx, statusReportsPage(client, []status_reportv1.StatusReportStatus{
 		status_reportv1.StatusReportStatus_STATUS_REPORT_STATUS_INVESTIGATING,
 		status_reportv1.StatusReportStatus_STATUS_REPORT_STATUS_IDENTIFIED,
 		status_reportv1.StatusReportStatus_STATUS_REPORT_STATUS_MONITORING,
-	})
-
-	resp, err := client.ListStatusReports(ctx, req)
+	}))
 	if err != nil {
 		return nil, output.FormatError(err, "status-report", "")
 	}
-
-	reports := resp.GetStatusReports()
 	if len(reports) > 0 {
 		return reports, nil
 	}
 
-	reqAll := &status_reportv1.ListStatusReportsRequest{}
-	reqAll.SetLimit(l)
-	resp, err = client.ListStatusReports(ctx, reqAll)
+	reports, _, err = statusReportsPage(client, nil)(ctx, 20, 0)
 	if err != nil {
 		return nil, output.FormatError(err, "status-report", "")
 	}
-	return resp.GetStatusReports(), nil
+	return reports, nil
 }
 
 // Wizard: sr create

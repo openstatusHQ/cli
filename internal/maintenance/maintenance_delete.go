@@ -84,9 +84,7 @@ func GetMaintenanceDeleteCmd() *cli.Command {
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
-			fmt.Printf("Maintenance %s deleted successfully\n", maintenanceId)
-			fmt.Println("Run 'openstatus maintenance list' to see remaining maintenances")
-			return nil
+			return output.RenderDeleted(maintenanceId, fmt.Sprintf("Maintenance %s deleted successfully", maintenanceId), "Run 'openstatus maintenance list' to see remaining maintenances")
 		},
 	}
 }

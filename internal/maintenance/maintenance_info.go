@@ -32,6 +32,36 @@ type maintenanceDetail struct {
 	UpdatedAt  string   `json:"updated_at"`
 }
 
+func toMaintenanceDetail(m *maintenancev1.Maintenance) maintenanceDetail {
+	return maintenanceDetail{
+		ID:         m.GetId(),
+		Title:      m.GetTitle(),
+		Message:    m.GetMessage(),
+		Status:     timeWindowStatus(m.GetFrom(), m.GetTo()),
+		From:       m.GetFrom(),
+		To:         m.GetTo(),
+		PageID:     m.GetPageId(),
+		Components: m.GetPageComponentIds(),
+		CreatedAt:  m.GetCreatedAt(),
+		UpdatedAt:  m.GetUpdatedAt(),
+	}
+}
+
+// renderMaintenanceResult reports a created or updated maintenance; verb is
+// "created" or "updated".
+func renderMaintenanceResult(m *maintenancev1.Maintenance, verb string) error {
+	if output.IsJSONOutput() {
+		return output.PrintJSON(toMaintenanceDetail(m))
+	}
+	if output.IsQuiet() {
+		fmt.Println(m.GetId())
+		return nil
+	}
+	fmt.Printf("Maintenance %s successfully (ID: %s)\n", verb, m.GetId())
+	fmt.Printf("Run 'openstatus maintenance info %s' to see details\n", m.GetId())
+	return nil
+}
+
 func GetMaintenanceInfo(ctx context.Context, client maintenancev1connect.MaintenanceServiceClient, maintenanceId string, s *output.Spinner) error {
 	if maintenanceId == "" {
 		output.StopSpinner(s)
@@ -52,19 +82,7 @@ func GetMaintenanceInfo(ctx context.Context, client maintenancev1connect.Mainten
 	m := resp.GetMaintenance()
 
 	if output.IsJSONOutput() {
-		detail := maintenanceDetail{
-			ID:         m.GetId(),
-			Title:      m.GetTitle(),
-			Message:    m.GetMessage(),
-			Status:     timeWindowStatus(m.GetFrom(), m.GetTo()),
-			From:       m.GetFrom(),
-			To:         m.GetTo(),
-			PageID:     m.GetPageId(),
-			Components: m.GetPageComponentIds(),
-			CreatedAt:  m.GetCreatedAt(),
-			UpdatedAt:  m.GetUpdatedAt(),
-		}
-		return output.PrintJSON(detail)
+		return output.PrintJSON(toMaintenanceDetail(m))
 	}
 
 	fmt.Println(aurora.Bold("Maintenance:"))

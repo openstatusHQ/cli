@@ -158,7 +158,7 @@ func GetStatusReportCreateCmd() *cli.Command {
 				Notify:  cmd.Bool("notify"),
 			}
 			if ids := cmd.String("component-ids"); ids != "" {
-				inputs.ComponentIDs = strings.Split(ids, ",")
+				inputs.ComponentIDs = output.SplitList(ids)
 			}
 
 			impacts, err := parseImpactsFlag(cmd.StringSlice("impact"))

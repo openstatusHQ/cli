@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
-	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
@@ -30,7 +29,7 @@ type monitorListEntry struct {
 }
 
 func ListMonitors(ctx context.Context, client monitorv1connect.MonitorServiceClient, resolver PrivateLocationResolver, showAll bool, s *output.Spinner) error {
-	resp, err := client.ListMonitors(ctx, &monitorv1.ListMonitorsRequest{})
+	resp, err := api.ListAllMonitors(ctx, client)
 	output.StopSpinner(s)
 	if err != nil {
 		return output.FormatError(err, "monitors", "")
@@ -81,6 +80,18 @@ func ListMonitors(ctx context.Context, client monitorv1connect.MonitorServiceCli
 				Name:               monitor.GetName(),
 				URL:                monitor.GetUri(),
 				Kind:               "icmp",
+				privateLocationIDs: monitor.GetPrivateLocationIds(),
+			})
+		}
+	}
+
+	for _, monitor := range resp.GetGrpcMonitors() {
+		if monitor.GetActive() || showAll {
+			entries = append(entries, monitorListEntry{
+				ID:                 monitor.GetId(),
+				Name:               monitor.GetName(),
+				URL:                monitor.GetUri(),
+				Kind:               "grpc",
 				privateLocationIDs: monitor.GetPrivateLocationIds(),
 			})
 		}

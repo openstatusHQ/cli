@@ -108,7 +108,7 @@ func GetTerraformGenerateCmd() *cli.Command {
 				return cli.Exit(fmt.Sprintf("failed to write imports.tf: %v", err), 1)
 			}
 
-			printSummary(outputDir, data)
+			printSummary(outputDir, gen)
 			return nil
 		},
 	}
@@ -136,13 +136,14 @@ func writeFile(path string, content []byte) error {
 	return err
 }
 
-func printSummary(outputDir string, data *WorkspaceData) {
+func printSummary(outputDir string, gen *Generator) {
+	data := gen.data
+	notifCount := gen.NotificationCount()
 	httpCount := len(data.HTTPMonitors)
 	tcpCount := len(data.TCPMonitors)
 	dnsCount := len(data.DNSMonitors)
 	icmpCount := len(data.ICMPMonitors)
 	monitorTotal := httpCount + tcpCount + dnsCount + icmpCount
-	notifCount := len(data.Notifications)
 	plCount := len(data.PrivateLocations)
 
 	pageCount := len(data.StatusPages)
@@ -158,6 +159,9 @@ func printSummary(outputDir string, data *WorkspaceData) {
 	fmt.Printf("\nGenerated Terraform configuration in %s\n\n", outputDir)
 	if monitorTotal > 0 {
 		fmt.Printf("  %d monitors (%d HTTP, %d TCP, %d DNS, %d ICMP)\n", monitorTotal, httpCount, tcpCount, dnsCount, icmpCount)
+	}
+	if grpcCount := len(data.GRPCMonitors); grpcCount > 0 {
+		fmt.Printf("  %d gRPC monitors skipped (not supported by the Terraform provider)\n", grpcCount)
 	}
 	if notifCount > 0 {
 		fmt.Printf("  %d notifications\n", notifCount)

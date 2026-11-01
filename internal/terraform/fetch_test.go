@@ -9,6 +9,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/openstatusHQ/cli/internal/api"
 )
 
 type recordedCall struct {
@@ -146,7 +148,7 @@ func TestFetchPrivateLocations_SinglePage(t *testing.T) {
 }
 
 func TestFetchPrivateLocations_MultiPage(t *testing.T) {
-	firstPage := manyIDs("pl_", privateLocationPageSize)
+	firstPage := manyIDs("pl_", int(api.PageSize))
 	secondPage := manyIDs("pl_second_", 50)
 
 	client, transport := newFetchClient(map[string][]fakeResponse{
@@ -170,19 +172,19 @@ func TestFetchPrivateLocations_MultiPage(t *testing.T) {
 	if len(listCalls) != 2 {
 		t.Fatalf("got %d list calls, want 2", len(listCalls))
 	}
-	if listCalls[0].Limit != privateLocationPageSize || listCalls[0].Offset != 0 {
-		t.Errorf("first page requested limit=%d offset=%d, want limit=%d offset=0", listCalls[0].Limit, listCalls[0].Offset, privateLocationPageSize)
+	if listCalls[0].Limit != api.PageSize || listCalls[0].Offset != 0 {
+		t.Errorf("first page requested limit=%d offset=%d, want limit=%d offset=0", listCalls[0].Limit, listCalls[0].Offset, api.PageSize)
 	}
-	if listCalls[1].Offset != privateLocationPageSize {
-		t.Errorf("second page requested offset=%d, want %d", listCalls[1].Offset, privateLocationPageSize)
+	if listCalls[1].Offset != api.PageSize {
+		t.Errorf("second page requested offset=%d, want %d", listCalls[1].Offset, api.PageSize)
 	}
 }
 
-func TestFetchPrivateLocations_EmptyPageStopsLoop(t *testing.T) {
+func TestFetchPrivateLocations_ShortPageStopsLoop(t *testing.T) {
+	// total_size over-reports: a short page must still end paging.
 	client, transport := newFetchClient(map[string][]fakeResponse{
 		"/ListPrivateLocations": {
 			okResponse(listBody([]string{"pl_1"}, 99)),
-			okResponse(listBody(nil, 99)),
 		},
 		"/GetPrivateLocation": {okResponse(getBody("pl_1", nil))},
 	})
@@ -195,8 +197,8 @@ func TestFetchPrivateLocations_EmptyPageStopsLoop(t *testing.T) {
 	if got := len(data.PrivateLocations); got != 1 {
 		t.Fatalf("got %d private locations, want 1", got)
 	}
-	if got := len(transport.callsTo("/ListPrivateLocations")); got != 2 {
-		t.Errorf("got %d list calls, want 2 (loop must stop on an empty page)", got)
+	if got := len(transport.callsTo("/ListPrivateLocations")); got != 1 {
+		t.Errorf("got %d list calls, want 1 (loop must stop on a short page)", got)
 	}
 }
 

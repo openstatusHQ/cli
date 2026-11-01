@@ -62,3 +62,19 @@ func TestNameRegistryPerTypeScopee(t *testing.T) {
 		t.Errorf("tcp = %q, want %q", tcpName, "api")
 	}
 }
+
+func TestNameRegistrySuffixCollision(t *testing.T) {
+	reg := NewNameRegistry()
+	got := []string{
+		reg.Name("openstatus_http_monitor", "api"),
+		reg.Name("openstatus_http_monitor", "api"),
+		reg.Name("openstatus_http_monitor", "api 2"),
+	}
+	seen := map[string]bool{}
+	for _, n := range got {
+		if seen[n] {
+			t.Fatalf("duplicate resource name %q in %v", n, got)
+		}
+		seen[n] = true
+	}
+}

@@ -12,6 +12,7 @@ import (
 	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
 
+	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
 	output "github.com/openstatusHQ/cli/internal/cli"
 )
@@ -23,20 +24,11 @@ type statusPageListEntry struct {
 }
 
 func ListStatusPages(ctx context.Context, client status_pagev1connect.StatusPageServiceClient, limit int, s *output.Spinner) error {
-	req := &status_pagev1.ListStatusPagesRequest{}
-
-	if limit > 0 {
-		l := int32(limit)
-		req.SetLimit(l)
-	}
-
-	resp, err := client.ListStatusPages(ctx, req)
+	pages, _, err := api.List(ctx, int32(limit), api.StatusPagesPage(client))
 	output.StopSpinner(s)
 	if err != nil {
 		return output.FormatError(err, "status-page", "")
 	}
-
-	pages := resp.GetStatusPages()
 
 	if output.IsJSONOutput() {
 		entries := make([]statusPageListEntry, 0, len(pages))
@@ -103,7 +95,7 @@ func GetStatusPageListCmd() *cli.Command {
 			},
 			&cli.IntFlag{
 				Name:  "limit",
-				Usage: "Maximum number of pages to return (1-100)",
+				Usage: "Maximum number of pages to return (1-100; all when omitted)",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {

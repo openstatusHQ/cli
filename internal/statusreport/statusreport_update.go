@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/status_report/v1/status_reportv1connect"
 	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
@@ -15,16 +14,16 @@ import (
 	output "github.com/openstatusHQ/cli/internal/cli"
 )
 
-func UpdateStatusReport(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, reportId string, title string, componentIds []string, hasTitle bool, hasComponents bool) error {
+func UpdateStatusReport(ctx context.Context, client status_reportv1connect.StatusReportServiceClient, reportId string, title string, componentIds []string, hasTitle bool, hasComponents bool) (*status_reportv1.StatusReport, error) {
 	if reportId == "" {
 		fmt.Fprintln(os.Stderr, "Usage: openstatus status-report update <report-id> [--title ...] [--component-ids ...]")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus status-report update 12345 --title \"Updated title\"")
-		return fmt.Errorf("report ID is required")
+		return nil, fmt.Errorf("report ID is required")
 	}
 
 	if !hasTitle && !hasComponents {
-		return fmt.Errorf("at least one of --title or --component-ids must be provided")
+		return nil, fmt.Errorf("at least one of --title or --component-ids must be provided")
 	}
 
 	req := &status_reportv1.UpdateStatusReportRequest{
@@ -39,17 +38,30 @@ func UpdateStatusReport(ctx context.Context, client status_reportv1connect.Statu
 		req.SetPageComponentIds(componentIds)
 	}
 
-	_, err := client.UpdateStatusReport(ctx, req)
+	resp, err := client.UpdateStatusReport(ctx, req)
 	if err != nil {
-		return output.FormatError(err, "status-report", reportId)
+		return nil, output.FormatError(err, "status-report", reportId)
 	}
+	return resp.GetStatusReport(), nil
+}
 
+func renderStatusReportUpdated(report *status_reportv1.StatusReport) error {
+	if output.IsJSONOutput() {
+		return output.PrintJSON(toStatusReportDetail(report, affectedOrder(report), currentImpacts(report.GetUpdates())))
+	}
+	if output.IsQuiet() {
+		fmt.Println(report.GetId())
+		return nil
+	}
+	fmt.Printf("Status report %s updated successfully\n", report.GetId())
+	fmt.Println("Run 'openstatus status-report info " + report.GetId() + "' to see the report")
 	return nil
 }
 
 func UpdateStatusReportWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, reportId string, title string, componentIds []string, hasTitle bool, hasComponents bool) error {
 	client := NewStatusReportClientWithHTTPClient(httpClient, apiKey)
-	return UpdateStatusReport(ctx, client, reportId, title, componentIds, hasTitle, hasComponents)
+	_, err := UpdateStatusReport(ctx, client, reportId, title, componentIds, hasTitle, hasComponents)
+	return err
 }
 
 func GetStatusReportUpdateCmd() *cli.Command {
@@ -81,23 +93,19 @@ func GetStatusReportUpdateCmd() *cli.Command {
 			reportId := cmd.Args().Get(0)
 
 			hasTitle := cmd.IsSet("title")
-			hasComponents := cmd.IsSet("component-ids") && cmd.String("component-ids") != ""
-
-			var componentIds []string
-			if ids := cmd.String("component-ids"); ids != "" {
-				componentIds = strings.Split(ids, ",")
+			componentIds, hasComponents, err := output.ParseIDList("component-ids", cmd.String("component-ids"))
+			if err != nil {
+				return cli.Exit(err.Error(), 1)
 			}
 
 			client := NewStatusReportClient(apiKey)
 			s := output.StartSpinner("Updating status report...")
-			err = UpdateStatusReport(ctx, client, reportId, cmd.String("title"), componentIds, hasTitle, hasComponents)
+			report, err := UpdateStatusReport(ctx, client, reportId, cmd.String("title"), componentIds, hasTitle, hasComponents)
 			output.StopSpinner(s)
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}
-			fmt.Printf("Status report %s updated successfully\n", reportId)
-			fmt.Println("Run 'openstatus status-report info " + reportId + "' to see the report")
-			return nil
+			return renderStatusReportUpdated(report)
 		},
 	}
 }

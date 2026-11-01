@@ -46,26 +46,31 @@ func sanitizeName(name string) string {
 	return name
 }
 
+// NameRegistry hands out unique Terraform resource names per resource type.
 type NameRegistry struct {
-	used map[string]map[string]int
+	used map[string]map[string]bool
 }
 
 func NewNameRegistry() *NameRegistry {
-	return &NameRegistry{used: make(map[string]map[string]int)}
+	return &NameRegistry{used: make(map[string]map[string]bool)}
 }
 
+// Name returns the sanitized name, suffixed with _2, _3, … when taken. Every
+// emitted name is recorded, so "api", "api", "api 2" yields api, api_2, api_2_2
+// rather than a duplicate api_2.
 func (r *NameRegistry) Name(resourceType, rawName string) string {
-	name := sanitizeName(rawName)
+	base := sanitizeName(rawName)
 
-	if _, ok := r.used[resourceType]; !ok {
-		r.used[resourceType] = make(map[string]int)
+	used, ok := r.used[resourceType]
+	if !ok {
+		used = make(map[string]bool)
+		r.used[resourceType] = used
 	}
 
-	count := r.used[resourceType][name]
-	r.used[resourceType][name] = count + 1
-
-	if count == 0 {
-		return name
+	name := base
+	for i := 2; used[name]; i++ {
+		name = fmt.Sprintf("%s_%d", base, i)
 	}
-	return fmt.Sprintf("%s_%d", name, count+1)
+	used[name] = true
+	return name
 }

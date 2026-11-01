@@ -2,7 +2,7 @@
 
 ## CLI interface - openstatus
 
-OpenStatus CLI lets you manage your status pages and uptime monitors from the command line. Declare and run incidents, post public status updates, define monitors as code, and run on-demand checks.  Get started:   openstatus login                Save your API token   openstatus incident declare     Declare an incident   openstatus incident list        View incidents   openstatus status-report create Post a public status update   openstatus status-report list   View status reports   openstatus maintenance create   Schedule a maintenance window   openstatus maintenance list     View maintenance windows   openstatus monitors apply       Sync monitors from config   openstatus monitors list        List your monitors   openstatus run                  Run synthetic tests   openstatus pl list              List your private locations  https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new.
+OpenStatus CLI lets you manage your status pages and uptime monitors from the command line. Declare and run incidents, post public status updates, define monitors as code, and run on-demand checks.  Get started:   openstatus login                Save your API token   openstatus incident declare     Declare an incident   openstatus incident list        View incidents   openstatus status-report create Post a public status update   openstatus status-report list   View status reports   openstatus maintenance create   Schedule a maintenance window   openstatus maintenance list     View maintenance windows   openstatus monitors list        List your monitors   openstatus run                  Run synthetic tests   openstatus pl list              List your private locations  https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new.
 
 Manage status pages, monitors, and incidents from the terminal.
 
@@ -59,31 +59,6 @@ Usage:
 $ openstatus [GLOBAL FLAGS] monitors [ARGUMENTS...]
 ```
 
-### `monitors apply` subcommand
-
-Create or update monitors.
-
-> openstatus monitors apply
->   openstatus monitors apply --config custom.yaml -y
->   openstatus monitors apply --dry-run
-
-Creates or updates monitors according to the OpenStatus configuration file. Compares your openstatus.yaml with the current state and applies changes.  DEPRECATED: this command is deprecated. Prefer managing your monitors with Terraform via 'openstatus terraform generate'.
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] monitors apply [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                        | Description                                           | Type   |    Default value    |  Environment variables |
-|-----------------------------|-------------------------------------------------------|--------|:-------------------:|:----------------------:|
-| `--config="…"` (`-c`)       | The configuration file containing monitor information | string | `"openstatus.yaml"` |         *none*         |
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           | string |                     | `OPENSTATUS_API_TOKEN` |
-| `--auto-accept` (`-y`)      | Automatically accept the prompt                       | bool   |       `false`       |         *none*         |
-| `--dry-run` (`-n`)          | Show what would be changed without applying           | bool   |       `false`       |         *none*         |
-
 ### `monitors create` subcommand
 
 Create monitors.
@@ -126,28 +101,6 @@ The following flags are supported:
 |-----------------------------|---------------------------------|--------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token     | string |               | `OPENSTATUS_API_TOKEN` |
 | `--auto-accept` (`-y`)      | Automatically accept the prompt | bool   |    `false`    |         *none*         |
-
-### `monitors import` subcommand
-
-Import all your monitors.
-
-> openstatus monitors import
->   openstatus monitors import --output monitors.yaml
-
-Import all your monitors from your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.  DEPRECATED: the monitors.yaml config file is deprecated for import. Prefer managing monitors declaratively with 'openstatus monitors apply'.
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] monitors import [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                        | Description                 | Type   |    Default value    |  Environment variables |
-|-----------------------------|-----------------------------|--------|:-------------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |                     | `OPENSTATUS_API_TOKEN` |
-| `--output="…"` (`-o`)       | The output file name        | string | `"openstatus.yaml"` |         *none*         |
 
 ### `monitors info` subcommand
 

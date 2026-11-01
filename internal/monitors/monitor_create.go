@@ -240,3 +240,51 @@ func GetMonitorCreateCmd() *cli.Command {
 	}
 	return &monitorCreateCmd
 }
+
+// convertNumberComparator converts SDK NumberComparator to config.Compare
+func convertNumberComparator(c monitorv1.NumberComparator) config.Compare {
+	switch c {
+	case monitorv1.NumberComparator_NUMBER_COMPARATOR_EQUAL:
+		return config.Eq
+	case monitorv1.NumberComparator_NUMBER_COMPARATOR_NOT_EQUAL:
+		return config.NotEq
+	case monitorv1.NumberComparator_NUMBER_COMPARATOR_GREATER_THAN:
+		return config.Gt
+	case monitorv1.NumberComparator_NUMBER_COMPARATOR_GREATER_THAN_OR_EQUAL:
+		return config.Gte
+	case monitorv1.NumberComparator_NUMBER_COMPARATOR_LESS_THAN:
+		return config.Lt
+	case monitorv1.NumberComparator_NUMBER_COMPARATOR_LESS_THAN_OR_EQUAL:
+		return config.LTE
+	default:
+		return config.Eq
+	}
+}
+
+// convertStringComparator converts SDK StringComparator to config.Compare
+func convertStringComparator(c monitorv1.StringComparator) config.Compare {
+	switch c {
+	case monitorv1.StringComparator_STRING_COMPARATOR_EQUAL:
+		return config.Eq
+	case monitorv1.StringComparator_STRING_COMPARATOR_NOT_EQUAL:
+		return config.NotEq
+	case monitorv1.StringComparator_STRING_COMPARATOR_CONTAINS:
+		return config.Contains
+	case monitorv1.StringComparator_STRING_COMPARATOR_NOT_CONTAINS:
+		return config.NotContains
+	case monitorv1.StringComparator_STRING_COMPARATOR_EMPTY:
+		return config.Empty
+	case monitorv1.StringComparator_STRING_COMPARATOR_NOT_EMPTY:
+		return config.NotEmpty
+	case monitorv1.StringComparator_STRING_COMPARATOR_GREATER_THAN:
+		return config.Gt
+	case monitorv1.StringComparator_STRING_COMPARATOR_GREATER_THAN_OR_EQUAL:
+		return config.Gte
+	case monitorv1.StringComparator_STRING_COMPARATOR_LESS_THAN:
+		return config.Lt
+	case monitorv1.StringComparator_STRING_COMPARATOR_LESS_THAN_OR_EQUAL:
+		return config.LTE
+	default:
+		return config.Eq
+	}
+}

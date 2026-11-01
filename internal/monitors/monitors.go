@@ -592,10 +592,8 @@ func MonitorsCmd() *cli.Command {
 		Usage:   "Manage your monitors",
 		Aliases: []string{"m"},
 		Commands: []*cli.Command{
-			GetMonitorsApplyCmd(),
 			GetMonitorCreateCmd(),
 			GetMonitorDeleteCmd(),
-			GetMonitorImportCmd(),
 			GetMonitorInfoCmd(),
 			GetMonitorsListCmd(),
 			GetMonitorLogsCmd(),

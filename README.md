@@ -88,7 +88,7 @@ Rate limit: 3 requests per 60 seconds.
 | `check` | `c` | Run an HTTP check against a URL from 28 global regions (no auth) |
 | `login` / `logout` | | Authenticate with the OpenStatus API |
 | `whoami` | `w` | Show current workspace info |
-| `monitors` | `m` | List, inspect, trigger, import, and apply monitors |
+| `monitors` | `m` | List, inspect, trigger, and import monitors |
 | `incident` | `inc`, `incidents` | Declare and run incidents (lifecycle, notes, status report link, postmortem) |
 | `status-report` | `sr` | Post and manage public status reports |
 | `maintenance` | `mt` | Schedule and manage maintenance windows |
@@ -106,21 +106,6 @@ Rate limit: 3 requests per 60 seconds.
 | `--debug` | Print HTTP request details to stderr |
 | `--no-color` | Disable colored output |
 | `--access-token`, `-t` | Override API token |
-
-## Monitors as Code
-
-Define monitors declaratively in YAML and sync them with `apply`:
-
-```bash
-# Export existing monitors to openstatus.yaml + openstatus.lock
-openstatus monitors import
-
-# Preview changes
-openstatus monitors apply --dry-run
-
-# Apply changes
-openstatus monitors apply
-```
 
 ## Terraform Export
 

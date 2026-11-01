@@ -76,17 +76,18 @@ func SaveToken(token string) error {
 	return nil
 }
 
-func RemoveToken() error {
+// RemoveToken deletes the saved token. It reports false if no token was saved.
+func RemoveToken() (bool, error) {
 	tokenPath, err := config.TokenPath()
 	if err != nil {
-		return fmt.Errorf("failed to determine token path: %w", err)
+		return false, fmt.Errorf("failed to determine token path: %w", err)
 	}
 	err = os.Remove(tokenPath)
 	if os.IsNotExist(err) {
-		return nil
+		return false, nil
 	}
 	if err != nil {
-		return fmt.Errorf("failed to remove token: %w", err)
+		return false, fmt.Errorf("failed to remove token: %w", err)
 	}
-	return nil
+	return true, nil
 }

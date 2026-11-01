@@ -3,7 +3,9 @@ package login
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -40,8 +42,10 @@ Get your API token from the OpenStatus dashboard.`,
 				fmt.Fprintln(os.Stderr)
 			} else {
 				reader := bufio.NewReader(os.Stdin)
+				// Input may not end with a line break (e.g. `printf "$TOKEN" | openstatus login`),
+				// in which case ReadString returns the token along with io.EOF.
 				line, err := reader.ReadString('\n')
-				if err != nil {
+				if err != nil && !errors.Is(err, io.EOF) {
 					return cli.Exit("Failed to read token", 1)
 				}
 				token = line
@@ -74,10 +78,18 @@ func LogoutCmd() *cli.Command {
 		Usage:     "Remove saved API token",
 		UsageText: "openstatus logout",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			if err := auth.RemoveToken(); err != nil {
+			removed, err := auth.RemoveToken()
+			if err != nil {
 				return cli.Exit(fmt.Sprintf("Failed to remove token: %v", err), 1)
 			}
-			fmt.Println("Token removed successfully")
+			if removed {
+				fmt.Println("Token removed successfully")
+			} else {
+				fmt.Println("No saved token found")
+			}
+			if os.Getenv("OPENSTATUS_API_TOKEN") != "" {
+				fmt.Fprintln(os.Stderr, "Warning: OPENSTATUS_API_TOKEN is still set; commands will keep using it until you unset it")
+			}
 			return nil
 		},
 	}

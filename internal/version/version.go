@@ -4,4 +4,4 @@ package version
 
 // Version is overridden at release time via
 // -ldflags "-X github.com/openstatusHQ/cli/internal/version.Version=<tag>".
-var Version = "v1.4.0"
+var Version = "v1.5.0"

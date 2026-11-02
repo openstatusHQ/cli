@@ -19,7 +19,7 @@ func DeleteStatusReport(ctx context.Context, client status_reportv1connect.Statu
 		fmt.Fprintln(os.Stderr, "Usage: openstatus status-report delete <report-id>")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus status-report delete 12345")
-		return fmt.Errorf("report ID is required")
+		return output.UsageErrorf("report ID is required")
 	}
 
 	_, err := client.DeleteStatusReport(ctx, &status_reportv1.DeleteStatusReportRequest{
@@ -59,18 +59,18 @@ func GetStatusReportDeleteCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			reportId := cmd.Args().Get(0)
 			if reportId == "" {
 				fmt.Fprintln(os.Stderr, "Usage: openstatus status-report delete <report-id>")
-				return cli.Exit("report ID is required", 1)
+				return output.UsageErrorf("report ID is required")
 			}
 
 			if !cmd.Bool("auto-accept") {
 				confirmed, err := output.AskForConfirmation(fmt.Sprintf("You are about to delete status report: %s, do you want to continue", reportId))
 				if err != nil {
-					return cli.Exit(fmt.Sprintf("Failed to read input: %v", err), 1)
+					return fmt.Errorf("failed to read input: %w", err)
 				}
 				if !confirmed {
 					return nil
@@ -82,7 +82,7 @@ func GetStatusReportDeleteCmd() *cli.Command {
 			err = DeleteStatusReport(ctx, client, reportId)
 			output.StopSpinner(s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return output.RenderDeleted(reportId, fmt.Sprintf("Status report %s deleted successfully", reportId), "Run 'openstatus status-report list' to see remaining reports")
 		},

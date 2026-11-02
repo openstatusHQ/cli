@@ -65,20 +65,20 @@ Rate limit: 3 requests per 60 seconds.`,
 func runCheck(ctx context.Context, cmd *cli.Command) error {
 	rawURL := cmd.Args().Get(0)
 	if rawURL == "" {
-		return cli.Exit("URL is required.\n\nUsage: openstatus check <URL>\nExample: openstatus check https://openstat.us", 1)
+		return output.UsageErrorf("URL is required.\n\nUsage: openstatus check <URL>\nExample: openstatus check https://openstat.us")
 	}
 	if err := validateURL(rawURL); err != nil {
-		return cli.Exit(err.Error(), 1)
+		return err
 	}
 
 	headers, err := parseHeaders(cmd.StringSlice("header"))
 	if err != nil {
-		return cli.Exit(err.Error(), 1)
+		return err
 	}
 
 	body, err := resolveBody(cmd.String("body"))
 	if err != nil {
-		return cli.Exit(err.Error(), 1)
+		return err
 	}
 
 	payload := Payload{
@@ -125,13 +125,13 @@ func runCheck(ctx context.Context, cmd *cli.Command) error {
 func validateURL(raw string) error {
 	u, err := url.Parse(raw)
 	if err != nil {
-		return fmt.Errorf("invalid URL %q: %w", raw, err)
+		return output.UsageErrorf("invalid URL %q: %w", raw, err)
 	}
 	if u.Scheme == "" || u.Host == "" {
-		return fmt.Errorf("invalid URL %q: missing scheme or host (did you mean https://%s?)", raw, raw)
+		return output.UsageErrorf("invalid URL %q: missing scheme or host (did you mean https://%s?)", raw, raw)
 	}
 	if u.Scheme != "http" && u.Scheme != "https" {
-		return fmt.Errorf("invalid URL %q: only http and https schemes are supported", raw)
+		return output.UsageErrorf("invalid URL %q: only http and https schemes are supported", raw)
 	}
 	return nil
 }
@@ -144,12 +144,12 @@ func parseHeaders(raw []string) (map[string]string, error) {
 	for _, h := range raw {
 		key, value, ok := strings.Cut(h, ":")
 		if !ok {
-			return nil, fmt.Errorf("invalid header %q: expected \"Key: Value\"", h)
+			return nil, output.UsageErrorf("invalid header %q: expected \"Key: Value\"", h)
 		}
 		key = strings.TrimSpace(key)
 		value = strings.TrimSpace(value)
 		if key == "" {
-			return nil, fmt.Errorf("invalid header %q: key is empty", h)
+			return nil, output.UsageErrorf("invalid header %q: key is empty", h)
 		}
 		out[key] = value
 	}
@@ -192,9 +192,9 @@ func formatRunError(err error) error {
 	var rl *RateLimitError
 	if errors.As(err, &rl) {
 		if rl.RetryAfter > 0 {
-			return cli.Exit(fmt.Sprintf("Rate limited. Retry after %s. (3 requests per 60s allowed.)", rl.RetryAfter), 1)
+			return output.NewError(output.KindRateLimited, "Rate limited. Retry after %s. (3 requests per 60s allowed.)", rl.RetryAfter)
 		}
-		return cli.Exit("Rate limited. Try again in a moment. (3 requests per 60s allowed.)", 1)
+		return output.NewError(output.KindRateLimited, "Rate limited. Try again in a moment. (3 requests per 60s allowed.)")
 	}
 	var br *BadRequestError
 	if errors.As(err, &br) {
@@ -203,20 +203,20 @@ func formatRunError(err error) error {
 			msg = fmt.Sprintf("HTTP %d", br.Status)
 		}
 		if strings.Contains(strings.ToLower(msg), "client ip") || strings.Contains(strings.ToLower(br.Body), "client ip") {
-			return cli.Exit(msg+"\n(This often happens behind a VPN or corporate proxy.)", 1)
+			return output.NewError(output.KindInvalidArgument, "%s\n(This often happens behind a VPN or corporate proxy.)", msg)
 		}
-		return cli.Exit(msg, 1)
+		return output.NewError(output.KindInvalidArgument, "%s", msg)
 	}
 	var se *ServerError
 	if errors.As(err, &se) {
-		return cli.Exit(fmt.Sprintf("OpenStatus checker temporarily unavailable (HTTP %d). Try again in a moment.", se.Status), 1)
+		return output.NewError(output.KindUnavailable, "OpenStatus checker temporarily unavailable (HTTP %d). Try again in a moment.", se.Status)
 	}
 	if errors.Is(err, ErrStreamTruncated) {
 		fmt.Fprintln(os.Stderr, "Warning: stream ended before completion; results may be incomplete.")
-		return cli.Exit("Stream ended before all regions reported.", 1)
+		return output.NewError(output.KindUnavailable, "Stream ended before all regions reported.")
 	}
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-		return cli.Exit("Check cancelled.", 130)
+		return output.NewError(output.KindCancelled, "Check cancelled.")
 	}
-	return cli.Exit(fmt.Sprintf("Could not reach OpenStatus: %s", err.Error()), 1)
+	return output.NewError(output.KindUnavailable, "Could not reach OpenStatus: %w", err)
 }

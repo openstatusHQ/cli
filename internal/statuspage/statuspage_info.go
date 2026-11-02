@@ -12,7 +12,6 @@ import (
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/status_page/v1/status_pagev1connect"
 	status_pagev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_page/v1"
 	"github.com/fatih/color"
-	"github.com/logrusorgru/aurora/v4"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
@@ -90,7 +89,7 @@ func GetStatusPageInfo(ctx context.Context, client status_pagev1connect.StatusPa
 		fmt.Fprintln(os.Stderr, "Usage: openstatus status-page info <page-id>")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus status-page info 12345")
-		return fmt.Errorf("page ID is required")
+		return output.UsageErrorf("page ID is required")
 	}
 
 	req := &status_pagev1.GetStatusPageContentRequest{}
@@ -128,7 +127,7 @@ func GetStatusPageInfo(ctx context.Context, client status_pagev1connect.StatusPa
 		return output.PrintJSON(detail)
 	}
 
-	fmt.Println(aurora.Bold("Status Page:"))
+	fmt.Println(output.Bold("Status Page:"))
 	tbl := tablewriter.NewTable(os.Stdout,
 		tablewriter.WithRenderer(renderer.NewBlueprint()),
 		tablewriter.WithRendition(tw.Rendition{
@@ -183,7 +182,7 @@ func GetStatusPageInfo(ctx context.Context, client status_pagev1connect.StatusPa
 	tbl.Render()
 
 	if len(comps) > 0 {
-		fmt.Println(aurora.Bold("\nComponents:"))
+		fmt.Println(output.Bold("\nComponents:"))
 
 		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 		columnFmt := color.New(color.FgYellow).SprintfFunc()
@@ -223,14 +222,14 @@ func GetStatusPageInfoCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			pageId := cmd.Args().Get(0)
 			s := output.StartSpinner("Fetching status page...")
 			client := NewStatusPageClient(apiKey)
 			err = GetStatusPageInfo(ctx, client, pageId, s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return nil
 		},

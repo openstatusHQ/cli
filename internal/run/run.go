@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/logrusorgru/aurora/v4"
 	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
 
@@ -54,7 +53,7 @@ func (r runMonitorResult) failed() bool {
 // MonitorTrigger triggers a monitor run and returns the results without printing.
 func MonitorTrigger(ctx context.Context, httpClient *http.Client, apiKey string, monitorId string) (runMonitorResult, error) {
 	if monitorId == "" {
-		return runMonitorResult{}, fmt.Errorf("monitor ID is required")
+		return runMonitorResult{}, output.UsageErrorf("monitor ID is required")
 	}
 
 	url := fmt.Sprintf("%s/monitor/%s/run", api.APIBaseURL, monitorId)
@@ -154,7 +153,7 @@ func MonitorTrigger(ctx context.Context, httpClient *http.Client, apiKey string,
 
 // printMonitorResult prints a single monitor's results to stdout.
 func printMonitorResult(res runMonitorResult) {
-	fmt.Println(aurora.Bold(fmt.Sprintf("Monitor: %s", res.MonitorID)))
+	fmt.Println(output.Bold(fmt.Sprintf("Monitor: %s", res.MonitorID)))
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
 
@@ -200,19 +199,19 @@ tests:
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			path := cmd.String("config")
 			if path != "" {
 				if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-					return cli.Exit("Config does not exist", 1)
+					return output.UsageErrorf("Config does not exist")
 				}
 			}
 
 			conf, err := config.ReadConfig(path)
 			if err != nil {
-				return err
+				return output.UsageErrorf("%w", err)
 			}
 			size := len(conf.Tests.Ids)
 
@@ -222,12 +221,14 @@ tests:
 
 			// Each goroutine writes only its own index, so no locking is needed.
 			results := make([]runMonitorResult, size)
+			errs := make([]error, size)
 			var wg sync.WaitGroup
 			for i, id := range conf.Tests.Ids {
 				wg.Go(func() {
 					monitorID := strconv.Itoa(id)
 					res, err := MonitorTrigger(ctx, api.DefaultHTTPClient, apiKey, monitorID)
 					if err != nil {
+						errs[i] = err
 						res = runMonitorResult{MonitorID: monitorID, Results: []runRegionResult{}, Error: err.Error()}
 					}
 					results[i] = res
@@ -257,8 +258,13 @@ tests:
 				}
 			}
 
+			// When no monitor could be triggered at all (bad token, API down),
+			// the run itself failed: report why so CI can tell it from failed checks.
+			if size > 0 && !slices.Contains(errs, nil) {
+				return errs[0]
+			}
 			if hasErrors {
-				return cli.Exit("Some tests failed", 1)
+				return output.NewError(output.KindChecksFailed, "Some tests failed")
 			}
 			return nil
 		},

@@ -12,7 +12,6 @@ import (
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"github.com/fatih/color"
-	"github.com/logrusorgru/aurora/v4"
 	"github.com/urfave/cli/v3"
 
 	"github.com/openstatusHQ/cli/internal/auth"
@@ -56,14 +55,14 @@ func GetMonitorResponseLogInfo(
 		fmt.Fprintln(os.Stderr, "Usage: openstatus monitors log-info <monitor-id> <log-id>")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus monitors log-info 12345 abc-def")
-		return fmt.Errorf("monitor ID is required")
+		return output.UsageErrorf("monitor ID is required")
 	}
 	if logId == "" {
 		output.StopSpinner(s)
 		fmt.Fprintln(os.Stderr, "Usage: openstatus monitors log-info <monitor-id> <log-id>")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus monitors log-info 12345 abc-def")
-		return fmt.Errorf("log ID is required")
+		return output.UsageErrorf("log ID is required")
 	}
 
 	resp, err := client.GetMonitorHTTPResponseLog(ctx, &monitorv1.GetMonitorHTTPResponseLogRequest{
@@ -112,7 +111,7 @@ func GetMonitorResponseLogInfo(
 	}
 
 	// Section 1: Response Log
-	fmt.Println(aurora.Bold("Response Log:"))
+	fmt.Println(output.Bold("Response Log:"))
 	tbl := newBlueprintTable()
 	data := [][]string{
 		{"ID", detailOut.ID},
@@ -138,14 +137,14 @@ func GetMonitorResponseLogInfo(
 	// Section 2: Timing waterfall
 	if timing != nil {
 		fmt.Println()
-		fmt.Println(aurora.Bold("Timing:"))
+		fmt.Println(output.Bold("Timing:"))
 		renderTimingWaterfall(timing)
 	}
 
 	// Section 3: Response Headers
 	if len(detailOut.Headers) > 0 {
 		fmt.Println()
-		fmt.Println(aurora.Bold("Response Headers:"))
+		fmt.Println(output.Bold("Response Headers:"))
 		headerTable := newBlueprintTable()
 		keys := make([]string, 0, len(detailOut.Headers))
 		for k := range detailOut.Headers {
@@ -163,7 +162,7 @@ func GetMonitorResponseLogInfo(
 	// Section 4: Assertions
 	if detailOut.Assertions != "" {
 		fmt.Println()
-		fmt.Println(aurora.Bold("Assertions:"))
+		fmt.Println(output.Bold("Assertions:"))
 		renderAssertions(detailOut.Assertions)
 	}
 
@@ -256,7 +255,7 @@ func GetMonitorLogInfoCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			monitorId := cmd.Args().Get(0)
 			logId := cmd.Args().Get(1)
@@ -269,7 +268,7 @@ func GetMonitorLogInfoCmd() *cli.Command {
 				s,
 			)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return nil
 		},

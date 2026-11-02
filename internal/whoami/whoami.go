@@ -88,7 +88,7 @@ Displays the workspace name, slug, and plan.`,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			if !output.IsQuiet() && !output.IsJSONOutput() {
 				fmt.Println("Your current workspace information")
@@ -96,7 +96,7 @@ Displays the workspace name, slug, and plan.`,
 			s := output.StartSpinner("Fetching workspace info...")
 			err = GetWhoamiCmd(ctx, api.DefaultHTTPClient, apiKey, s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return nil
 		},

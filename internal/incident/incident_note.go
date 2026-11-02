@@ -2,7 +2,6 @@ package incident
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -19,7 +18,7 @@ const noteUsage = "openstatus incident note <incident-id> --message <text|->"
 
 func buildNoteRequest(id, message string) (*incidentv1.AddIncidentNoteRequest, error) {
 	if strings.TrimSpace(message) == "" {
-		return nil, errors.New("note message cannot be empty")
+		return nil, output.UsageErrorf("note message cannot be empty")
 	}
 	if err := validateNote(message); err != nil {
 		return nil, err
@@ -79,7 +78,7 @@ func GetIncidentNoteCmd() *cli.Command {
 				return err
 			}
 			if cmd.String("message") == "" {
-				return errors.New("missing required flags: --message")
+				return output.UsageErrorf("missing required flags: --message")
 			}
 			message, err := readTextArg(cmd.String("message"), os.Stdin)
 			if err != nil {

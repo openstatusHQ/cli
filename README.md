@@ -107,6 +107,32 @@ Rate limit: 3 requests per 60 seconds.
 | `--no-color` | Disable colored output |
 | `--access-token`, `-t` | Override API token |
 
+### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success |
+| `1` | General error, including failed checks in `openstatus run` |
+| `2` | Usage error: unknown command or flag, missing argument, invalid value or config |
+| `3` | Authentication: missing, invalid or insufficient API token |
+| `4` | Resource not found |
+| `5` | API unreachable, timed out or rate limited |
+| `130` | Interrupted (Ctrl-C) |
+
+With `--json`, errors are written to stderr as JSON:
+
+```json
+{
+  "error": {
+    "code": "not_found",
+    "message": "monitor 7 not found. Run 'openstatus monitors list' to see available monitors",
+    "exit_code": 4
+  }
+}
+```
+
+`code` is one of `error`, `usage`, `unauthenticated`, `permission_denied`, `not_found`, `invalid_argument`, `failed_precondition`, `rate_limited`, `unavailable`, `timeout`, `cancelled` or `checks_failed`.
+
 ## Terraform Export
 
 Generate Terraform HCL for your entire workspace:

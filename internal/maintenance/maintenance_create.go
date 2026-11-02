@@ -2,7 +2,6 @@ package maintenance
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -92,7 +91,7 @@ func GetMaintenanceCreateCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			inputs := &createInputs{
@@ -128,11 +127,11 @@ func GetMaintenanceCreateCmd() *cli.Command {
 					if inputs.PageID == "" {
 						missing = append(missing, "--page-id")
 					}
-					return cli.Exit(fmt.Sprintf("missing required flags: %s", strings.Join(missing, ", ")), 1)
+					return output.UsageErrorf("missing required flags: %s", strings.Join(missing, ", "))
 				}
 				inputs, err = runCreateWizard(ctx, apiKey, inputs)
 				if err != nil {
-					return cli.Exit(err.Error(), 1)
+					return err
 				}
 			}
 
@@ -151,7 +150,7 @@ func GetMaintenanceCreateCmd() *cli.Command {
 			)
 			output.StopSpinner(s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			return renderMaintenanceResult(m, "created")

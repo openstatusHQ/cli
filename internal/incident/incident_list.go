@@ -2,7 +2,6 @@ package incident
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -30,13 +29,13 @@ type listOutput struct {
 
 func buildListRequest(p ListParams) (*incidentv1.ListIncidentsRequest, error) {
 	if p.Active && p.Closed {
-		return nil, errors.New("--active and --closed are mutually exclusive")
+		return nil, output.UsageErrorf("--active and --closed are mutually exclusive")
 	}
 	if p.Limit < 0 || p.Limit > 100 {
-		return nil, fmt.Errorf("invalid --limit %d: must be between 1 and 100", p.Limit)
+		return nil, output.UsageErrorf("invalid --limit %d: must be between 1 and 100", p.Limit)
 	}
 	if p.Offset < 0 {
-		return nil, fmt.Errorf("invalid --offset %d: must be 0 or more", p.Offset)
+		return nil, output.UsageErrorf("invalid --offset %d: must be 0 or more", p.Offset)
 	}
 
 	statuses, err := parseStatuses(p.Statuses)
@@ -174,7 +173,7 @@ func GetIncidentListCmd() *cli.Command {
 				Offset:   int(cmd.Int("offset")),
 			}
 			if cmd.IsSet("limit") && p.Limit < 1 {
-				return fmt.Errorf("invalid --limit %d: must be between 1 and 100", p.Limit)
+				return output.UsageErrorf("invalid --limit %d: must be between 1 and 100", p.Limit)
 			}
 			s := output.StartSpinner("Fetching incidents...")
 			return ListIncidents(ctx, client, p, s)

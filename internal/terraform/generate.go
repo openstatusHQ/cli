@@ -50,12 +50,12 @@ func GetTerraformGenerateCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			outputDir := cmd.String("output-dir")
 			if err := checkExistingFiles(outputDir, cmd.Bool("force")); err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			if err := os.MkdirAll(outputDir, 0o755); err != nil {
 				return cli.Exit(fmt.Sprintf("failed to create output directory: %v", err), 1)
@@ -65,7 +65,7 @@ func GetTerraformGenerateCmd() *cli.Command {
 			data, err := FetchWorkspaceData(ctx, apiKey)
 			output.StopSpinner(s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			gen := NewGenerator(data)

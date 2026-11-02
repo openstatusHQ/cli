@@ -30,7 +30,7 @@ func CreateMonitor(ctx context.Context, httpClient *http.Client, apiKey string, 
 	case config.ICMP:
 		return CreateICMPMonitor(ctx, client, monitor)
 	default:
-		return Monitor{}, fmt.Errorf("unsupported monitor kind: %s", monitor.Kind)
+		return Monitor{}, output.UsageErrorf("unsupported monitor kind: %s", monitor.Kind)
 	}
 }
 
@@ -87,7 +87,7 @@ func CreateICMPMonitor(ctx context.Context, client monitorv1connect.MonitorServi
 func httpMonitorToLocal(m *monitorv1.HTTPMonitor) (Monitor, error) {
 	id, err := strconv.Atoi(m.GetId())
 	if err != nil {
-		return Monitor{}, fmt.Errorf("invalid monitor ID %q: %w", m.GetId(), err)
+		return Monitor{}, output.UsageErrorf("invalid monitor ID %q: %w", m.GetId(), err)
 	}
 
 	var headers []Header
@@ -143,7 +143,7 @@ func httpMonitorToLocal(m *monitorv1.HTTPMonitor) (Monitor, error) {
 func tcpMonitorToLocal(m *monitorv1.TCPMonitor) (Monitor, error) {
 	id, err := strconv.Atoi(m.GetId())
 	if err != nil {
-		return Monitor{}, fmt.Errorf("invalid monitor ID %q: %w", m.GetId(), err)
+		return Monitor{}, output.UsageErrorf("invalid monitor ID %q: %w", m.GetId(), err)
 	}
 	return Monitor{
 		ID:                 id,
@@ -167,7 +167,6 @@ func GetMonitorCreateCmd() *cli.Command {
 		Name:            "create",
 		Usage:           "Create monitors",
 		Hidden:          true,
-		HideHelp:        true,
 		HideHelpCommand: true,
 		Description:     "Create the monitors defined in the openstatus.yaml file",
 		UsageText: `openstatus monitors create
@@ -176,14 +175,14 @@ func GetMonitorCreateCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			path := cmd.String("config")
 
 			if path != "" {
 				if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-					return cli.Exit("Config does not exist", 1)
+					return output.UsageErrorf("Config does not exist")
 				}
 			}
 
@@ -191,13 +190,13 @@ func GetMonitorCreateCmd() *cli.Command {
 
 			monitors, err := config.ReadOpenStatus(path)
 			if err != nil {
-				return cli.Exit("Unable to read config file", 1)
+				return output.UsageErrorf("Unable to read config file")
 			}
 
 			if !accept {
 				confirmed, err := output.AskForConfirmation(fmt.Sprintf("You are about to create %d monitors do you want to continue", len(monitors)))
 				if err != nil {
-					return cli.Exit(fmt.Sprintf("Failed to read input: %v", err), 1)
+					return fmt.Errorf("failed to read input: %w", err)
 				}
 				if !confirmed {
 					return nil

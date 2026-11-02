@@ -19,11 +19,11 @@ func UpdateMaintenance(ctx context.Context, client maintenancev1connect.Maintena
 		fmt.Fprintln(os.Stderr, "Usage: openstatus maintenance update <maintenance-id> [--title ...] [--message ...] [--from ...] [--to ...]")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus maintenance update 12345 --title \"Updated title\"")
-		return nil, fmt.Errorf("maintenance ID is required")
+		return nil, output.UsageErrorf("maintenance ID is required")
 	}
 
 	if !hasTitle && !hasMessage && !hasFrom && !hasTo && !hasComponents {
-		return nil, fmt.Errorf("at least one of --title, --message, --from, --to, or --component-ids must be provided")
+		return nil, output.UsageErrorf("at least one of --title, --message, --from, --to, or --component-ids must be provided")
 	}
 
 	req := &maintenancev1.UpdateMaintenanceRequest{
@@ -96,7 +96,7 @@ func GetMaintenanceUpdateCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			maintenanceId := cmd.Args().Get(0)
 
@@ -106,7 +106,7 @@ func GetMaintenanceUpdateCmd() *cli.Command {
 			hasTo := cmd.IsSet("to")
 			componentIds, hasComponents, err := output.ParseIDList("component-ids", cmd.String("component-ids"))
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			client := NewMaintenanceClient(apiKey)
@@ -114,7 +114,7 @@ func GetMaintenanceUpdateCmd() *cli.Command {
 			m, err := UpdateMaintenance(ctx, client, maintenanceId, cmd.String("title"), cmd.String("message"), cmd.String("from"), cmd.String("to"), componentIds, hasTitle, hasMessage, hasFrom, hasTo, hasComponents)
 			output.StopSpinner(s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return renderMaintenanceResult(m, "updated")
 		},

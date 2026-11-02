@@ -192,7 +192,7 @@ It displays the ID, name, URL, and kind of each monitor.`,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			if !output.IsQuiet() && !output.IsJSONOutput() {
 				fmt.Println("List of all monitors")
@@ -201,7 +201,7 @@ It displays the ID, name, URL, and kind of each monitor.`,
 			client := NewMonitorClient(apiKey)
 			err = ListMonitors(ctx, client, newPrivateLocationResolver(api.DefaultHTTPClient, apiKey), cmd.Bool("all"), s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return nil
 		},

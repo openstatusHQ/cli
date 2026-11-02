@@ -13,7 +13,7 @@ var isInteractiveStdin = func() bool {
 
 func AskForConfirmation(s string) (bool, error) {
 	if !isInteractiveStdin() {
-		return false, fmt.Errorf("confirmation required but stdin is not a terminal (use --auto-accept / -y to skip)")
+		return false, UsageErrorf("confirmation required but stdin is not a terminal (use --auto-accept / -y to skip)")
 	}
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Fprintf(os.Stderr, "%s [y/N]: ", s)

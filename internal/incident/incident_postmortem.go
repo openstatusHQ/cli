@@ -140,7 +140,7 @@ func resolvePostmortemContent(file, content string, fileSet, contentSet bool, st
 	if fileSet {
 		switch file {
 		case "":
-			return "", errors.New("--file cannot be empty")
+			return "", output.UsageErrorf("--file cannot be empty")
 		case "-":
 			var err error
 			text, err = readTextArg("-", stdin)
@@ -157,7 +157,7 @@ func resolvePostmortemContent(file, content string, fileSet, contentSet bool, st
 	}
 
 	if strings.TrimSpace(text) == "" {
-		return "", errors.New("postmortem content cannot be empty")
+		return "", output.UsageErrorf("postmortem content cannot be empty")
 	}
 	if utf8.RuneCountInString(text) > maxPostmortemLen {
 		return "", fmt.Errorf("postmortem is too long: maximum %d characters", maxPostmortemLen)

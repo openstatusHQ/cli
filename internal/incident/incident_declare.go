@@ -2,7 +2,6 @@ package incident
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -32,7 +31,7 @@ type DeclareParams struct {
 
 func validateTitle(title string) error {
 	if strings.TrimSpace(title) == "" {
-		return errors.New("title cannot be empty")
+		return output.UsageErrorf("title cannot be empty")
 	}
 	if utf8.RuneCountInString(title) > maxTitleLen {
 		return fmt.Errorf("title is too long: maximum %d characters", maxTitleLen)
@@ -207,7 +206,7 @@ In scripts, pass every required flag.`,
 
 			if missing := missingDeclareFlags(p); len(missing) > 0 {
 				if output.IsJSONOutput() || !output.IsStdinTerminal() {
-					return fmt.Errorf("missing required flags: %s", strings.Join(missing, ", "))
+					return output.UsageErrorf("missing required flags: %s", strings.Join(missing, ", "))
 				}
 				if err := validateProvidedDeclareFlags(p); err != nil {
 					return err

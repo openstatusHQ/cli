@@ -147,7 +147,7 @@ func GetStatusReportCreateCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			inputs := &createInputs{
@@ -163,10 +163,10 @@ func GetStatusReportCreateCmd() *cli.Command {
 
 			impacts, err := parseImpactsFlag(cmd.StringSlice("impact"))
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			if len(impacts) > 0 && len(inputs.ComponentIDs) > 0 {
-				return cli.Exit("--component-ids and --impact are mutually exclusive; pick one", 1)
+				return output.UsageErrorf("--component-ids and --impact are mutually exclusive; pick one")
 			}
 			inputs.ComponentImpacts = impactsToMap(impacts)
 
@@ -188,11 +188,11 @@ func GetStatusReportCreateCmd() *cli.Command {
 					if inputs.PageID == "" {
 						missing = append(missing, "--page-id")
 					}
-					return cli.Exit(fmt.Sprintf("missing required flags: %s", strings.Join(missing, ", ")), 1)
+					return output.UsageErrorf("missing required flags: %s", strings.Join(missing, ", "))
 				}
 				inputs, err = runCreateWizard(ctx, apiKey, inputs)
 				if err != nil {
-					return cli.Exit(err.Error(), 1)
+					return err
 				}
 			}
 
@@ -203,7 +203,7 @@ func GetStatusReportCreateCmd() *cli.Command {
 
 			componentImpacts, err := mapToImpacts(inputs.ComponentImpacts, inputs.ComponentIDs)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			componentIDs := inputs.ComponentIDs
@@ -226,7 +226,7 @@ func GetStatusReportCreateCmd() *cli.Command {
 			})
 			output.StopSpinner(s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			return renderCreated(report, cmd.String("incident-id"))

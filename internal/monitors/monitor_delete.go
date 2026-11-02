@@ -20,7 +20,7 @@ func DeleteMonitor(ctx context.Context, client monitorv1connect.MonitorServiceCl
 		fmt.Fprintln(os.Stderr, "Usage: openstatus monitors delete <monitor-id>")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus monitors delete 12345")
-		return fmt.Errorf("monitor ID is required")
+		return output.UsageErrorf("monitor ID is required")
 	}
 
 	_, err := client.DeleteMonitor(ctx, &monitorv1.DeleteMonitorRequest{
@@ -45,7 +45,6 @@ func GetMonitorDeleteCmd() *cli.Command {
 		Usage:           "Delete a monitor",
 		Hidden:          true,
 		HideHelpCommand: true,
-		HideHelp:        true,
 		UsageText: `openstatus monitors delete <MonitorID>
   openstatus monitors delete 12345 -y`,
 
@@ -66,18 +65,18 @@ func GetMonitorDeleteCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			monitorId := cmd.Args().Get(0)
 			if monitorId == "" {
 				fmt.Fprintln(os.Stderr, "Usage: openstatus monitors delete <monitor-id>")
-				return cli.Exit("monitor ID is required", 1)
+				return output.UsageErrorf("monitor ID is required")
 			}
 
 			if !cmd.Bool("auto-accept") {
 				confirmed, err := output.AskForConfirmation(fmt.Sprintf("You are about to delete monitor: %s, do you want to continue", monitorId))
 				if err != nil {
-					return cli.Exit(fmt.Sprintf("Failed to read input: %v", err), 1)
+					return fmt.Errorf("failed to read input: %w", err)
 				}
 				if !confirmed {
 					return nil
@@ -88,7 +87,7 @@ func GetMonitorDeleteCmd() *cli.Command {
 			err = DeleteMonitor(ctx, client, monitorId)
 			output.StopSpinner(s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return output.RenderDeleted(monitorId, "Monitor deleted successfully", "Run 'openstatus monitors list' to see remaining monitors")
 		},

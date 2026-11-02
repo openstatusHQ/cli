@@ -11,7 +11,6 @@ import (
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/private_location/v1/private_locationv1connect"
 	private_locationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/private_location/v1"
 	"github.com/charmbracelet/huh"
-	"github.com/logrusorgru/aurora/v4"
 	"github.com/urfave/cli/v3"
 
 	"github.com/openstatusHQ/cli/internal/api"
@@ -45,7 +44,7 @@ func parseMetadataFlag(values []string) (map[string]string, error) {
 		key, value, found := strings.Cut(v, "=")
 		key = strings.TrimSpace(key)
 		if !found || key == "" {
-			return nil, fmt.Errorf("invalid --metadata %q: expected key=value", v)
+			return nil, output.UsageErrorf("invalid --metadata %q: expected key=value", v)
 		}
 		metadata[key] = value
 	}
@@ -87,7 +86,7 @@ func renderCreated(location *private_locationv1.PrivateLocation) error {
 		return nil
 	}
 
-	fmt.Println(aurora.Bold("Private location created:"))
+	fmt.Println(output.Bold("Private location created:"))
 	tbl := newBlueprintTable()
 	tbl.Bulk([][]string{
 		{"ID", location.GetId()},
@@ -202,12 +201,12 @@ picker for the monitors to attach.`,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			metadata, err := parseMetadataFlag(cmd.StringSlice("metadata"))
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			params := CreateParams{
@@ -218,11 +217,11 @@ picker for the monitors to attach.`,
 
 			if params.Name == "" {
 				if output.IsJSONOutput() || !output.IsStdinTerminal() {
-					return cli.Exit("missing required flags: --name", 1)
+					return output.UsageErrorf("missing required flags: --name")
 				}
 				params, err = runCreateWizard(ctx, newMonitorClient(api.DefaultHTTPClient, apiKey), params)
 				if err != nil {
-					return cli.Exit(err.Error(), 1)
+					return err
 				}
 			}
 
@@ -231,11 +230,11 @@ picker for the monitors to attach.`,
 			location, err := CreatePrivateLocation(ctx, client, params)
 			output.StopSpinner(s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			if err := renderCreated(location); err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return nil
 		},

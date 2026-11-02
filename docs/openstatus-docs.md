@@ -246,7 +246,7 @@ The following flags are supported:
 |-----------------------------|--------------------------------------------------------------------|--------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token                                        | string |               | `OPENSTATUS_API_TOKEN` |
 | `--status="…"`              | Filter by status (investigating, identified, monitoring, resolved) | string |               |         *none*         |
-| `--limit="…"`               | Maximum number of reports to return (1-100)                        | int    |      `0`      |         *none*         |
+| `--limit="…"`               | Maximum number of reports to return (1-100; all when omitted)      | int    |      `0`      |         *none*         |
 
 ### `status-report info` subcommand
 
@@ -779,11 +779,11 @@ $ openstatus [GLOBAL FLAGS] maintenance list [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                                      | Type   | Default value |  Environment variables |
-|-----------------------------|--------------------------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                      | string |               | `OPENSTATUS_API_TOKEN` |
-| `--page-id="…"`             | Filter by status page ID                         | string |               |         *none*         |
-| `--limit="…"`               | Maximum number of maintenances to return (1-100) | int    |      `0`      |         *none*         |
+| Name                        | Description                                                        | Type   | Default value |  Environment variables |
+|-----------------------------|--------------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                        | string |               | `OPENSTATUS_API_TOKEN` |
+| `--page-id="…"`             | Filter by status page ID                                           | string |               |         *none*         |
+| `--limit="…"`               | Maximum number of maintenances to return (1-100; all when omitted) | int    |      `0`      |         *none*         |
 
 ### `maintenance info` subcommand
 
@@ -897,10 +897,10 @@ $ openstatus [GLOBAL FLAGS] status-page list [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                               | Type   | Default value |  Environment variables |
-|-----------------------------|-------------------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token               | string |               | `OPENSTATUS_API_TOKEN` |
-| `--limit="…"`               | Maximum number of pages to return (1-100) | int    |      `0`      |         *none*         |
+| Name                        | Description                                                 | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                 | string |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of pages to return (1-100; all when omitted) | int    |      `0`      |         *none*         |
 
 ### `status-page info` subcommand
 
@@ -946,10 +946,10 @@ $ openstatus [GLOBAL FLAGS] notification list [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description                                       | Type   | Default value |  Environment variables |
-|-----------------------------|---------------------------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                       | string |               | `OPENSTATUS_API_TOKEN` |
-| `--limit="…"`               | Maximum number of notifications to return (1-100) | int    |      `0`      |         *none*         |
+| Name                        | Description                                                         | Type   | Default value |  Environment variables |
+|-----------------------------|---------------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                         | string |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of notifications to return (1-100; all when omitted) | int    |      `0`      |         *none*         |
 
 ### `notification info` subcommand
 
@@ -1000,10 +1000,10 @@ $ openstatus [GLOBAL FLAGS] private-locations list [COMMAND FLAGS] [ARGUMENTS...
 
 The following flags are supported:
 
-| Name                        | Description                                           | Type   | Default value |  Environment variables |
-|-----------------------------|-------------------------------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           | string |               | `OPENSTATUS_API_TOKEN` |
-| `--limit="…"`               | Maximum number of private locations to return (1-100) | int    |      `0`      |         *none*         |
+| Name                        | Description                                                             | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                             | string |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of private locations to return (1-100; all when omitted) | int    |      `0`      |         *none*         |
 
 ### `private-locations info` subcommand
 
@@ -1150,3 +1150,15 @@ The following flags are supported:
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token              | string |                             | `OPENSTATUS_API_TOKEN` |
 | `--output-dir="…"` (`-o`)   | Directory to write Terraform files into  | string | `"./openstatus-terraform/"` |         *none*         |
 | `--force` (`-f`)            | Overwrite existing files in --output-dir | bool   |           `false`           |         *none*         |
+
+### `version` command
+
+Print the CLI version.
+
+> openstatus version
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] version [ARGUMENTS...]
+```

@@ -53,6 +53,12 @@ func FormatTimestamp(rfc3339 string) string {
 	return t.UTC().Format("2006-01-02 15:04 UTC")
 }
 
+// Bold formats a section heading. It goes through fatih/color so --no-color,
+// NO_COLOR and non-terminal output all disable it.
+func Bold(s string) string {
+	return color.New(color.Bold).Sprint(s)
+}
+
 func InitColorSettings(noColorFlag bool) {
 	if noColorFlag || os.Getenv("NO_COLOR") != "" || os.Getenv("TERM") == "dumb" || !IsTerminal() {
 		color.NoColor = true

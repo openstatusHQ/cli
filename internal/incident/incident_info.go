@@ -8,7 +8,6 @@ import (
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/incident/v1/incidentv1connect"
 	incidentv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/incident/v1"
-	"github.com/logrusorgru/aurora/v4"
 	"github.com/urfave/cli/v3"
 
 	output "github.com/openstatusHQ/cli/internal/cli"
@@ -29,7 +28,7 @@ func GetIncidentInfo(ctx context.Context, client incidentv1connect.IncidentServi
 		return output.PrintJSON(toDetailJSON(inc))
 	}
 
-	fmt.Println(aurora.Bold("Incident:"))
+	fmt.Println(output.Bold("Incident:"))
 	tbl := newBlueprintTable()
 	tbl.Bulk(infoRows(inc))
 	tbl.Render()
@@ -99,7 +98,7 @@ func printTimeline(events []*incidentv1.IncidentEvent) {
 		return
 	}
 
-	fmt.Println(aurora.Bold("\nTimeline:"))
+	fmt.Println(output.Bold("\nTimeline:"))
 	for _, e := range events {
 		lines := strings.Split(e.GetMessage(), "\n")
 		line := fmt.Sprintf("  %s  %s  %s", output.FormatTimestamp(e.GetCreatedAt()), eventTypeToString(e.GetType()), lines[0])

@@ -2,7 +2,6 @@ package incident
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"unicode/utf8"
@@ -145,7 +144,7 @@ the incident. A linked status report is not updated: post the public update with
 				return err
 			}
 			if cmd.String("status") == "" {
-				return errors.New("missing required flags: --status")
+				return output.UsageErrorf("missing required flags: --status")
 			}
 			return runSetStatus(ctx, cmd, client, id, cmd.String("status"))
 		}),

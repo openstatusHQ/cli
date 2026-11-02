@@ -109,12 +109,12 @@ and the number of monitors it runs.`,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			s := output.StartSpinner("Fetching private locations...")
 			client := NewPrivateLocationClient(apiKey)
 			if err := ListPrivateLocations(ctx, client, int(cmd.Int("limit")), s); err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return nil
 		},

@@ -15,6 +15,7 @@ import (
 	"github.com/urfave/cli/v3"
 
 	"github.com/openstatusHQ/cli/internal/api"
+	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/config"
 )
 
@@ -427,10 +428,10 @@ func configToHTTPMonitor(m config.Monitor) *monitorv1.HTTPMonitor {
 // configToTCPMonitor converts config.Monitor to SDK TCPMonitor
 func configToTCPMonitor(m config.Monitor) (*monitorv1.TCPMonitor, error) {
 	if m.Request.Host == "" {
-		return nil, fmt.Errorf("TCP monitor %q: host is required", m.Name)
+		return nil, output.UsageErrorf("TCP monitor %q: host is required", m.Name)
 	}
 	if m.Request.Port <= 0 || m.Request.Port > 65535 {
-		return nil, fmt.Errorf("TCP monitor %q: port must be between 1 and 65535, got %d", m.Name, m.Request.Port)
+		return nil, output.UsageErrorf("TCP monitor %q: port must be between 1 and 65535, got %d", m.Name, m.Request.Port)
 	}
 
 	monitor := &monitorv1.TCPMonitor{
@@ -455,7 +456,7 @@ func configToTCPMonitor(m config.Monitor) (*monitorv1.TCPMonitor, error) {
 // configToICMPMonitor converts config.Monitor to SDK ICMPMonitor
 func configToICMPMonitor(m config.Monitor) (*monitorv1.ICMPMonitor, error) {
 	if m.Request.Host == "" {
-		return nil, fmt.Errorf("ICMP monitor %q: host is required", m.Name)
+		return nil, output.UsageErrorf("ICMP monitor %q: host is required", m.Name)
 	}
 
 	monitor := &monitorv1.ICMPMonitor{
@@ -481,7 +482,7 @@ func configToICMPMonitor(m config.Monitor) (*monitorv1.ICMPMonitor, error) {
 func icmpMonitorToLocal(m *monitorv1.ICMPMonitor) (Monitor, error) {
 	id, err := strconv.Atoi(m.GetId())
 	if err != nil {
-		return Monitor{}, fmt.Errorf("invalid monitor ID %q: %w", m.GetId(), err)
+		return Monitor{}, output.UsageErrorf("invalid monitor ID %q: %w", m.GetId(), err)
 	}
 	return Monitor{
 		ID:                 id,

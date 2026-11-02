@@ -9,6 +9,7 @@ import (
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 
+	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/config"
 )
 
@@ -24,7 +25,7 @@ func UpdateMonitor(ctx context.Context, httpClient *http.Client, apiKey string, 
 	case config.ICMP:
 		return UpdateICMPMonitor(ctx, client, id, monitor)
 	default:
-		return Monitor{}, fmt.Errorf("unsupported monitor kind: %s", monitor.Kind)
+		return Monitor{}, output.UsageErrorf("unsupported monitor kind: %s", monitor.Kind)
 	}
 }
 

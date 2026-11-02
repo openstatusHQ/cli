@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -49,7 +50,8 @@ Get started:
   openstatus pl list              List your private locations
 
 https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
-		Version: version.Version,
+		Version:        version.Version,
+		ExitErrHandler: output.HandleExitError,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "json",
@@ -90,8 +92,10 @@ https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
 			login.LoginCmd(),
 			login.LogoutCmd(),
 			terraform.TerraformCmd(),
+			versionCmd(),
 		},
 	}
+	handleUsage([]*cli.Command{app})
 	trackInvocation(app.Commands)
 	return app
 }
@@ -108,12 +112,31 @@ func trackInvocation(cmds []*cli.Command) {
 		}
 		before := c.Before
 		c.Before = func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-			api.SetCommand(strings.TrimPrefix(cmd.FullName(), cmd.Root().Name+" "))
+			path := strings.TrimPrefix(cmd.FullName(), cmd.Root().Name+" ")
+			api.SetCommand(path)
+			output.SetCommandPath(path)
 			if before == nil {
 				return ctx, nil
 			}
 			return before(ctx, cmd)
 		}
+	}
+}
+
+func versionCmd() *cli.Command {
+	return &cli.Command{
+		Name:      "version",
+		Usage:     "Print the CLI version",
+		UsageText: "openstatus version",
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			if output.IsJSONOutput() {
+				return output.PrintJSON(struct {
+					Version string `json:"version"`
+				}{version.Version})
+			}
+			fmt.Printf("openstatus version %s\n", version.Version)
+			return nil
+		},
 	}
 }
 

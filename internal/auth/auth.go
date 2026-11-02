@@ -7,6 +7,7 @@ import (
 
 	clilib "github.com/urfave/cli/v3"
 
+	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/config"
 )
 
@@ -33,7 +34,7 @@ func ResolveToken(flagValue string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("no API token found. Set OPENSTATUS_API_TOKEN env var, or run 'openstatus login'")
+	return "", output.NewError(output.KindUnauthenticated, "no API token found. Set OPENSTATUS_API_TOKEN env var, or run 'openstatus login'")
 }
 
 func SaveToken(token string) error {

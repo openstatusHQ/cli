@@ -1,7 +1,6 @@
 package statusreport
 
 import (
-	"fmt"
 	"net/http"
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/status_report/v1/status_reportv1connect"
@@ -11,6 +10,7 @@ import (
 	"github.com/urfave/cli/v3"
 
 	"github.com/openstatusHQ/cli/internal/api"
+	output "github.com/openstatusHQ/cli/internal/cli"
 )
 
 func NewStatusReportClient(apiKey string) status_reportv1connect.StatusReportServiceClient {
@@ -43,7 +43,7 @@ func statusToSDK(s string) (status_reportv1.StatusReportStatus, error) {
 		return status_reportv1.StatusReportStatus_STATUS_REPORT_STATUS_RESOLVED, nil
 	default:
 		return status_reportv1.StatusReportStatus_STATUS_REPORT_STATUS_UNSPECIFIED,
-			fmt.Errorf("invalid status %q: must be one of investigating, identified, monitoring, resolved", s)
+			output.UsageErrorf("invalid status %q: must be one of investigating, identified, monitoring, resolved", s)
 	}
 }
 
@@ -89,7 +89,7 @@ func impactToSDK(s string) (status_reportv1.PageComponentImpact, error) {
 		return status_reportv1.PageComponentImpact_PAGE_COMPONENT_IMPACT_MAJOR_OUTAGE, nil
 	default:
 		return status_reportv1.PageComponentImpact_PAGE_COMPONENT_IMPACT_UNSPECIFIED,
-			fmt.Errorf("invalid impact %q: must be one of operational, degraded, partial_outage, major_outage", s)
+			output.UsageErrorf("invalid impact %q: must be one of operational, degraded, partial_outage, major_outage", s)
 	}
 }
 

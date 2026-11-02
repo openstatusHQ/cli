@@ -11,7 +11,6 @@ import (
 
 	private_locationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/private_location/v1"
 	"connectrpc.com/connect"
-	"github.com/logrusorgru/aurora/v4"
 	"github.com/urfave/cli/v3"
 
 	"github.com/openstatusHQ/cli/internal/api"
@@ -42,7 +41,7 @@ func GetPrivateLocationInfo(ctx context.Context, httpClient *http.Client, apiKey
 		fmt.Fprintln(os.Stderr, "Usage: openstatus private-locations info <private-location-id>")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus pl info pl_1a2b3c")
-		return errors.New("private location ID is required")
+		return output.UsageErrorf("private location ID is required")
 	}
 
 	locationClient := NewPrivateLocationClientWithHTTPClient(httpClient, apiKey)
@@ -110,7 +109,7 @@ func GetPrivateLocationInfo(ctx context.Context, httpClient *http.Client, apiKey
 		})
 	}
 
-	fmt.Println(aurora.Bold("Private Location:"))
+	fmt.Println(output.Bold("Private Location:"))
 	tbl := newBlueprintTable()
 
 	data := [][]string{
@@ -176,12 +175,12 @@ The token is masked unless --show-token is passed.`,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			id := cmd.Args().Get(0)
 			s := output.StartSpinner("Fetching private location...")
 			if err := GetPrivateLocationInfo(ctx, api.DefaultHTTPClient, apiKey, id, cmd.Bool("show-token"), s); err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return nil
 		},

@@ -9,7 +9,6 @@ import (
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/maintenance/v1/maintenancev1connect"
 	maintenancev1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/maintenance/v1"
-	"github.com/logrusorgru/aurora/v4"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
@@ -68,7 +67,7 @@ func GetMaintenanceInfo(ctx context.Context, client maintenancev1connect.Mainten
 		fmt.Fprintln(os.Stderr, "Usage: openstatus maintenance info <maintenance-id>")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus maintenance info 12345")
-		return fmt.Errorf("maintenance ID is required")
+		return output.UsageErrorf("maintenance ID is required")
 	}
 
 	resp, err := client.GetMaintenance(ctx, &maintenancev1.GetMaintenanceRequest{
@@ -85,7 +84,7 @@ func GetMaintenanceInfo(ctx context.Context, client maintenancev1connect.Mainten
 		return output.PrintJSON(toMaintenanceDetail(m))
 	}
 
-	fmt.Println(aurora.Bold("Maintenance:"))
+	fmt.Println(output.Bold("Maintenance:"))
 	table := tablewriter.NewTable(os.Stdout,
 		tablewriter.WithRenderer(renderer.NewBlueprint()),
 		tablewriter.WithRendition(tw.Rendition{
@@ -155,14 +154,14 @@ func GetMaintenanceInfoCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			maintenanceId := cmd.Args().Get(0)
 			s := output.StartSpinner("Fetching maintenance...")
 			client := NewMaintenanceClient(apiKey)
 			err = GetMaintenanceInfo(ctx, client, maintenanceId, s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return nil
 		},

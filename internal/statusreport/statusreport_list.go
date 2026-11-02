@@ -130,13 +130,13 @@ func GetStatusReportListCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			s := output.StartSpinner("Fetching status reports...")
 			client := NewStatusReportClient(apiKey)
 			err = ListStatusReports(ctx, client, cmd.String("status"), int(cmd.Int("limit")), s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return nil
 		},

@@ -19,11 +19,11 @@ func UpdateStatusReport(ctx context.Context, client status_reportv1connect.Statu
 		fmt.Fprintln(os.Stderr, "Usage: openstatus status-report update <report-id> [--title ...] [--component-ids ...]")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus status-report update 12345 --title \"Updated title\"")
-		return nil, fmt.Errorf("report ID is required")
+		return nil, output.UsageErrorf("report ID is required")
 	}
 
 	if !hasTitle && !hasComponents {
-		return nil, fmt.Errorf("at least one of --title or --component-ids must be provided")
+		return nil, output.UsageErrorf("at least one of --title or --component-ids must be provided")
 	}
 
 	req := &status_reportv1.UpdateStatusReportRequest{
@@ -88,14 +88,14 @@ func GetStatusReportUpdateCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			reportId := cmd.Args().Get(0)
 
 			hasTitle := cmd.IsSet("title")
 			componentIds, hasComponents, err := output.ParseIDList("component-ids", cmd.String("component-ids"))
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			client := NewStatusReportClient(apiKey)
@@ -103,7 +103,7 @@ func GetStatusReportUpdateCmd() *cli.Command {
 			report, err := UpdateStatusReport(ctx, client, reportId, cmd.String("title"), componentIds, hasTitle, hasComponents)
 			output.StopSpinner(s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return renderStatusReportUpdated(report)
 		},

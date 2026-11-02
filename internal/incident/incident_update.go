@@ -2,7 +2,6 @@ package incident
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -32,13 +31,13 @@ func (p UpdateParams) empty() bool {
 
 func buildUpdateRequest(id string, p UpdateParams) (*incidentv1.UpdateIncidentRequest, error) {
 	if p.empty() {
-		return nil, errors.New("nothing to update: pass at least one of --title, --severity, --summary, --clear-summary, --commander, --clear-commander, --started-at")
+		return nil, output.UsageErrorf("nothing to update: pass at least one of --title, --severity, --summary, --clear-summary, --commander, --clear-commander, --started-at")
 	}
 	if p.Summary != nil && p.ClearSummary {
-		return nil, errors.New("--summary and --clear-summary are mutually exclusive")
+		return nil, output.UsageErrorf("--summary and --clear-summary are mutually exclusive")
 	}
 	if p.Commander != nil && p.ClearCommander {
-		return nil, errors.New("--commander and --clear-commander are mutually exclusive")
+		return nil, output.UsageErrorf("--commander and --clear-commander are mutually exclusive")
 	}
 
 	req := &incidentv1.UpdateIncidentRequest{Id: id}
@@ -57,7 +56,7 @@ func buildUpdateRequest(id string, p UpdateParams) (*incidentv1.UpdateIncidentRe
 	}
 	if p.Summary != nil {
 		if *p.Summary == "" {
-			return nil, errors.New("--summary cannot be empty; use --clear-summary to remove it")
+			return nil, output.UsageErrorf("--summary cannot be empty; use --clear-summary to remove it")
 		}
 		if err := validateSummary(*p.Summary); err != nil {
 			return nil, err

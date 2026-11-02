@@ -31,7 +31,7 @@ func AddStatusReportUpdate(ctx context.Context, client status_reportv1connect.St
 		fmt.Fprintln(os.Stderr, "Usage: openstatus status-report add-update <report-id> --status <status> --message <message>")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus sr add-update 12345 --status resolved --message \"Fix deployed\"")
-		return fmt.Errorf("report ID is required")
+		return output.UsageErrorf("report ID is required")
 	}
 
 	sdkStatus, err := statusToSDK(p.Status)
@@ -175,7 +175,7 @@ func GetStatusReportAddUpdateCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			inputs := &addUpdateInputs{
@@ -187,7 +187,7 @@ func GetStatusReportAddUpdateCmd() *cli.Command {
 
 			impacts, err := parseImpactsFlag(cmd.StringSlice("impact"))
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			inputs.ComponentImpacts = impactsToMap(impacts)
 
@@ -206,11 +206,11 @@ func GetStatusReportAddUpdateCmd() *cli.Command {
 					if inputs.Message == "" {
 						missing = append(missing, "--message")
 					}
-					return cli.Exit(fmt.Sprintf("missing required arguments: %s", strings.Join(missing, ", ")), 1)
+					return output.UsageErrorf("missing required arguments: %s", strings.Join(missing, ", "))
 				}
 				inputs, err = runAddUpdateWizard(ctx, apiKey, inputs)
 				if err != nil {
-					return cli.Exit(err.Error(), 1)
+					return err
 				}
 			}
 
@@ -221,7 +221,7 @@ func GetStatusReportAddUpdateCmd() *cli.Command {
 
 			componentImpacts, err := mapToImpacts(inputs.ComponentImpacts, nil)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 
 			s := output.StartSpinner("Adding update...")
@@ -235,7 +235,7 @@ func GetStatusReportAddUpdateCmd() *cli.Command {
 				Notify:           inputs.Notify,
 			}, s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return nil
 		},

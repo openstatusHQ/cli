@@ -19,7 +19,7 @@ func DeleteMaintenance(ctx context.Context, client maintenancev1connect.Maintena
 		fmt.Fprintln(os.Stderr, "Usage: openstatus maintenance delete <maintenance-id>")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus maintenance delete 12345")
-		return fmt.Errorf("maintenance ID is required")
+		return output.UsageErrorf("maintenance ID is required")
 	}
 
 	_, err := client.DeleteMaintenance(ctx, &maintenancev1.DeleteMaintenanceRequest{
@@ -59,18 +59,18 @@ func GetMaintenanceDeleteCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			maintenanceId := cmd.Args().Get(0)
 			if maintenanceId == "" {
 				fmt.Fprintln(os.Stderr, "Usage: openstatus maintenance delete <maintenance-id>")
-				return cli.Exit("maintenance ID is required", 1)
+				return output.UsageErrorf("maintenance ID is required")
 			}
 
 			if !cmd.Bool("auto-accept") {
 				confirmed, err := output.AskForConfirmation(fmt.Sprintf("You are about to delete maintenance: %s, do you want to continue", maintenanceId))
 				if err != nil {
-					return cli.Exit(fmt.Sprintf("Failed to read input: %v", err), 1)
+					return fmt.Errorf("Failed to read input: %w", err)
 				}
 				if !confirmed {
 					return nil
@@ -82,7 +82,7 @@ func GetMaintenanceDeleteCmd() *cli.Command {
 			err = DeleteMaintenance(ctx, client, maintenanceId)
 			output.StopSpinner(s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return output.RenderDeleted(maintenanceId, fmt.Sprintf("Maintenance %s deleted successfully", maintenanceId), "Run 'openstatus maintenance list' to see remaining maintenances")
 		},

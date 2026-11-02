@@ -10,7 +10,6 @@ import (
 
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"github.com/fatih/color"
-	"github.com/logrusorgru/aurora/v4"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
@@ -86,7 +85,7 @@ func parseTimeRange(s string) (monitorv1.TimeRange, error) {
 	case "14d":
 		return monitorv1.TimeRange_TIME_RANGE_14D, nil
 	default:
-		return monitorv1.TimeRange_TIME_RANGE_UNSPECIFIED, fmt.Errorf("invalid time range %q: must be 1d, 7d, or 14d", s)
+		return monitorv1.TimeRange_TIME_RANGE_UNSPECIFIED, output.UsageErrorf("invalid time range %q: must be 1d, 7d, or 14d", s)
 	}
 }
 
@@ -175,7 +174,7 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 		fmt.Fprintln(os.Stderr, "Usage: openstatus monitors info <monitor-id>")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus monitors info 12345")
-		return fmt.Errorf("monitor ID is required")
+		return output.UsageErrorf("monitor ID is required")
 	}
 
 	client := NewMonitorClientWithHTTPClient(httpClient, apiKey)
@@ -220,7 +219,7 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 		if monitorConfig.HasDns() {
 			return fmt.Errorf("DNS monitors are not yet supported in the CLI. Monitor ID: %s", monitorId)
 		}
-		return fmt.Errorf("unknown monitor type for monitor ID: %s", monitorId)
+		return output.UsageErrorf("unknown monitor type for monitor ID: %s", monitorId)
 	}
 
 	var (
@@ -305,7 +304,7 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 	}
 
 	// Section 1: Monitor config table
-	fmt.Println(aurora.Bold("Monitor:"))
+	fmt.Println(output.Bold("Monitor:"))
 	table := newBlueprintTable()
 
 	data := [][]string{
@@ -359,7 +358,7 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 	// Section 2: Assertions table
 	if len(monitor.Assertions) > 0 {
 		fmt.Println()
-		fmt.Println(aurora.Bold("Assertions:"))
+		fmt.Println(output.Bold("Assertions:"))
 		assertionTable := newBlueprintTable()
 		var assertionData [][]string
 		for _, a := range monitor.Assertions {
@@ -376,7 +375,7 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 	// Section 3: Region status table
 	if statusResp != nil && len(statusResp.GetRegions()) > 0 {
 		fmt.Println()
-		fmt.Println(aurora.Bold("Region Status:"))
+		fmt.Println(output.Bold("Region Status:"))
 		regionTable := newBlueprintTable()
 		var regionData [][]string
 		for _, rs := range statusResp.GetRegions() {
@@ -392,7 +391,7 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 	// Section 3: Summary table
 	if summaryResp != nil {
 		fmt.Println()
-		fmt.Println(aurora.Bold(fmt.Sprintf("Summary (%s):", timeRangeStr)))
+		fmt.Println(output.Bold(fmt.Sprintf("Summary (%s):", timeRangeStr)))
 		summaryTable := newBlueprintTable()
 		summaryData := [][]string{
 			{"Total Successful", fmt.Sprintf("%d", summaryResp.GetTotalSuccessful())},
@@ -425,18 +424,18 @@ func GetMonitorInfoCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			monitorId := cmd.Args().Get(0)
 			timeRangeStr := cmd.String("time-range")
 			timeRange, err := parseTimeRange(timeRangeStr)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			s := output.StartSpinner("Fetching monitor details...")
 			err = GetMonitorInfo(ctx, api.DefaultHTTPClient, apiKey, monitorId, timeRange, timeRangeStr, s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return nil
 		},

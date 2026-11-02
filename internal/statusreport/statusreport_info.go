@@ -9,7 +9,6 @@ import (
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/status_report/v1/status_reportv1connect"
 	status_reportv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/status_report/v1"
-	"github.com/logrusorgru/aurora/v4"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
@@ -82,7 +81,7 @@ func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.Stat
 		fmt.Fprintln(os.Stderr, "Usage: openstatus status-report info <report-id>")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus status-report info 12345")
-		return fmt.Errorf("report ID is required")
+		return output.UsageErrorf("report ID is required")
 	}
 
 	resp, err := client.GetStatusReport(ctx, &status_reportv1.GetStatusReportRequest{
@@ -102,7 +101,7 @@ func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.Stat
 		return output.PrintJSON(toStatusReportDetail(report, affected, current))
 	}
 
-	fmt.Println(aurora.Bold("Status Report:"))
+	fmt.Println(output.Bold("Status Report:"))
 	table := tablewriter.NewTable(os.Stdout,
 		tablewriter.WithRenderer(renderer.NewBlueprint()),
 		tablewriter.WithRendition(tw.Rendition{
@@ -152,7 +151,7 @@ func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.Stat
 		return nil
 	}
 
-	fmt.Println(aurora.Bold("\nUpdate Timeline:"))
+	fmt.Println(output.Bold("\nUpdate Timeline:"))
 	for _, u := range updates {
 		fmt.Printf("  %s  [%s]  %s\n",
 			output.FormatTimestamp(u.GetDate()),
@@ -172,7 +171,7 @@ func GetStatusReportInfo(ctx context.Context, client status_reportv1connect.Stat
 }
 
 func printAffectedSection(report *status_reportv1.StatusReport, affected []string, current map[string]status_reportv1.PageComponentImpact) {
-	fmt.Println(aurora.Bold("\nAffected:"))
+	fmt.Println(output.Bold("\nAffected:"))
 
 	priorPerComponent := make(map[string]status_reportv1.PageComponentImpact)
 	finalPerComponent := make(map[string]status_reportv1.PageComponentImpact)
@@ -230,14 +229,14 @@ func GetStatusReportInfoCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			reportId := cmd.Args().Get(0)
 			s := output.StartSpinner("Fetching status report...")
 			client := NewStatusReportClient(apiKey)
 			err = GetStatusReportInfo(ctx, client, reportId, s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return nil
 		},

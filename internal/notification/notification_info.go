@@ -9,7 +9,6 @@ import (
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/notification/v1/notificationv1connect"
 	notificationv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/notification/v1"
-	"github.com/logrusorgru/aurora/v4"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
@@ -135,7 +134,7 @@ func GetNotificationInfo(ctx context.Context, client notificationv1connect.Notif
 		fmt.Fprintln(os.Stderr, "Usage: openstatus notification info <notification-id>")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus notification info 12345")
-		return fmt.Errorf("notification ID is required")
+		return output.UsageErrorf("notification ID is required")
 	}
 
 	req := &notificationv1.GetNotificationRequest{}
@@ -166,7 +165,7 @@ func GetNotificationInfo(ctx context.Context, client notificationv1connect.Notif
 		return output.PrintJSON(detail)
 	}
 
-	fmt.Println(aurora.Bold("Notification:"))
+	fmt.Println(output.Bold("Notification:"))
 	tbl := tablewriter.NewTable(os.Stdout,
 		tablewriter.WithRenderer(renderer.NewBlueprint()),
 		tablewriter.WithRendition(tw.Rendition{
@@ -238,14 +237,14 @@ func GetNotificationInfoCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			notificationId := cmd.Args().Get(0)
 			s := output.StartSpinner("Fetching notification...")
 			client := NewNotificationClient(apiKey)
 			err = GetNotificationInfo(ctx, client, notificationId, s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return nil
 		},

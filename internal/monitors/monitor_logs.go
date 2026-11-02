@@ -84,7 +84,7 @@ func formatUnixMillis(ms int64) string {
 func parseRFC3339ToUnixMillis(s string) (int64, error) {
 	t, err := time.Parse(time.RFC3339, s)
 	if err != nil {
-		return 0, fmt.Errorf("invalid RFC 3339 timestamp %q: %w", s, err)
+		return 0, output.UsageErrorf("invalid RFC 3339 timestamp %q: %w", s, err)
 	}
 	return t.UnixMilli(), nil
 }
@@ -104,7 +104,7 @@ func ListMonitorResponseLogs(
 		fmt.Fprintln(os.Stderr, "Usage: openstatus monitors logs <monitor-id>")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus monitors logs 12345")
-		return fmt.Errorf("monitor ID is required")
+		return output.UsageErrorf("monitor ID is required")
 	}
 
 	req := &monitorv1.ListMonitorHTTPResponseLogsRequest{
@@ -139,7 +139,7 @@ func ListMonitorResponseLogs(
 	}
 	if from != "" && to != "" && fromMs >= toMs {
 		output.StopSpinner(s)
-		return fmt.Errorf("--from must be before --to")
+		return output.UsageErrorf("--from must be before --to")
 	}
 
 	resp, err := client.ListMonitorHTTPResponseLogs(ctx, req)
@@ -248,7 +248,7 @@ func GetMonitorLogsCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			monitorId := cmd.Args().Get(0)
 			s := output.StartSpinner("Fetching response logs...")
@@ -263,7 +263,7 @@ func GetMonitorLogsCmd() *cli.Command {
 				s,
 			)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return nil
 		},

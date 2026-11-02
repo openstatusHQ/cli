@@ -14,6 +14,7 @@ import (
 
 	"github.com/openstatusHQ/cli/internal/api"
 	"github.com/openstatusHQ/cli/internal/auth"
+	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/whoami"
 )
 
@@ -53,16 +54,16 @@ Get your API token from the OpenStatus dashboard.`,
 
 			token = strings.TrimSpace(token)
 			if token == "" {
-				return cli.Exit("Token cannot be empty", 1)
+				return output.UsageErrorf("Token cannot be empty")
 			}
 
 			fmt.Fprintln(os.Stderr, "Verifying token...")
 			workspace, err := whoami.Fetch(ctx, api.DefaultHTTPClient, token)
 			if errors.Is(err, whoami.ErrUnauthorized) {
-				return cli.Exit("Invalid token. Could not authenticate with OpenStatus API", 1)
+				return output.NewError(output.KindUnauthenticated, "Invalid token. Could not authenticate with OpenStatus API")
 			}
 			if err != nil {
-				return cli.Exit(fmt.Sprintf("Could not verify token: %v", err), 1)
+				return fmt.Errorf("Could not verify token: %w", output.FormatError(err, "", ""))
 			}
 
 			if err := auth.SaveToken(token); err != nil {

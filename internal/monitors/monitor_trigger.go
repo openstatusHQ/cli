@@ -21,7 +21,7 @@ func TriggerMonitor(ctx context.Context, client monitorv1connect.MonitorServiceC
 		fmt.Fprintln(os.Stderr, "Usage: openstatus monitors trigger <monitor-id>")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "Example: openstatus monitors trigger 12345")
-		return fmt.Errorf("monitor ID is required")
+		return output.UsageErrorf("monitor ID is required")
 	}
 
 	_, err := client.TriggerMonitor(ctx, &monitorv1.TriggerMonitorRequest{
@@ -63,14 +63,14 @@ func GetMonitorsTriggerCmd() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(cmd)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			monitorId := cmd.Args().Get(0)
 			s := output.StartSpinner("Triggering monitor...")
 			client := NewMonitorClient(apiKey)
 			err = TriggerMonitor(ctx, client, monitorId, s)
 			if err != nil {
-				return cli.Exit(err.Error(), 1)
+				return err
 			}
 			return nil
 		},

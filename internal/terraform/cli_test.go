@@ -75,7 +75,7 @@ func TestPrintSummary_IncludesInitUpgradeHint(t *testing.T) {
 	if !strings.Contains(out, "terraform init -upgrade") {
 		t.Errorf("expected init-upgrade hint, got:\n%s", out)
 	}
-	if !strings.Contains(out, "~> 0.4") {
+	if !strings.Contains(out, "~> 0.5") {
 		t.Errorf("expected version mention in hint, got:\n%s", out)
 	}
 }
@@ -110,7 +110,7 @@ func TestPrintSummary_CountsICMPMonitors(t *testing.T) {
 		}))
 	})
 
-	if !strings.Contains(out, "1 monitors (0 HTTP, 0 TCP, 0 DNS, 1 ICMP)") {
+	if !strings.Contains(out, "1 monitors (0 HTTP, 0 TCP, 0 DNS, 1 ICMP, 0 gRPC)") {
 		t.Errorf("expected ICMP monitor count, got:\n%s", out)
 	}
 	if !strings.Contains(out, "1 import blocks") {

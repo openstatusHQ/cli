@@ -15,7 +15,7 @@ import (
 func TestGenerateProviderFile(t *testing.T) {
 	content := string(GenerateProviderFile(api.DefaultBaseURL))
 	mustContain(t, content, `source  = "openstatusHQ/openstatus"`)
-	mustContain(t, content, `version = "~> 0.4"`)
+	mustContain(t, content, `version = "~> 0.5"`)
 	mustContain(t, content, `provider "openstatus" {}`)
 	mustContain(t, content, `OPENSTATUS_API_TOKEN`)
 	mustNotContain(t, content, `base_url`)
@@ -482,6 +482,98 @@ func TestTotalResourceCount_ICMP(t *testing.T) {
 	}
 }
 
+func TestGenerateMonitorsFile_GRPC(t *testing.T) {
+	md := &monitorv1.Headers{}
+	md.SetKey("authorization")
+	md.SetValue("Bearer abc")
+
+	m := &monitorv1.GRPCMonitor{}
+	m.SetId("888")
+	m.SetName("API gRPC Health")
+	m.SetUri("grpc.example.com:443")
+	m.SetPeriodicity(monitorv1.Periodicity_PERIODICITY_1M)
+	m.SetService("my.package.Service")
+	m.SetTlsMode(monitorv1.GRPCTlsMode_GRPC_TLS_MODE_PLAINTEXT)
+	m.SetTimeout(45000)
+	m.SetRetry(3)
+	m.SetActive(true)
+	m.SetMetadata([]*monitorv1.Headers{md})
+	m.SetRegions([]monitorv1.Region{monitorv1.Region_REGION_FLY_IAD})
+
+	data := &WorkspaceData{GRPCMonitors: []*monitorv1.GRPCMonitor{m}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateMonitorsFile().Bytes())
+
+	mustContain(t, content, `resource "openstatus_grpc_monitor" "api_grpc_health"`)
+	mustContain(t, content, `uri         = "grpc.example.com:443"`)
+	mustContain(t, content, `service     = "my.package.Service"`)
+	mustContain(t, content, `tls_mode    = "plaintext"`)
+	mustContain(t, content, "metadata {")
+	mustContain(t, content, `key   = "authorization"`)
+	mustContain(t, content, `value = "Bearer abc"`)
+	mustNotContain(t, content, "timeout")
+	mustNotContain(t, content, "retry")
+	if !gen.HasMonitors() {
+		t.Error("HasMonitors() should be true")
+	}
+}
+
+func TestGenerateMonitorsFile_GRPC_DefaultTLSOmitted(t *testing.T) {
+	m := &monitorv1.GRPCMonitor{}
+	m.SetId("1")
+	m.SetName("gRPC")
+	m.SetUri("grpc.example.com:443")
+	m.SetTlsMode(monitorv1.GRPCTlsMode_GRPC_TLS_MODE_TLS)
+
+	data := &WorkspaceData{GRPCMonitors: []*monitorv1.GRPCMonitor{m}}
+	content := string(NewGenerator(data).GenerateMonitorsFile().Bytes())
+
+	mustNotContain(t, content, "tls_mode")
+	mustNotContain(t, content, "service")
+	mustNotContain(t, content, "metadata")
+}
+
+func TestGenerateImportsFile_GRPC(t *testing.T) {
+	m := &monitorv1.GRPCMonitor{}
+	m.SetId("4242")
+	m.SetName("API gRPC Health")
+
+	data := &WorkspaceData{GRPCMonitors: []*monitorv1.GRPCMonitor{m}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateImportsFile().Bytes())
+
+	mustContain(t, content, "to = openstatus_grpc_monitor.api_grpc_health")
+	mustContain(t, content, `id = "4242"`)
+	if got := gen.TotalResourceCount(); got != 1 {
+		t.Errorf("TotalResourceCount() = %d, want 1", got)
+	}
+}
+
+func TestCrossReferenceGRPCMonitorInNotification(t *testing.T) {
+	m := &monitorv1.GRPCMonitor{}
+	m.SetId("mon-grpc")
+	m.SetName("gRPC API")
+
+	slack := &notificationv1.SlackData{}
+	slack.SetWebhookUrl("https://hooks.slack.com/x")
+	nd := &notificationv1.NotificationData{}
+	nd.SetSlack(slack)
+	n := &notificationv1.Notification{}
+	n.SetId("n1")
+	n.SetName("Slack")
+	n.SetData(nd)
+	n.SetMonitorIds([]string{"mon-grpc"})
+
+	data := &WorkspaceData{
+		GRPCMonitors:  []*monitorv1.GRPCMonitor{m},
+		Notifications: []*notificationv1.Notification{n},
+	}
+	content := string(NewGenerator(data).GenerateNotificationsFile().Bytes())
+
+	mustContain(t, content, "openstatus_grpc_monitor.grpc_api.id")
+	mustNotContain(t, content, `"mon-grpc"`)
+}
+
 func TestGenerateMonitorsFile_OpenTelemetry_SkippedWhenEmpty(t *testing.T) {
 	m := &monitorv1.HTTPMonitor{}
 	m.SetId("1")
@@ -939,4 +1031,44 @@ func mustNotContain(t *testing.T, content, substr string) {
 	if strings.Contains(content, substr) {
 		t.Errorf("expected output NOT to contain %q, got:\n%s", substr, content)
 	}
+}
+
+func TestGenerateMonitorsFile_GRPC_UnknownTLSModeSkipped(t *testing.T) {
+	known := &monitorv1.GRPCMonitor{}
+	known.SetId("1")
+	known.SetName("Known")
+	unknown := &monitorv1.GRPCMonitor{}
+	unknown.SetId("2")
+	unknown.SetName("Future mTLS")
+	unknown.SetTlsMode(monitorv1.GRPCTlsMode(99))
+
+	data := &WorkspaceData{GRPCMonitors: []*monitorv1.GRPCMonitor{known, unknown}}
+	gen := NewGenerator(data)
+
+	mustNotContain(t, string(gen.GenerateMonitorsFile().Bytes()), "future_mtls")
+	mustNotContain(t, string(gen.GenerateImportsFile().Bytes()), `id = "2"`)
+	if got := gen.TotalResourceCount(); got != 1 {
+		t.Errorf("TotalResourceCount() = %d, want 1", got)
+	}
+	if len(data.GRPCMonitors) != 2 {
+		t.Errorf("caller's WorkspaceData was modified: %d gRPC monitors, want 2", len(data.GRPCMonitors))
+	}
+}
+
+func TestGenerateMonitorsFile_GRPC_MetadataEmptyKeyKept(t *testing.T) {
+	emptyKey := &monitorv1.Headers{}
+	emptyKey.SetValue("x")
+	bothEmpty := &monitorv1.Headers{}
+
+	m := &monitorv1.GRPCMonitor{}
+	m.SetId("1")
+	m.SetName("gRPC")
+	m.SetMetadata([]*monitorv1.Headers{emptyKey, bothEmpty})
+
+	content := string(NewGenerator(&WorkspaceData{GRPCMonitors: []*monitorv1.GRPCMonitor{m}}).GenerateMonitorsFile().Bytes())
+
+	if got := strings.Count(content, "metadata {"); got != 1 {
+		t.Errorf("metadata blocks = %d, want 1 (only the both-empty entry is dropped):\n%s", got, content)
+	}
+	mustContain(t, content, `value = "x"`)
 }

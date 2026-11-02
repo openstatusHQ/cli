@@ -456,7 +456,7 @@ openstatus terraform generate
 
 This creates an `openstatus-terraform/` directory with:
 - `provider.tf` — Terraform provider configuration
-- `monitors.tf` — all HTTP, TCP, and DNS monitors
+- `monitors.tf` — all HTTP, TCP, DNS, ICMP, and gRPC monitors
 - `notifications.tf` — all notification channels with provider-specific blocks
 - `status_pages.tf` — status pages, components, and component groups
 - `private_locations.tf` — private locations with their monitor assignments
@@ -477,6 +477,8 @@ terraform plan
 ```
 
 Sensitive values (passwords, API keys) are emitted as `"REPLACE_ME"` with a TODO comment — update them before running `terraform apply`.
+
+The generated `provider.tf` pins the provider to `~> 0.5` (the first release with `openstatus_grpc_monitor`). If you already ran `terraform init` against an older provider, run `terraform init -upgrade`.
 
 ## Global Flags
 

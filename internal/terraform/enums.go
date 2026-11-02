@@ -111,6 +111,22 @@ func recordComparatorToString(c monitorv1.RecordComparator) string {
 	}
 }
 
+// grpcTLSModeToString maps unspecified to "tls", the API and provider default.
+// It reports false for modes this CLI doesn't know, so callers can skip the
+// monitor instead of silently downgrading it to the default.
+func grpcTLSModeToString(m monitorv1.GRPCTlsMode) (string, bool) {
+	switch m {
+	case monitorv1.GRPCTlsMode_GRPC_TLS_MODE_UNSPECIFIED, monitorv1.GRPCTlsMode_GRPC_TLS_MODE_TLS:
+		return "tls", true
+	case monitorv1.GRPCTlsMode_GRPC_TLS_MODE_PLAINTEXT:
+		return "plaintext", true
+	case monitorv1.GRPCTlsMode_GRPC_TLS_MODE_TLS_INSECURE:
+		return "tls_insecure", true
+	default:
+		return "", false
+	}
+}
+
 func opsgenieRegionToString(r notificationv1.OpsgenieRegion) string {
 	switch r {
 	case notificationv1.OpsgenieRegion_OPSGENIE_REGION_US:

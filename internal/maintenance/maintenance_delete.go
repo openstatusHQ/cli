@@ -70,7 +70,7 @@ func GetMaintenanceDeleteCmd() *cli.Command {
 			if !cmd.Bool("auto-accept") {
 				confirmed, err := output.AskForConfirmation(fmt.Sprintf("You are about to delete maintenance: %s, do you want to continue", maintenanceId))
 				if err != nil {
-					return fmt.Errorf("Failed to read input: %w", err)
+					return fmt.Errorf("failed to read input: %w", err)
 				}
 				if !confirmed {
 					return nil

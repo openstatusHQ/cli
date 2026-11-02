@@ -76,7 +76,7 @@ func GetMonitorDeleteCmd() *cli.Command {
 			if !cmd.Bool("auto-accept") {
 				confirmed, err := output.AskForConfirmation(fmt.Sprintf("You are about to delete monitor: %s, do you want to continue", monitorId))
 				if err != nil {
-					return fmt.Errorf("Failed to read input: %w", err)
+					return fmt.Errorf("failed to read input: %w", err)
 				}
 				if !confirmed {
 					return nil

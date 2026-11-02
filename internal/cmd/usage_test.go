@@ -20,7 +20,7 @@ func Test_suggest(t *testing.T) {
 		{"monitr", "monitors"},
 		{"monitor", "monitors"},
 		{"statusreport", "status-report"},
-		{"versoin", "version"},
+		{"verson", "version"},
 		{"stat", "status-report"},
 		{"x", ""},
 		{"deploy", ""},

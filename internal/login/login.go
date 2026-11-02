@@ -63,7 +63,7 @@ Get your API token from the OpenStatus dashboard.`,
 				return output.NewError(output.KindUnauthenticated, "Invalid token. Could not authenticate with OpenStatus API")
 			}
 			if err != nil {
-				return fmt.Errorf("Could not verify token: %w", output.FormatError(err, "", ""))
+				return fmt.Errorf("could not verify token: %w", output.FormatError(err, "", ""))
 			}
 
 			if err := auth.SaveToken(token); err != nil {

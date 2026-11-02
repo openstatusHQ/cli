@@ -196,7 +196,7 @@ func GetMonitorCreateCmd() *cli.Command {
 			if !accept {
 				confirmed, err := output.AskForConfirmation(fmt.Sprintf("You are about to create %d monitors do you want to continue", len(monitors)))
 				if err != nil {
-					return fmt.Errorf("Failed to read input: %w", err)
+					return fmt.Errorf("failed to read input: %w", err)
 				}
 				if !confirmed {
 					return nil

@@ -6,6 +6,7 @@ var (
 	FormatMetadata    = formatMetadata
 	FormatMonitors    = formatMonitors
 	ParseMetadataFlag = parseMetadataFlag
+	SplitMonitorIDs   = splitMonitorIDs
 )
 
 type MonitorRef = monitorRef

@@ -409,6 +409,7 @@ func configToHTTPMonitor(m config.Monitor) *monitorv1.HTTPMonitor {
 		StatusCodeAssertions: statusCodeAssertions,
 		BodyAssertions:       bodyAssertions,
 		HeaderAssertions:     headerAssertions,
+		OpenTelemetry:        configToOpenTelemetry(m.OpenTelemetry),
 	}
 	monitor.SetDescription(m.Description)
 	monitor.SetActive(m.Active)
@@ -425,6 +426,18 @@ func configToHTTPMonitor(m config.Monitor) *monitorv1.HTTPMonitor {
 	return monitor
 }
 
+// configToOpenTelemetry returns nil when no OTel export is configured.
+func configToOpenTelemetry(ot config.OpenTelemetryConfig) *monitorv1.OpenTelemetryConfig {
+	if ot.Endpoint == "" && len(ot.Headers) == 0 {
+		return nil
+	}
+	headers := make([]*monitorv1.Headers, 0, len(ot.Headers))
+	for _, k := range slices.Sorted(maps.Keys(ot.Headers)) {
+		headers = append(headers, &monitorv1.Headers{Key: k, Value: ot.Headers[k]})
+	}
+	return &monitorv1.OpenTelemetryConfig{Endpoint: ot.Endpoint, Headers: headers}
+}
+
 // configToTCPMonitor converts config.Monitor to SDK TCPMonitor
 func configToTCPMonitor(m config.Monitor) (*monitorv1.TCPMonitor, error) {
 	if m.Request.Host == "" {
@@ -435,12 +448,13 @@ func configToTCPMonitor(m config.Monitor) (*monitorv1.TCPMonitor, error) {
 	}
 
 	monitor := &monitorv1.TCPMonitor{
-		Name:        m.Name,
-		Uri:         fmt.Sprintf("%s:%d", m.Request.Host, m.Request.Port),
-		Periodicity: stringToPeriodicity(m.Frequency),
-		Regions:     stringsToRegions(m.Regions),
-		Timeout:     m.Timeout,
-		Retry:       m.Retry,
+		Name:          m.Name,
+		Uri:           fmt.Sprintf("%s:%d", m.Request.Host, m.Request.Port),
+		Periodicity:   stringToPeriodicity(m.Frequency),
+		Regions:       stringsToRegions(m.Regions),
+		Timeout:       m.Timeout,
+		Retry:         m.Retry,
+		OpenTelemetry: configToOpenTelemetry(m.OpenTelemetry),
 	}
 	monitor.SetDescription(m.Description)
 	monitor.SetActive(m.Active)
@@ -460,12 +474,13 @@ func configToICMPMonitor(m config.Monitor) (*monitorv1.ICMPMonitor, error) {
 	}
 
 	monitor := &monitorv1.ICMPMonitor{
-		Name:        m.Name,
-		Uri:         m.Request.Host,
-		Periodicity: stringToPeriodicity(m.Frequency),
-		Regions:     stringsToRegions(m.Regions),
-		Timeout:     m.Timeout,
-		Retry:       m.Retry,
+		Name:          m.Name,
+		Uri:           m.Request.Host,
+		Periodicity:   stringToPeriodicity(m.Frequency),
+		Regions:       stringsToRegions(m.Regions),
+		Timeout:       m.Timeout,
+		Retry:         m.Retry,
+		OpenTelemetry: configToOpenTelemetry(m.OpenTelemetry),
 	}
 	monitor.SetDescription(m.Description)
 	monitor.SetActive(m.Active)
@@ -595,7 +610,6 @@ func MonitorsCmd() *cli.Command {
 		Usage:   "Manage your monitors",
 		Aliases: []string{"m"},
 		Commands: []*cli.Command{
-			GetMonitorCreateCmd(),
 			GetMonitorDeleteCmd(),
 			GetMonitorInfoCmd(),
 			GetMonitorsListCmd(),

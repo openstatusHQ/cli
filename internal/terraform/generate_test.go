@@ -776,6 +776,27 @@ func TestGenerateStatusPagesFile_LocalesDeduped(t *testing.T) {
 	mustContain(t, content, `locales = ["en", "fr", "de"]`)
 }
 
+func TestGenerateStatusPagesFile_AllLocales(t *testing.T) {
+	page := &status_pagev1.StatusPage{}
+	page.SetId("p1")
+	page.SetTitle("Global")
+	page.SetSlug("global")
+	page.SetDefaultLocale(status_pagev1.Locale_LOCALE_JA)
+	page.SetLocales([]status_pagev1.Locale{
+		status_pagev1.Locale_LOCALE_JA,
+		status_pagev1.Locale_LOCALE_KO,
+		status_pagev1.Locale_LOCALE_HI,
+		status_pagev1.Locale_LOCALE_TR,
+	})
+
+	data := &WorkspaceData{StatusPages: []StatusPageData{{Page: page}}}
+	gen := NewGenerator(data)
+	content := string(gen.GenerateStatusPagesFile().Bytes())
+
+	mustContain(t, content, `default_locale = "ja"`)
+	mustContain(t, content, `locales        = ["ja", "ko", "hi", "tr"]`)
+}
+
 func TestGenerateStatusPagesFile_DefaultsOmitted(t *testing.T) {
 	page := &status_pagev1.StatusPage{}
 	page.SetId("p1")

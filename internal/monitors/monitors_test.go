@@ -43,12 +43,11 @@ func Test_MonitorsCmd(t *testing.T) {
 	t.Run("Has expected subcommands", func(t *testing.T) {
 		cmd := monitors.MonitorsCmd()
 
-		if len(cmd.Commands) != 7 {
-			t.Errorf("Expected 7 subcommands, got %d", len(cmd.Commands))
+		if len(cmd.Commands) != 6 {
+			t.Errorf("Expected 6 subcommands, got %d", len(cmd.Commands))
 		}
 
 		expectedSubcommands := map[string]bool{
-			"create":   false,
 			"delete":   false,
 			"info":     false,
 			"list":     false,

@@ -59,29 +59,6 @@ Usage:
 $ openstatus [GLOBAL FLAGS] monitors [ARGUMENTS...]
 ```
 
-### `monitors create` subcommand
-
-Create monitors.
-
-> openstatus monitors create
->   openstatus monitors create --config custom.yaml -y
-
-Create the monitors defined in the openstatus.yaml file.
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] monitors create [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                        | Description                                           | Type   |    Default value    |  Environment variables |
-|-----------------------------|-------------------------------------------------------|--------|:-------------------:|:----------------------:|
-| `--config="…"` (`-c`)       | The configuration file containing monitor information | string | `"openstatus.yaml"` |         *none*         |
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           | string |                     | `OPENSTATUS_API_TOKEN` |
-| `--auto-accept` (`-y`)      | Automatically accept the prompt                       | bool   |       `false`       |         *none*         |
-
 ### `monitors delete` subcommand
 
 Delete a monitor.

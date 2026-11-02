@@ -185,6 +185,14 @@ func localeToString(l status_pagev1.Locale) string {
 		return "fr"
 	case status_pagev1.Locale_LOCALE_DE:
 		return "de"
+	case status_pagev1.Locale_LOCALE_TR:
+		return "tr"
+	case status_pagev1.Locale_LOCALE_HI:
+		return "hi"
+	case status_pagev1.Locale_LOCALE_KO:
+		return "ko"
+	case status_pagev1.Locale_LOCALE_JA:
+		return "ja"
 	default:
 		return ""
 	}

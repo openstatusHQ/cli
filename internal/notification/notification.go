@@ -55,6 +55,8 @@ func providerToString(p notificationv1.NotificationProvider) string {
 		return "webhook"
 	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_WHATSAPP:
 		return "whatsapp"
+	case notificationv1.NotificationProvider_NOTIFICATION_PROVIDER_MS_TEAMS:
+		return "ms_teams"
 	default:
 		return "unknown"
 	}

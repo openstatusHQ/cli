@@ -51,6 +51,15 @@ func parseMetadataFlag(values []string) (map[string]string, error) {
 	return metadata, nil
 }
 
+// splitMonitorIDs accepts both repeated and comma-separated --monitor-ids values.
+func splitMonitorIDs(values []string) []string {
+	var ids []string
+	for _, v := range values {
+		ids = append(ids, output.SplitList(v)...)
+	}
+	return ids
+}
+
 func CreatePrivateLocation(ctx context.Context, client private_locationv1connect.PrivateLocationServiceClient, p CreateParams) (*private_locationv1.PrivateLocation, error) {
 	req := &private_locationv1.CreatePrivateLocationRequest{}
 	req.SetName(p.Name)
@@ -178,6 +187,8 @@ because you need it to configure the agent; retrieve it later with 'openstatus p
 
 Run without --name in an interactive terminal to be prompted, including a
 picker for the monitors to attach.`,
+		// Keep commas inside --metadata values; --monitor-ids is split by hand below.
+		DisableSliceFlagSeparator: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "access-token",
@@ -211,7 +222,7 @@ picker for the monitors to attach.`,
 
 			params := CreateParams{
 				Name:       cmd.String("name"),
-				MonitorIDs: cmd.StringSlice("monitor-ids"),
+				MonitorIDs: splitMonitorIDs(cmd.StringSlice("monitor-ids")),
 				Metadata:   metadata,
 			}
 

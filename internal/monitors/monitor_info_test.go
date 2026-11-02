@@ -101,6 +101,19 @@ func Test_getMonitorInfo(t *testing.T) {
 		}
 	})
 
+	t.Run("Should work with gRPC monitor", func(t *testing.T) {
+		interceptor := monitorInfoInterceptor([]routeEntry{
+			{"GetMonitor", `{"monitor":{"grpc":{"id":"4001","name":"gRPC Check","uri":"grpc.example.com:443","service":"health.v1","periodicity":"PERIODICITY_5M","regions":["REGION_FLY_IAD"],"active":true,"timeout":10000}}}`},
+			{"GetMonitorStatus", `{"id":"4001","regions":[{"region":"REGION_FLY_IAD","status":"MONITOR_STATUS_ACTIVE"}]}`},
+			{"GetMonitorSummary", `{"id":"4001","totalSuccessful":"10","totalDegraded":"0","totalFailed":"0","p50":"20","p75":"30","p90":"40","p95":"50","p99":"60","timeRange":"TIME_RANGE_1D"}`},
+		})
+
+		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "4001", monitorv1.TimeRange_TIME_RANGE_1D, "1d", nil)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+	})
+
 	t.Run("Should work with TCP monitor and degradedAt", func(t *testing.T) {
 		interceptor := monitorInfoInterceptor([]routeEntry{
 			{"GetMonitor", `{"monitor":{"tcp":{"id":"3001","name":"TCP Check","description":"tcp test","uri":"example.com:443","periodicity":"PERIODICITY_5M","regions":["REGION_FLY_IAD"],"active":true,"public":false,"timeout":10000,"degradedAt":"5000"}}}`},

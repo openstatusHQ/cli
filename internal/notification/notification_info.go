@@ -123,6 +123,11 @@ func extractNotificationData(data *notificationv1.NotificationData) (map[string]
 		return map[string]any{"whatsapp": map[string]any{"phone_number": phone}},
 			[][]string{{"Phone Number", phone}}
 
+	case *notificationv1.NotificationData_MsTeams:
+		url := d.MsTeams.GetWebhookUrl()
+		return map[string]any{"ms_teams": map[string]any{"webhook_url": url}},
+			[][]string{{"Webhook URL", url}}
+
 	default:
 		return map[string]any{}, [][]string{}
 	}

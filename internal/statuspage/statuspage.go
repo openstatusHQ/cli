@@ -37,6 +37,8 @@ func accessTypeToString(a status_pagev1.PageAccessType) string {
 		return "password-protected"
 	case status_pagev1.PageAccessType_PAGE_ACCESS_TYPE_AUTHENTICATED:
 		return "authenticated"
+	case status_pagev1.PageAccessType_PAGE_ACCESS_TYPE_IP_RESTRICTED:
+		return "ip-restricted"
 	default:
 		return "unknown"
 	}
@@ -74,6 +76,14 @@ func localeToString(l status_pagev1.Locale) string {
 		return "fr"
 	case status_pagev1.Locale_LOCALE_DE:
 		return "de"
+	case status_pagev1.Locale_LOCALE_TR:
+		return "tr"
+	case status_pagev1.Locale_LOCALE_HI:
+		return "hi"
+	case status_pagev1.Locale_LOCALE_KO:
+		return "ko"
+	case status_pagev1.Locale_LOCALE_JA:
+		return "ja"
 	default:
 		return "unknown"
 	}

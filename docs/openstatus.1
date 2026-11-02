@@ -186,72 +186,6 @@ Usage:
 .EX
 $ openstatus [GLOBAL FLAGS] monitors [ARGUMENTS...]
 .EE
-.SS \f[CR]monitors create\f[R] subcommand
-Create monitors.
-.RS
-.PP
-openstatus monitors create openstatus monitors create \(enconfig
-custom.yaml \-y
-.RE
-.PP
-Create the monitors defined in the openstatus.yaml file.
-.PP
-Usage:
-.IP
-.EX
-$ openstatus [GLOBAL FLAGS] monitors create [COMMAND FLAGS] [ARGUMENTS...]
-.EE
-.PP
-The following flags are supported:
-.PP
-.TS
-tab(@);
-lw(14.8n) lw(28.1n) lw(4.1n) cw(10.7n) cw(12.3n).
-T{
-Name
-T}@T{
-Description
-T}@T{
-Type
-T}@T{
-Default value
-T}@T{
-Environment variables
-T}
-_
-T{
-\f[CR]\-\-config=\(dq\&...\(dq\f[R] (\f[CR]\-c\f[R])
-T}@T{
-The configuration file containing monitor information
-T}@T{
-string
-T}@T{
-\f[CR]\(dqopenstatus.yaml\(dq\f[R]
-T}@T{
-\f[I]none\f[R]
-T}
-T{
-\f[CR]\-\-access\-token=\(dq\&...\(dq\f[R] (\f[CR]\-t\f[R])
-T}@T{
-OpenStatus API Access Token
-T}@T{
-string
-T}@T{
-T}@T{
-\f[CR]OPENSTATUS_API_TOKEN\f[R]
-T}
-T{
-\f[CR]\-\-auto\-accept\f[R] (\f[CR]\-y\f[R])
-T}@T{
-Automatically accept the prompt
-T}@T{
-bool
-T}@T{
-\f[CR]false\f[R]
-T}@T{
-\f[I]none\f[R]
-T}
-.TE
 .SS \f[CR]monitors delete\f[R] subcommand
 Delete a monitor.
 .RS
@@ -656,7 +590,7 @@ T}
 T{
 \f[CR]\-\-limit=\(dq\&...\(dq\f[R]
 T}@T{
-Maximum number of reports to return (1\-100)
+Maximum number of reports to return (1\-100; all when omitted)
 T}@T{
 int
 T}@T{
@@ -2210,7 +2144,7 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(16.1n) lw(27.8n) lw(4.4n) cw(8.3n) cw(13.3n).
+lw(14.1n) lw(33.1n) lw(3.9n) cw(7.3n) cw(11.7n).
 T{
 Name
 T}@T{
@@ -2246,7 +2180,7 @@ T}
 T{
 \f[CR]\-\-limit=\(dq\&...\(dq\f[R]
 T}@T{
-Maximum number of maintenances to return (1\-100)
+Maximum number of maintenances to return (1\-100; all when omitted)
 T}@T{
 int
 T}@T{
@@ -2580,7 +2514,7 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(17.1n) lw(25.3n) lw(4.7n) cw(8.8n) cw(14.1n).
+lw(14.8n) lw(31.2n) lw(4.1n) cw(7.7n) cw(12.3n).
 T{
 Name
 T}@T{
@@ -2606,7 +2540,7 @@ T}
 T{
 \f[CR]\-\-limit=\(dq\&...\(dq\f[R]
 T}@T{
-Maximum number of pages to return (1\-100)
+Maximum number of pages to return (1\-100; all when omitted)
 T}@T{
 int
 T}@T{
@@ -2681,7 +2615,7 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(16.0n) lw(28.1n) lw(4.4n) cw(8.3n) cw(13.2n).
+lw(14.0n) lw(33.3n) lw(3.9n) cw(7.2n) cw(11.6n).
 T{
 Name
 T}@T{
@@ -2707,7 +2641,7 @@ T}
 T{
 \f[CR]\-\-limit=\(dq\&...\(dq\f[R]
 T}@T{
-Maximum number of notifications to return (1\-100)
+Maximum number of notifications to return (1\-100; all when omitted)
 T}@T{
 int
 T}@T{
@@ -2792,7 +2726,7 @@ The following flags are supported:
 .PP
 .TS
 tab(@);
-lw(15.5n) lw(29.4n) lw(4.3n) cw(8.0n) cw(12.8n).
+lw(13.6n) lw(34.3n) lw(3.8n) cw(7.0n) cw(11.3n).
 T{
 Name
 T}@T{
@@ -2818,7 +2752,7 @@ T}
 T{
 \f[CR]\-\-limit=\(dq\&...\(dq\f[R]
 T}@T{
-Maximum number of private locations to return (1\-100)
+Maximum number of private locations to return (1\-100; all when omitted)
 T}@T{
 int
 T}@T{
@@ -3162,3 +3096,15 @@ T}@T{
 \f[I]none\f[R]
 T}
 .TE
+.SS \f[CR]version\f[R] command
+Print the CLI version.
+.RS
+.PP
+openstatus version
+.RE
+.PP
+Usage:
+.IP
+.EX
+$ openstatus [GLOBAL FLAGS] version [ARGUMENTS...]
+.EE

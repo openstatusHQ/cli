@@ -2,8 +2,11 @@ package privatelocation_test
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
+
+	"github.com/urfave/cli/v3"
 
 	"github.com/openstatusHQ/cli/internal/privatelocation"
 )
@@ -88,5 +91,35 @@ func Test_CreateCmdFlags(t *testing.T) {
 		if !found {
 			t.Errorf("Expected flag '%s' not found", name)
 		}
+	}
+}
+
+func Test_CreateCmdSliceFlags(t *testing.T) {
+	t.Parallel()
+
+	cmd := privatelocation.GetPrivateLocationCreateCmd()
+	var metadata, monitorIDs []string
+	cmd.Action = func(_ context.Context, c *cli.Command) error {
+		metadata = c.StringSlice("metadata")
+		monitorIDs = privatelocation.SplitMonitorIDs(c.StringSlice("monitor-ids"))
+		return nil
+	}
+
+	err := cmd.Run(context.Background(), []string{
+		"create",
+		"--metadata", "note=a,b",
+		"--metadata", "env=prod",
+		"--monitor-ids", "1, 2,,3",
+		"--monitor-ids", "4",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if want := []string{"note=a,b", "env=prod"}; !slices.Equal(metadata, want) {
+		t.Errorf("Expected metadata %v, got %v", want, metadata)
+	}
+	if want := []string{"1", "2", "3", "4"}; !slices.Equal(monitorIDs, want) {
+		t.Errorf("Expected monitor IDs %v, got %v", want, monitorIDs)
 	}
 }

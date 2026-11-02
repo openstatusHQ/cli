@@ -143,7 +143,8 @@ func printSummary(outputDir string, gen *Generator) {
 	tcpCount := len(data.TCPMonitors)
 	dnsCount := len(data.DNSMonitors)
 	icmpCount := len(data.ICMPMonitors)
-	monitorTotal := httpCount + tcpCount + dnsCount + icmpCount
+	grpcCount := len(data.GRPCMonitors)
+	monitorTotal := httpCount + tcpCount + dnsCount + icmpCount + grpcCount
 	plCount := len(data.PrivateLocations)
 
 	pageCount := len(data.StatusPages)
@@ -158,10 +159,7 @@ func printSummary(outputDir string, gen *Generator) {
 
 	fmt.Printf("\nGenerated Terraform configuration in %s\n\n", outputDir)
 	if monitorTotal > 0 {
-		fmt.Printf("  %d monitors (%d HTTP, %d TCP, %d DNS, %d ICMP)\n", monitorTotal, httpCount, tcpCount, dnsCount, icmpCount)
-	}
-	if grpcCount := len(data.GRPCMonitors); grpcCount > 0 {
-		fmt.Printf("  %d gRPC monitors skipped (not supported by the Terraform provider)\n", grpcCount)
+		fmt.Printf("  %d monitors (%d HTTP, %d TCP, %d DNS, %d ICMP, %d gRPC)\n", monitorTotal, httpCount, tcpCount, dnsCount, icmpCount, grpcCount)
 	}
 	if notifCount > 0 {
 		fmt.Printf("  %d notifications\n", notifCount)
@@ -177,5 +175,5 @@ func printSummary(outputDir string, gen *Generator) {
 	fmt.Printf("  cd %s\n", outputDir)
 	fmt.Printf("  terraform init\n")
 	fmt.Printf("  terraform plan\n")
-	fmt.Printf("\nNote: provider version pinned to ~> 0.4. Run 'terraform init -upgrade' if you previously ran this command.\n")
+	fmt.Printf("\nNote: provider version pinned to ~> 0.5. Run 'terraform init -upgrade' if you previously ran this command.\n")
 }

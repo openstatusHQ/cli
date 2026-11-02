@@ -26,12 +26,10 @@ type StatusPageData struct {
 }
 
 type WorkspaceData struct {
-	HTTPMonitors []*monitorv1.HTTPMonitor
-	TCPMonitors  []*monitorv1.TCPMonitor
-	DNSMonitors  []*monitorv1.DNSMonitor
-	ICMPMonitors []*monitorv1.ICMPMonitor
-	// GRPCMonitors are fetched only to warn about them: the Terraform provider
-	// has no gRPC monitor resource yet.
+	HTTPMonitors     []*monitorv1.HTTPMonitor
+	TCPMonitors      []*monitorv1.TCPMonitor
+	DNSMonitors      []*monitorv1.DNSMonitor
+	ICMPMonitors     []*monitorv1.ICMPMonitor
 	GRPCMonitors     []*monitorv1.GRPCMonitor
 	Notifications    []*notificationv1.Notification
 	StatusPages      []StatusPageData

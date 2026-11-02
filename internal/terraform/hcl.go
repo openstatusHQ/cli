@@ -31,6 +31,7 @@ type Generator struct {
 	tcpMonitorNames      map[string]string
 	dnsMonitorNames      map[string]string
 	icmpMonitorNames     map[string]string
+	grpcMonitorNames     map[string]string
 	notifNames           map[string]string
 	pageNames            map[string]string
 	componentNames       map[string]string
@@ -50,6 +51,7 @@ func NewGenerator(data *WorkspaceData) *Generator {
 		tcpMonitorNames:      make(map[string]string),
 		dnsMonitorNames:      make(map[string]string),
 		icmpMonitorNames:     make(map[string]string),
+		grpcMonitorNames:     make(map[string]string),
 		notifNames:           make(map[string]string),
 		pageNames:            make(map[string]string),
 		componentNames:       make(map[string]string),
@@ -79,7 +81,9 @@ func NewGenerator(data *WorkspaceData) *Generator {
 		g.monitorRefs[m.GetId()] = resourceRef{"openstatus_icmp_monitor", name}
 	}
 	for _, m := range data.GRPCMonitors {
-		fmt.Fprintf(os.Stderr, "warning: skipping gRPC monitor %q (ID: %s) — the Terraform provider does not support gRPC monitors yet; references to it are kept as raw IDs\n", m.GetName(), m.GetId())
+		name := g.registry.Name("openstatus_grpc_monitor", m.GetName())
+		g.grpcMonitorNames[m.GetId()] = name
+		g.monitorRefs[m.GetId()] = resourceRef{"openstatus_grpc_monitor", name}
 	}
 	for _, n := range data.Notifications {
 		if _, ok := renderableNotification(n); !ok {
@@ -125,7 +129,7 @@ func GenerateProviderFile(baseURL string) []byte {
   required_providers {
     openstatus = {
       source  = "openstatusHQ/openstatus"
-      version = "~> 0.4"
+      version = "~> 0.5"
     }
   }
 }
@@ -274,6 +278,43 @@ func (g *Generator) GenerateMonitorsFile() *hclwrite.File {
 		}
 
 		writeRegions(b, m.GetRegions())
+		writeOpenTelemetry(b, m.GetOpenTelemetry())
+
+		body.AppendNewline()
+	}
+
+	for _, m := range g.data.GRPCMonitors {
+		name := g.grpcMonitorNames[m.GetId()]
+		block := body.AppendNewBlock("resource", []string{"openstatus_grpc_monitor", name})
+		b := block.Body()
+
+		b.SetAttributeValue("name", cty.StringVal(m.GetName()))
+		b.SetAttributeValue("uri", cty.StringVal(m.GetUri()))
+		b.SetAttributeValue("periodicity", cty.StringVal(periodicityToString(m.GetPeriodicity())))
+
+		if m.GetService() != "" {
+			b.SetAttributeValue("service", cty.StringVal(m.GetService()))
+		}
+		if mode := grpcTLSModeToString(m.GetTlsMode()); mode != "tls" {
+			b.SetAttributeValue("tls_mode", cty.StringVal(mode))
+		}
+		if m.GetTimeout() != 45000 {
+			b.SetAttributeValue("timeout", cty.NumberIntVal(m.GetTimeout()))
+		}
+		if m.GetDegradedAt() != 0 {
+			b.SetAttributeValue("degraded_at", cty.NumberIntVal(m.GetDegradedAt()))
+		}
+		if m.GetRetry() != 3 {
+			b.SetAttributeValue("retry", cty.NumberIntVal(m.GetRetry()))
+		}
+		b.SetAttributeValue("active", cty.BoolVal(m.GetActive()))
+		b.SetAttributeValue("public", cty.BoolVal(m.GetPublic()))
+		if m.GetDescription() != "" {
+			b.SetAttributeValue("description", cty.StringVal(m.GetDescription()))
+		}
+
+		writeRegions(b, m.GetRegions())
+		writeKeyValueBlocks(b, "metadata", m.GetMetadata())
 		writeOpenTelemetry(b, m.GetOpenTelemetry())
 
 		body.AppendNewline()
@@ -622,6 +663,9 @@ func (g *Generator) GenerateImportsFile() *hclwrite.File {
 	for _, m := range g.data.ICMPMonitors {
 		writeImportBlock(body, "openstatus_icmp_monitor", g.icmpMonitorNames[m.GetId()], m.GetId())
 	}
+	for _, m := range g.data.GRPCMonitors {
+		writeImportBlock(body, "openstatus_grpc_monitor", g.grpcMonitorNames[m.GetId()], m.GetId())
+	}
 	for _, n := range g.data.Notifications {
 		if g.skippedNotifications[n.GetId()] {
 			continue
@@ -646,7 +690,7 @@ func (g *Generator) GenerateImportsFile() *hclwrite.File {
 }
 
 func (g *Generator) TotalResourceCount() int {
-	count := len(g.data.HTTPMonitors) + len(g.data.TCPMonitors) + len(g.data.DNSMonitors) + len(g.data.ICMPMonitors) + len(g.notifNames)
+	count := len(g.data.HTTPMonitors) + len(g.data.TCPMonitors) + len(g.data.DNSMonitors) + len(g.data.ICMPMonitors) + len(g.data.GRPCMonitors) + len(g.notifNames)
 	for _, sp := range g.data.StatusPages {
 		count += 1 + len(sp.Components) + len(sp.Groups)
 	}
@@ -655,7 +699,7 @@ func (g *Generator) TotalResourceCount() int {
 }
 
 func (g *Generator) HasMonitors() bool {
-	return len(g.data.HTTPMonitors) > 0 || len(g.data.TCPMonitors) > 0 || len(g.data.DNSMonitors) > 0 || len(g.data.ICMPMonitors) > 0
+	return len(g.data.HTTPMonitors) > 0 || len(g.data.TCPMonitors) > 0 || len(g.data.DNSMonitors) > 0 || len(g.data.ICMPMonitors) > 0 || len(g.data.GRPCMonitors) > 0
 }
 
 // NotificationCount is the number of notifications that will be rendered.
@@ -773,11 +817,17 @@ func writeOpenTelemetry(b *hclwrite.Body, ot *monitorv1.OpenTelemetryConfig) {
 }
 
 func writeHeaders(b *hclwrite.Body, headers []*monitorv1.Headers) {
+	writeKeyValueBlocks(b, "headers", headers)
+}
+
+// writeKeyValueBlocks emits one key/value block per entry, e.g. HTTP headers
+// or gRPC metadata.
+func writeKeyValueBlocks(b *hclwrite.Body, blockName string, headers []*monitorv1.Headers) {
 	for _, h := range headers {
 		if h.GetKey() == "" {
 			continue
 		}
-		hb := b.AppendNewBlock("headers", nil).Body()
+		hb := b.AppendNewBlock(blockName, nil).Body()
 		hb.SetAttributeValue("key", cty.StringVal(h.GetKey()))
 		hb.SetAttributeValue("value", cty.StringVal(h.GetValue()))
 	}

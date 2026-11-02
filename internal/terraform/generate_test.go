@@ -1032,3 +1032,43 @@ func mustNotContain(t *testing.T, content, substr string) {
 		t.Errorf("expected output NOT to contain %q, got:\n%s", substr, content)
 	}
 }
+
+func TestGenerateMonitorsFile_GRPC_UnknownTLSModeSkipped(t *testing.T) {
+	known := &monitorv1.GRPCMonitor{}
+	known.SetId("1")
+	known.SetName("Known")
+	unknown := &monitorv1.GRPCMonitor{}
+	unknown.SetId("2")
+	unknown.SetName("Future mTLS")
+	unknown.SetTlsMode(monitorv1.GRPCTlsMode(99))
+
+	data := &WorkspaceData{GRPCMonitors: []*monitorv1.GRPCMonitor{known, unknown}}
+	gen := NewGenerator(data)
+
+	mustNotContain(t, string(gen.GenerateMonitorsFile().Bytes()), "future_mtls")
+	mustNotContain(t, string(gen.GenerateImportsFile().Bytes()), `id = "2"`)
+	if got := gen.TotalResourceCount(); got != 1 {
+		t.Errorf("TotalResourceCount() = %d, want 1", got)
+	}
+	if len(data.GRPCMonitors) != 2 {
+		t.Errorf("caller's WorkspaceData was modified: %d gRPC monitors, want 2", len(data.GRPCMonitors))
+	}
+}
+
+func TestGenerateMonitorsFile_GRPC_MetadataEmptyKeyKept(t *testing.T) {
+	emptyKey := &monitorv1.Headers{}
+	emptyKey.SetValue("x")
+	bothEmpty := &monitorv1.Headers{}
+
+	m := &monitorv1.GRPCMonitor{}
+	m.SetId("1")
+	m.SetName("gRPC")
+	m.SetMetadata([]*monitorv1.Headers{emptyKey, bothEmpty})
+
+	content := string(NewGenerator(&WorkspaceData{GRPCMonitors: []*monitorv1.GRPCMonitor{m}}).GenerateMonitorsFile().Bytes())
+
+	if got := strings.Count(content, "metadata {"); got != 1 {
+		t.Errorf("metadata blocks = %d, want 1 (only the both-empty entry is dropped):\n%s", got, content)
+	}
+	mustContain(t, content, `value = "x"`)
+}

@@ -41,6 +41,7 @@ type Generator struct {
 }
 
 func NewGenerator(data *WorkspaceData) *Generator {
+	data = withoutUnrenderableGRPCMonitors(data)
 	g := &Generator{
 		data:                 data,
 		registry:             NewNameRegistry(),
@@ -118,6 +119,27 @@ func NewGenerator(data *WorkspaceData) *Generator {
 	return g
 }
 
+// withoutUnrenderableGRPCMonitors drops gRPC monitors whose TLS mode this CLI
+// doesn't know. Emitting them would omit tls_mode and let the provider default
+// ("tls") overwrite the real mode on the next apply. The caller's data is not
+// modified.
+func withoutUnrenderableGRPCMonitors(data *WorkspaceData) *WorkspaceData {
+	kept := make([]*monitorv1.GRPCMonitor, 0, len(data.GRPCMonitors))
+	for _, m := range data.GRPCMonitors {
+		if _, ok := grpcTLSModeToString(m.GetTlsMode()); !ok {
+			fmt.Fprintf(os.Stderr, "warning: skipping gRPC monitor %q — unknown TLS mode (CLI may be outdated)\n", m.GetName())
+			continue
+		}
+		kept = append(kept, m)
+	}
+	if len(kept) == len(data.GRPCMonitors) {
+		return data
+	}
+	filtered := *data
+	filtered.GRPCMonitors = kept
+	return &filtered
+}
+
 // GenerateProviderFile pins base_url when baseURL is not openstatus Cloud,
 // since the provider does not read OPENSTATUS_API_URL.
 func GenerateProviderFile(baseURL string) []byte {
@@ -157,27 +179,12 @@ func (g *Generator) GenerateMonitorsFile() *hclwrite.File {
 		if m.GetBody() != "" {
 			b.SetAttributeValue("body", cty.StringVal(m.GetBody()))
 		}
-		if m.GetTimeout() != 45000 {
-			b.SetAttributeValue("timeout", cty.NumberIntVal(m.GetTimeout()))
-		}
-		if m.GetDegradedAt() != 0 {
-			b.SetAttributeValue("degraded_at", cty.NumberIntVal(m.GetDegradedAt()))
-		}
-		if m.GetRetry() != 3 {
-			b.SetAttributeValue("retry", cty.NumberIntVal(m.GetRetry()))
-		}
 		// Unset means the API default (true), not false.
 		if m.HasFollowRedirects() && !m.GetFollowRedirects() {
 			b.SetAttributeValue("follow_redirects", cty.BoolVal(false))
 		}
-		b.SetAttributeValue("active", cty.BoolVal(m.GetActive()))
-		b.SetAttributeValue("public", cty.BoolVal(m.GetPublic()))
-		if m.GetDescription() != "" {
-			b.SetAttributeValue("description", cty.StringVal(m.GetDescription()))
-		}
-
-		writeRegions(b, m.GetRegions())
-		writeHeaders(b, m.GetHeaders())
+		writeCommonMonitorFields(b, m)
+		writeKeyValueBlocks(b, "headers", m.GetHeaders())
 		writeStatusCodeAssertions(b, m.GetStatusCodeAssertions())
 		writeBodyAssertions(b, m.GetBodyAssertions())
 		writeHeaderAssertions(b, m.GetHeaderAssertions())
@@ -194,23 +201,7 @@ func (g *Generator) GenerateMonitorsFile() *hclwrite.File {
 		b.SetAttributeValue("name", cty.StringVal(m.GetName()))
 		b.SetAttributeValue("uri", cty.StringVal(m.GetUri()))
 		b.SetAttributeValue("periodicity", cty.StringVal(periodicityToString(m.GetPeriodicity())))
-
-		if m.GetTimeout() != 45000 {
-			b.SetAttributeValue("timeout", cty.NumberIntVal(m.GetTimeout()))
-		}
-		if m.GetDegradedAt() != 0 {
-			b.SetAttributeValue("degraded_at", cty.NumberIntVal(m.GetDegradedAt()))
-		}
-		if m.GetRetry() != 3 {
-			b.SetAttributeValue("retry", cty.NumberIntVal(m.GetRetry()))
-		}
-		b.SetAttributeValue("active", cty.BoolVal(m.GetActive()))
-		b.SetAttributeValue("public", cty.BoolVal(m.GetPublic()))
-		if m.GetDescription() != "" {
-			b.SetAttributeValue("description", cty.StringVal(m.GetDescription()))
-		}
-
-		writeRegions(b, m.GetRegions())
+		writeCommonMonitorFields(b, m)
 		writeOpenTelemetry(b, m.GetOpenTelemetry())
 
 		body.AppendNewline()
@@ -224,23 +215,7 @@ func (g *Generator) GenerateMonitorsFile() *hclwrite.File {
 		b.SetAttributeValue("name", cty.StringVal(m.GetName()))
 		b.SetAttributeValue("uri", cty.StringVal(m.GetUri()))
 		b.SetAttributeValue("periodicity", cty.StringVal(periodicityToString(m.GetPeriodicity())))
-
-		if m.GetTimeout() != 45000 {
-			b.SetAttributeValue("timeout", cty.NumberIntVal(m.GetTimeout()))
-		}
-		if m.GetDegradedAt() != 0 {
-			b.SetAttributeValue("degraded_at", cty.NumberIntVal(m.GetDegradedAt()))
-		}
-		if m.GetRetry() != 3 {
-			b.SetAttributeValue("retry", cty.NumberIntVal(m.GetRetry()))
-		}
-		b.SetAttributeValue("active", cty.BoolVal(m.GetActive()))
-		b.SetAttributeValue("public", cty.BoolVal(m.GetPublic()))
-		if m.GetDescription() != "" {
-			b.SetAttributeValue("description", cty.StringVal(m.GetDescription()))
-		}
-
-		writeRegions(b, m.GetRegions())
+		writeCommonMonitorFields(b, m)
 
 		for _, a := range m.GetRecordAssertions() {
 			ab := b.AppendNewBlock("record_assertions", nil).Body()
@@ -261,23 +236,7 @@ func (g *Generator) GenerateMonitorsFile() *hclwrite.File {
 		b.SetAttributeValue("name", cty.StringVal(m.GetName()))
 		b.SetAttributeValue("uri", cty.StringVal(m.GetUri()))
 		b.SetAttributeValue("periodicity", cty.StringVal(periodicityToString(m.GetPeriodicity())))
-
-		if m.GetTimeout() != 45000 {
-			b.SetAttributeValue("timeout", cty.NumberIntVal(m.GetTimeout()))
-		}
-		if m.GetDegradedAt() != 0 {
-			b.SetAttributeValue("degraded_at", cty.NumberIntVal(m.GetDegradedAt()))
-		}
-		if m.GetRetry() != 3 {
-			b.SetAttributeValue("retry", cty.NumberIntVal(m.GetRetry()))
-		}
-		b.SetAttributeValue("active", cty.BoolVal(m.GetActive()))
-		b.SetAttributeValue("public", cty.BoolVal(m.GetPublic()))
-		if m.GetDescription() != "" {
-			b.SetAttributeValue("description", cty.StringVal(m.GetDescription()))
-		}
-
-		writeRegions(b, m.GetRegions())
+		writeCommonMonitorFields(b, m)
 		writeOpenTelemetry(b, m.GetOpenTelemetry())
 
 		body.AppendNewline()
@@ -295,25 +254,11 @@ func (g *Generator) GenerateMonitorsFile() *hclwrite.File {
 		if m.GetService() != "" {
 			b.SetAttributeValue("service", cty.StringVal(m.GetService()))
 		}
-		if mode := grpcTLSModeToString(m.GetTlsMode()); mode != "tls" {
+		// Unknown modes were filtered out in NewGenerator.
+		if mode, _ := grpcTLSModeToString(m.GetTlsMode()); mode != "tls" {
 			b.SetAttributeValue("tls_mode", cty.StringVal(mode))
 		}
-		if m.GetTimeout() != 45000 {
-			b.SetAttributeValue("timeout", cty.NumberIntVal(m.GetTimeout()))
-		}
-		if m.GetDegradedAt() != 0 {
-			b.SetAttributeValue("degraded_at", cty.NumberIntVal(m.GetDegradedAt()))
-		}
-		if m.GetRetry() != 3 {
-			b.SetAttributeValue("retry", cty.NumberIntVal(m.GetRetry()))
-		}
-		b.SetAttributeValue("active", cty.BoolVal(m.GetActive()))
-		b.SetAttributeValue("public", cty.BoolVal(m.GetPublic()))
-		if m.GetDescription() != "" {
-			b.SetAttributeValue("description", cty.StringVal(m.GetDescription()))
-		}
-
-		writeRegions(b, m.GetRegions())
+		writeCommonMonitorFields(b, m)
 		writeKeyValueBlocks(b, "metadata", m.GetMetadata())
 		writeOpenTelemetry(b, m.GetOpenTelemetry())
 
@@ -723,6 +668,37 @@ func (g *Generator) HasPrivateLocations() bool {
 
 // helpers
 
+// commonMonitor is the set of fields every monitor type shares.
+type commonMonitor interface {
+	GetTimeout() int64
+	GetDegradedAt() int64
+	GetRetry() int64
+	GetActive() bool
+	GetPublic() bool
+	GetDescription() string
+	GetRegions() []monitorv1.Region
+}
+
+// writeCommonMonitorFields omits timeout, degraded_at and retry at their
+// provider defaults so imports plan with no changes.
+func writeCommonMonitorFields(b *hclwrite.Body, m commonMonitor) {
+	if m.GetTimeout() != 45000 {
+		b.SetAttributeValue("timeout", cty.NumberIntVal(m.GetTimeout()))
+	}
+	if m.GetDegradedAt() != 0 {
+		b.SetAttributeValue("degraded_at", cty.NumberIntVal(m.GetDegradedAt()))
+	}
+	if m.GetRetry() != 3 {
+		b.SetAttributeValue("retry", cty.NumberIntVal(m.GetRetry()))
+	}
+	b.SetAttributeValue("active", cty.BoolVal(m.GetActive()))
+	b.SetAttributeValue("public", cty.BoolVal(m.GetPublic()))
+	if m.GetDescription() != "" {
+		b.SetAttributeValue("description", cty.StringVal(m.GetDescription()))
+	}
+	writeRegions(b, m.GetRegions())
+}
+
 func writeRegions(b *hclwrite.Body, regions []monitorv1.Region) {
 	if len(regions) == 0 {
 		return
@@ -806,25 +782,15 @@ func writeOpenTelemetry(b *hclwrite.Body, ot *monitorv1.OpenTelemetryConfig) {
 	if endpoint != "" {
 		otb.SetAttributeValue("endpoint", cty.StringVal(endpoint))
 	}
-	for _, h := range headers {
-		if h.GetKey() == "" {
-			continue
-		}
-		hb := otb.AppendNewBlock("headers", nil).Body()
-		hb.SetAttributeValue("key", cty.StringVal(h.GetKey()))
-		hb.SetAttributeValue("value", cty.StringVal(h.GetValue()))
-	}
-}
-
-func writeHeaders(b *hclwrite.Body, headers []*monitorv1.Headers) {
-	writeKeyValueBlocks(b, "headers", headers)
+	writeKeyValueBlocks(otb, "headers", headers)
 }
 
 // writeKeyValueBlocks emits one key/value block per entry, e.g. HTTP headers
-// or gRPC metadata.
+// or gRPC metadata. Like the provider's Read, it drops only entries whose key
+// and value are both empty; dropping more would show a diff right after import.
 func writeKeyValueBlocks(b *hclwrite.Body, blockName string, headers []*monitorv1.Headers) {
 	for _, h := range headers {
-		if h.GetKey() == "" {
+		if h.GetKey() == "" && h.GetValue() == "" {
 			continue
 		}
 		hb := b.AppendNewBlock(blockName, nil).Body()

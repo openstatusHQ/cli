@@ -179,6 +179,28 @@ func grpcMonitorToLocal(m *monitorv1.GRPCMonitor) (Monitor, error) {
 	}, nil
 }
 
+// heartbeatMonitorToLocal leaves out the ping URL: it works without
+// authentication, so it must not end up in terminal output or logs.
+func heartbeatMonitorToLocal(m *monitorv1.HeartbeatMonitor) (Monitor, error) {
+	id, err := strconv.Atoi(m.GetId())
+	if err != nil {
+		return Monitor{}, output.UsageErrorf("invalid monitor ID %q: %w", m.GetId(), err)
+	}
+	return Monitor{
+		ID:           id,
+		Name:         m.GetName(),
+		Description:  m.GetDescription(),
+		Regions:      []string{},
+		Active:       m.GetActive(),
+		Public:       m.GetPublic(),
+		JobType:      "heartbeat",
+		Period:       m.GetPeriod(),
+		Grace:        m.GetGrace(),
+		LastPingAt:   m.GetLastPingAt(),
+		LastPingKind: heartbeatPingKindToString(m.GetLastPingKind()),
+	}, nil
+}
+
 // convertNumberComparator converts SDK NumberComparator to config.Compare
 func convertNumberComparator(c monitorv1.NumberComparator) config.Compare {
 	switch c {

@@ -27,38 +27,40 @@ type Generator struct {
 	pageRefs    map[string]resourceRef
 	groupRefs   map[string]resourceRef
 
-	httpMonitorNames     map[string]string
-	tcpMonitorNames      map[string]string
-	dnsMonitorNames      map[string]string
-	icmpMonitorNames     map[string]string
-	grpcMonitorNames     map[string]string
-	notifNames           map[string]string
-	pageNames            map[string]string
-	componentNames       map[string]string
-	groupNames           map[string]string
-	privateLocationNames map[string]string
-	skippedNotifications map[string]bool
+	httpMonitorNames      map[string]string
+	tcpMonitorNames       map[string]string
+	dnsMonitorNames       map[string]string
+	icmpMonitorNames      map[string]string
+	grpcMonitorNames      map[string]string
+	heartbeatMonitorNames map[string]string
+	notifNames            map[string]string
+	pageNames             map[string]string
+	componentNames        map[string]string
+	groupNames            map[string]string
+	privateLocationNames  map[string]string
+	skippedNotifications  map[string]bool
 }
 
 func NewGenerator(data *WorkspaceData) *Generator {
 	data = withoutUnrenderableGRPCMonitors(data)
 	g := &Generator{
-		data:                 data,
-		registry:             NewNameRegistry(),
-		monitorRefs:          make(map[string]resourceRef),
-		pageRefs:             make(map[string]resourceRef),
-		groupRefs:            make(map[string]resourceRef),
-		httpMonitorNames:     make(map[string]string),
-		tcpMonitorNames:      make(map[string]string),
-		dnsMonitorNames:      make(map[string]string),
-		icmpMonitorNames:     make(map[string]string),
-		grpcMonitorNames:     make(map[string]string),
-		notifNames:           make(map[string]string),
-		pageNames:            make(map[string]string),
-		componentNames:       make(map[string]string),
-		groupNames:           make(map[string]string),
-		privateLocationNames: make(map[string]string),
-		skippedNotifications: make(map[string]bool),
+		data:                  data,
+		registry:              NewNameRegistry(),
+		monitorRefs:           make(map[string]resourceRef),
+		pageRefs:              make(map[string]resourceRef),
+		groupRefs:             make(map[string]resourceRef),
+		httpMonitorNames:      make(map[string]string),
+		tcpMonitorNames:       make(map[string]string),
+		dnsMonitorNames:       make(map[string]string),
+		icmpMonitorNames:      make(map[string]string),
+		grpcMonitorNames:      make(map[string]string),
+		heartbeatMonitorNames: make(map[string]string),
+		notifNames:            make(map[string]string),
+		pageNames:             make(map[string]string),
+		componentNames:        make(map[string]string),
+		groupNames:            make(map[string]string),
+		privateLocationNames:  make(map[string]string),
+		skippedNotifications:  make(map[string]bool),
 	}
 
 	for _, m := range data.HTTPMonitors {
@@ -85,6 +87,11 @@ func NewGenerator(data *WorkspaceData) *Generator {
 		name := g.registry.Name("openstatus_grpc_monitor", m.GetName())
 		g.grpcMonitorNames[m.GetId()] = name
 		g.monitorRefs[m.GetId()] = resourceRef{"openstatus_grpc_monitor", name}
+	}
+	for _, m := range data.HeartbeatMonitors {
+		name := g.registry.Name("openstatus_heartbeat_monitor", m.GetName())
+		g.heartbeatMonitorNames[m.GetId()] = name
+		g.monitorRefs[m.GetId()] = resourceRef{"openstatus_heartbeat_monitor", name}
 	}
 	for _, n := range data.Notifications {
 		if _, ok := renderableNotification(n); !ok {
@@ -151,7 +158,7 @@ func GenerateProviderFile(baseURL string) []byte {
   required_providers {
     openstatus = {
       source  = "openstatusHQ/openstatus"
-      version = "~> 0.5"
+      version = "~> 0.6"
     }
   }
 }
@@ -261,6 +268,25 @@ func (g *Generator) GenerateMonitorsFile() *hclwrite.File {
 		writeCommonMonitorFields(b, m)
 		writeKeyValueBlocks(b, "metadata", m.GetMetadata())
 		writeOpenTelemetry(b, m.GetOpenTelemetry())
+
+		body.AppendNewline()
+	}
+
+	// ping_url is left out: it is computed by the provider, and it is a secret
+	// that should not land in version-controlled configuration.
+	for _, m := range g.data.HeartbeatMonitors {
+		name := g.heartbeatMonitorNames[m.GetId()]
+		block := body.AppendNewBlock("resource", []string{"openstatus_heartbeat_monitor", name})
+		b := block.Body()
+
+		b.SetAttributeValue("name", cty.StringVal(m.GetName()))
+		b.SetAttributeValue("period", cty.NumberIntVal(m.GetPeriod()))
+		b.SetAttributeValue("grace", cty.NumberIntVal(m.GetGrace()))
+		b.SetAttributeValue("active", cty.BoolVal(m.GetActive()))
+		b.SetAttributeValue("public", cty.BoolVal(m.GetPublic()))
+		if m.GetDescription() != "" {
+			b.SetAttributeValue("description", cty.StringVal(m.GetDescription()))
+		}
 
 		body.AppendNewline()
 	}
@@ -611,6 +637,9 @@ func (g *Generator) GenerateImportsFile() *hclwrite.File {
 	for _, m := range g.data.GRPCMonitors {
 		writeImportBlock(body, "openstatus_grpc_monitor", g.grpcMonitorNames[m.GetId()], m.GetId())
 	}
+	for _, m := range g.data.HeartbeatMonitors {
+		writeImportBlock(body, "openstatus_heartbeat_monitor", g.heartbeatMonitorNames[m.GetId()], m.GetId())
+	}
 	for _, n := range g.data.Notifications {
 		if g.skippedNotifications[n.GetId()] {
 			continue
@@ -635,7 +664,7 @@ func (g *Generator) GenerateImportsFile() *hclwrite.File {
 }
 
 func (g *Generator) TotalResourceCount() int {
-	count := len(g.data.HTTPMonitors) + len(g.data.TCPMonitors) + len(g.data.DNSMonitors) + len(g.data.ICMPMonitors) + len(g.data.GRPCMonitors) + len(g.notifNames)
+	count := len(g.data.HTTPMonitors) + len(g.data.TCPMonitors) + len(g.data.DNSMonitors) + len(g.data.ICMPMonitors) + len(g.data.GRPCMonitors) + len(g.data.HeartbeatMonitors) + len(g.notifNames)
 	for _, sp := range g.data.StatusPages {
 		count += 1 + len(sp.Components) + len(sp.Groups)
 	}
@@ -644,7 +673,7 @@ func (g *Generator) TotalResourceCount() int {
 }
 
 func (g *Generator) HasMonitors() bool {
-	return len(g.data.HTTPMonitors) > 0 || len(g.data.TCPMonitors) > 0 || len(g.data.DNSMonitors) > 0 || len(g.data.ICMPMonitors) > 0 || len(g.data.GRPCMonitors) > 0
+	return len(g.data.HTTPMonitors) > 0 || len(g.data.TCPMonitors) > 0 || len(g.data.DNSMonitors) > 0 || len(g.data.ICMPMonitors) > 0 || len(g.data.GRPCMonitors) > 0 || len(g.data.HeartbeatMonitors) > 0
 }
 
 // NotificationCount is the number of notifications that will be rendered.

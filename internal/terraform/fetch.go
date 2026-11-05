@@ -26,14 +26,15 @@ type StatusPageData struct {
 }
 
 type WorkspaceData struct {
-	HTTPMonitors     []*monitorv1.HTTPMonitor
-	TCPMonitors      []*monitorv1.TCPMonitor
-	DNSMonitors      []*monitorv1.DNSMonitor
-	ICMPMonitors     []*monitorv1.ICMPMonitor
-	GRPCMonitors     []*monitorv1.GRPCMonitor
-	Notifications    []*notificationv1.Notification
-	StatusPages      []StatusPageData
-	PrivateLocations []*private_locationv1.PrivateLocation
+	HTTPMonitors      []*monitorv1.HTTPMonitor
+	TCPMonitors       []*monitorv1.TCPMonitor
+	DNSMonitors       []*monitorv1.DNSMonitor
+	ICMPMonitors      []*monitorv1.ICMPMonitor
+	GRPCMonitors      []*monitorv1.GRPCMonitor
+	HeartbeatMonitors []*monitorv1.HeartbeatMonitor
+	Notifications     []*notificationv1.Notification
+	StatusPages       []StatusPageData
+	PrivateLocations  []*private_locationv1.PrivateLocation
 }
 
 func FetchWorkspaceData(ctx context.Context, apiKey string) (*WorkspaceData, error) {
@@ -57,6 +58,7 @@ func FetchWorkspaceDataWithHTTPClient(ctx context.Context, httpClient *http.Clie
 	data.DNSMonitors = monitorResp.GetDnsMonitors()
 	data.ICMPMonitors = monitorResp.GetIcmpMonitors()
 	data.GRPCMonitors = monitorResp.GetGrpcMonitors()
+	data.HeartbeatMonitors = monitorResp.GetHeartbeatMonitors()
 
 	// Notifications
 	notifClient := notificationv1connect.NewNotificationServiceClient(httpClient, api.ConnectBaseURL, interceptor, protoJSON)

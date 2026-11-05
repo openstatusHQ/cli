@@ -5,8 +5,8 @@ go 1.26.0
 require github.com/urfave/cli/v3 v3.9.0 // direct
 
 require (
-	buf.build/gen/go/openstatus/api/connectrpc/gosimple v1.21.1-20261016131942-404d544bfc59.1
-	buf.build/gen/go/openstatus/api/protocolbuffers/go v1.36.12-20261016131942-404d544bfc59.2
+	buf.build/gen/go/openstatus/api/connectrpc/gosimple v1.21.1-20261105102303-642dc65c5c80.1
+	buf.build/gen/go/openstatus/api/protocolbuffers/go v1.36.12-20261105102303-642dc65c5c80.2
 	connectrpc.com/connect v1.21.1
 	github.com/briandowns/spinner v1.23.2
 	github.com/charmbracelet/huh v1.0.0

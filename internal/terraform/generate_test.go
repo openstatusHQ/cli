@@ -15,7 +15,7 @@ import (
 func TestGenerateProviderFile(t *testing.T) {
 	content := string(GenerateProviderFile(api.DefaultBaseURL))
 	mustContain(t, content, `source  = "openstatusHQ/openstatus"`)
-	mustContain(t, content, `version = "~> 0.5"`)
+	mustContain(t, content, `version = "~> 0.6"`)
 	mustContain(t, content, `provider "openstatus" {}`)
 	mustContain(t, content, `OPENSTATUS_API_TOKEN`)
 	mustNotContain(t, content, `base_url`)
@@ -572,6 +572,94 @@ func TestCrossReferenceGRPCMonitorInNotification(t *testing.T) {
 
 	mustContain(t, content, "openstatus_grpc_monitor.grpc_api.id")
 	mustNotContain(t, content, `"mon-grpc"`)
+}
+
+func newHeartbeatMonitor(id, name string) *monitorv1.HeartbeatMonitor {
+	m := &monitorv1.HeartbeatMonitor{}
+	m.SetId(id)
+	m.SetName(name)
+	m.SetPeriod(86400)
+	m.SetGrace(1800)
+	m.SetPingUrl("https://ping.example.com/secret-token")
+	return m
+}
+
+func TestGenerateMonitorsFile_Heartbeat(t *testing.T) {
+	m := newHeartbeatMonitor("hb1", "Nightly backup")
+	m.SetDescription("Dumps the production database")
+	m.SetActive(true)
+
+	gen := NewGenerator(&WorkspaceData{HeartbeatMonitors: []*monitorv1.HeartbeatMonitor{m}})
+	content := string(gen.GenerateMonitorsFile().Bytes())
+
+	mustContain(t, content, `resource "openstatus_heartbeat_monitor" "nightly_backup"`)
+	mustContain(t, content, `name        = "Nightly backup"`)
+	mustContain(t, content, `period      = 86400`)
+	mustContain(t, content, `grace       = 1800`)
+	mustContain(t, content, `active      = true`)
+	mustContain(t, content, `public      = false`)
+	mustContain(t, content, `description = "Dumps the production database"`)
+	if !gen.HasMonitors() {
+		t.Error("HasMonitors() should be true")
+	}
+}
+
+func TestGenerateMonitorsFile_Heartbeat_NoEmptyDescription(t *testing.T) {
+	m := newHeartbeatMonitor("hb1", "Nightly backup")
+
+	content := string(NewGenerator(&WorkspaceData{HeartbeatMonitors: []*monitorv1.HeartbeatMonitor{m}}).GenerateMonitorsFile().Bytes())
+
+	mustNotContain(t, content, "description")
+}
+
+// The ping URL needs no authentication, and these files get committed.
+func TestGenerate_HeartbeatPingURLNotWritten(t *testing.T) {
+	m := newHeartbeatMonitor("hb1", "Nightly backup")
+	gen := NewGenerator(&WorkspaceData{HeartbeatMonitors: []*monitorv1.HeartbeatMonitor{m}})
+
+	for _, content := range []string{
+		string(gen.GenerateMonitorsFile().Bytes()),
+		string(gen.GenerateImportsFile().Bytes()),
+	} {
+		mustNotContain(t, content, "ping_url")
+		mustNotContain(t, content, "secret-token")
+	}
+}
+
+func TestGenerateImportsFile_Heartbeat(t *testing.T) {
+	m := newHeartbeatMonitor("4242", "Nightly backup")
+
+	gen := NewGenerator(&WorkspaceData{HeartbeatMonitors: []*monitorv1.HeartbeatMonitor{m}})
+	content := string(gen.GenerateImportsFile().Bytes())
+
+	mustContain(t, content, "to = openstatus_heartbeat_monitor.nightly_backup")
+	mustContain(t, content, `id = "4242"`)
+	if got := gen.TotalResourceCount(); got != 1 {
+		t.Errorf("TotalResourceCount() = %d, want 1", got)
+	}
+}
+
+func TestCrossReferenceHeartbeatMonitor(t *testing.T) {
+	m := newHeartbeatMonitor("mon-hb", "Nightly backup")
+
+	slack := &notificationv1.SlackData{}
+	slack.SetWebhookUrl("https://hooks.slack.com/x")
+	nd := &notificationv1.NotificationData{}
+	nd.SetSlack(slack)
+	n := &notificationv1.Notification{}
+	n.SetId("n1")
+	n.SetName("Slack")
+	n.SetData(nd)
+	n.SetMonitorIds([]string{"mon-hb"})
+
+	gen := NewGenerator(&WorkspaceData{
+		HeartbeatMonitors: []*monitorv1.HeartbeatMonitor{m},
+		Notifications:     []*notificationv1.Notification{n},
+	})
+	content := string(gen.GenerateNotificationsFile().Bytes())
+
+	mustContain(t, content, "openstatus_heartbeat_monitor.nightly_backup.id")
+	mustNotContain(t, content, `"mon-hb"`)
 }
 
 func TestGenerateMonitorsFile_OpenTelemetry_SkippedWhenEmpty(t *testing.T) {

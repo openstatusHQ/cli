@@ -401,7 +401,7 @@ Both approaches run tests in parallel and show latency + status per region.
 openstatus monitors info <ID>
 openstatus monitors info <ID> --time-range 7d
 ```
-Shows config, live status per region, and summary metrics (P50/P75/P95/P99 latency). `--time-range` accepts `1d` (default), `7d`, or `14d`.
+Shows config, live status per region, and summary metrics (P50/P75/P95/P99 latency). `--time-range` accepts `1d` (default), `7d`, or `14d`. For heartbeat monitors it shows the period, grace, last ping, and successful/failed ping totals instead of regions and latency. The ping URL is never printed.
 
 **List monitors (including inactive):**
 ```bash
@@ -415,7 +415,7 @@ openstatus monitors logs <ID> --limit 10                              # cap resu
 openstatus monitors logs <ID> --limit 5 --offset 5                    # paginate
 openstatus monitors logs <ID> --from 2026-05-06T00:00:00Z --to 2026-05-07T00:00:00Z   # time window
 ```
-Lists HTTP response logs from the 14-day retention window — status code, latency, region, and timestamp per request. Use this to investigate why a monitor failed. `--limit`, `--offset`, `--from`, and `--to` (RFC 3339) are all optional.
+Lists HTTP response logs from the 14-day retention window — status code, latency, region, and timestamp per request. Use this to investigate why a monitor failed. `--limit`, `--offset`, `--from`, and `--to` (RFC 3339) are all optional. Only HTTP monitors have response logs. Heartbeat pings aren't available from the CLI: use the dashboard's Logs tab, or `monitors info <ID>` for the last ping and totals.
 
 **Single log full detail:**
 ```bash
@@ -457,7 +457,7 @@ openstatus terraform generate
 
 This creates an `openstatus-terraform/` directory with:
 - `provider.tf` — Terraform provider configuration
-- `monitors.tf` — all HTTP, TCP, DNS, ICMP, and gRPC monitors
+- `monitors.tf` — all HTTP, TCP, DNS, ICMP, gRPC, and heartbeat monitors
 - `notifications.tf` — all notification channels with provider-specific blocks
 - `status_pages.tf` — status pages, components, and component groups
 - `private_locations.tf` — private locations with their monitor assignments
@@ -479,7 +479,7 @@ terraform plan
 
 Sensitive values (passwords, API keys) are emitted as `"REPLACE_ME"` with a TODO comment — update them before running `terraform apply`.
 
-The generated `provider.tf` pins the provider to `~> 0.5` (the first release with `openstatus_grpc_monitor`). If you already ran `terraform init` against an older provider, run `terraform init -upgrade`.
+The generated `provider.tf` pins the provider to `~> 0.6` (the first release with `openstatus_heartbeat_monitor`). If you already ran `terraform init` against an older provider, run `terraform init -upgrade`.
 
 ## Global Flags
 

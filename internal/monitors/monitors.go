@@ -534,6 +534,12 @@ type Monitor struct {
 	Assertions         []Assertion `json:"assertions,omitempty"`
 	Retry              int         `json:"retry"`
 	JobType            string      `json:"jobType"`
+
+	// Heartbeat monitors only. Durations are in seconds.
+	Period       int64  `json:"period,omitempty"`
+	Grace        int64  `json:"grace,omitempty"`
+	LastPingAt   string `json:"last_ping_at,omitempty"`
+	LastPingKind string `json:"last_ping_kind,omitempty"`
 }
 
 type Header struct {

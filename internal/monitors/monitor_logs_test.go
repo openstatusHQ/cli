@@ -7,10 +7,91 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/openstatusHQ/cli/internal/monitors"
 )
+
+func Test_listMonitorResponseLogs_Heartbeat(t *testing.T) {
+	t.Parallel()
+
+	const heartbeat = `{"monitor":{"heartbeat":{"id":"7","name":"Nightly backup","period":"86400","grace":"1800"}}}`
+	const httpMonitor = `{"monitor":{"http":{"id":"7","name":"API","url":"https://example.com"}}}`
+
+	respond := func(status int, body string) *http.Response {
+		return &http.Response{
+			StatusCode: status,
+			Body:       io.NopCloser(strings.NewReader(body)),
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+		}
+	}
+
+	for _, tc := range []struct {
+		name          string
+		logsStatus    int
+		logsBody      string
+		getStatus     int
+		getBody       string
+		wantHeartbeat bool
+		wantInError   string
+	}{
+		{
+			name:          "type mismatch on a heartbeat is explained",
+			logsStatus:    http.StatusBadRequest,
+			logsBody:      `{"code":"invalid_argument","message":"Monitor type mismatch: expected http, got heartbeat"}`,
+			getStatus:     http.StatusOK,
+			getBody:       heartbeat,
+			wantHeartbeat: true,
+		},
+		{
+			name:          "plan rejection on a heartbeat is explained",
+			logsStatus:    http.StatusForbidden,
+			logsBody:      `{"code":"permission_denied","message":"Upgrade for response logs"}`,
+			getStatus:     http.StatusOK,
+			getBody:       heartbeat,
+			wantHeartbeat: true,
+		},
+		{
+			name:        "other monitor types keep the API error",
+			logsStatus:  http.StatusForbidden,
+			logsBody:    `{"code":"permission_denied","message":"Upgrade for response logs"}`,
+			getStatus:   http.StatusOK,
+			getBody:     httpMonitor,
+			wantInError: "permission denied",
+		},
+		{
+			name:        "failed lookup keeps the API error",
+			logsStatus:  http.StatusBadRequest,
+			logsBody:    `{"code":"invalid_argument","message":"limit out of range"}`,
+			getStatus:   http.StatusInternalServerError,
+			getBody:     `{"code":"internal","message":"boom"}`,
+			wantInError: "limit out of range",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			interceptor := &interceptorHTTPClient{
+				f: func(req *http.Request) (*http.Response, error) {
+					if strings.HasSuffix(req.URL.Path, "GetMonitor") {
+						return respond(tc.getStatus, tc.getBody), nil
+					}
+					return respond(tc.logsStatus, tc.logsBody), nil
+				},
+			}
+
+			err := monitors.ListMonitorResponseLogsWithHTTPClient(context.Background(), interceptor.GetHTTPClient(), "test-token", "7", 0, 0, "", "")
+			if err == nil {
+				t.Fatal("expected an error")
+			}
+			if got := strings.Contains(err.Error(), "heartbeat monitor"); got != tc.wantHeartbeat {
+				t.Errorf("heartbeat explanation = %t, want %t: %v", got, tc.wantHeartbeat, err)
+			}
+			if !strings.Contains(err.Error(), tc.wantInError) {
+				t.Errorf("expected %q in error: %v", tc.wantInError, err)
+			}
+		})
+	}
+}
 
 func Test_listMonitorResponseLogs(t *testing.T) {
 	t.Parallel()

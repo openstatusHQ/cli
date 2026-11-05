@@ -97,6 +97,18 @@ func ListMonitors(ctx context.Context, client monitorv1connect.MonitorServiceCli
 		}
 	}
 
+	// URL stays empty for heartbeat monitors: OpenStatus never calls the job, and the
+	// ping URL works without authentication, so it must not end up in terminal output.
+	for _, monitor := range resp.GetHeartbeatMonitors() {
+		if monitor.GetActive() || showAll {
+			entries = append(entries, monitorListEntry{
+				ID:   monitor.GetId(),
+				Name: monitor.GetName(),
+				Kind: "heartbeat",
+			})
+		}
+	}
+
 	// The private-location column is only rendered when something is attached, so workspaces
 	// without the feature keep the original four-column output and pay for no extra request.
 	var allIDs []string
@@ -138,15 +150,19 @@ func ListMonitors(ctx context.Context, client monitorv1connect.MonitorServiceCli
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
 	for _, e := range entries {
+		url := e.URL
+		if url == "" {
+			url = "—"
+		}
 		if !hasPrivateLocations {
-			tbl.AddRow(e.ID, e.Name, e.URL, e.Kind)
+			tbl.AddRow(e.ID, e.Name, url, e.Kind)
 			continue
 		}
 		locations := "—"
 		if len(e.privateLocationIDs) > 0 {
 			locations = strings.Join(privatelocation.Labels(e.privateLocationIDs, refs, false), ", ")
 		}
-		tbl.AddRow(e.ID, e.Name, e.URL, e.Kind, locations)
+		tbl.AddRow(e.ID, e.Name, url, e.Kind, locations)
 	}
 
 	tbl.Print()

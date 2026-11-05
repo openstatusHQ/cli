@@ -33,6 +33,41 @@ func (c *pagedMonitorClient) ListMonitors(_ context.Context, req *monitorv1.List
 	return resp, nil
 }
 
+// heartbeatFirstClient serves heartbeat monitors on page one and an HTTP monitor
+// on page two, since limit and offset apply to all monitor kinds combined.
+type heartbeatFirstClient struct {
+	monitorv1connect.MonitorServiceClient
+}
+
+func (c *heartbeatFirstClient) ListMonitors(_ context.Context, req *monitorv1.ListMonitorsRequest) (*monitorv1.ListMonitorsResponse, error) {
+	resp := &monitorv1.ListMonitorsResponse{}
+	if req.GetOffset() > 0 {
+		resp.SetHttpMonitors([]*monitorv1.HTTPMonitor{{}})
+		return resp, nil
+	}
+	page := make([]*monitorv1.HeartbeatMonitor, api.PageSize)
+	for i := range page {
+		page[i] = &monitorv1.HeartbeatMonitor{}
+	}
+	resp.SetHeartbeatMonitors(page)
+	return resp, nil
+}
+
+func TestListAllMonitors_HeartbeatsCountTowardPageSize(t *testing.T) {
+	t.Parallel()
+
+	resp, err := api.ListAllMonitors(context.Background(), &heartbeatFirstClient{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := len(resp.GetHeartbeatMonitors()); got != int(api.PageSize) {
+		t.Errorf("got %d heartbeat monitors, want %d", got, api.PageSize)
+	}
+	if got := len(resp.GetHttpMonitors()); got != 1 {
+		t.Errorf("got %d HTTP monitors from the second page, want 1", got)
+	}
+}
+
 func TestListAllMonitors(t *testing.T) {
 	t.Parallel()
 

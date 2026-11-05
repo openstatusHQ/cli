@@ -38,7 +38,7 @@ from the command line. Declare and run incidents, post public status updates,
 define monitors as code, and run on-demand checks.
 
 Get started:
-  openstatus login                Save your API token
+  openstatus login                Log in with your browser
   openstatus incident declare     Declare an incident
   openstatus incident list        View incidents
   openstatus status-report create Post a public status update

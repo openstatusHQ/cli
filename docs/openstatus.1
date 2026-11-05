@@ -8,14 +8,14 @@ OpenStatus CLI lets you manage your status pages and uptime monitors
 from the command line.
 Declare and run incidents, post public status updates, define monitors
 as code, and run on\-demand checks.
-Get started: openstatus login Save your API token openstatus incident
-declare Declare an incident openstatus incident list View incidents
-openstatus status\-report create Post a public status update openstatus
-status\-report list View status reports openstatus maintenance create
-Schedule a maintenance window openstatus maintenance list View
-maintenance windows openstatus monitors list List your monitors
-openstatus run Run synthetic tests openstatus pl list List your private
-locations https://docs.openstatus.dev |
+Get started: openstatus login Log in with your browser openstatus
+incident declare Declare an incident openstatus incident list View
+incidents openstatus status\-report create Post a public status update
+openstatus status\-report list View status reports openstatus
+maintenance create Schedule a maintenance window openstatus maintenance
+list View maintenance windows openstatus monitors list List your
+monitors openstatus run Run synthetic tests openstatus pl list List your
+private locations https://docs.openstatus.dev |
 https://github.com/openstatusHQ/cli/issues/new.
 .PP
 Manage status pages, monitors, and incidents from the terminal.
@@ -2999,22 +2999,69 @@ T}@T{
 T}
 .TE
 .SS \f[CR]login\f[R] command
-Save your API token.
+Log in with your browser, or save an API token.
 .RS
 .PP
-openstatus login
+openstatus login [\(enno\-browser | \(enwith\-token]
 .RE
 .PP
-Saves your OpenStatus API token for use in subsequent commands.
-Get your API token from the OpenStatus dashboard.
+Opens the OpenStatus dashboard in your browser, where you sign in and
+choose a workspace, then returns you to the CLI.
+The login is saved and refreshed automatically until you run `openstatus
+logout'.
+Where a browser isn\(cqt available, such as CI or an SSH session, use an
+API token from the dashboard: pass \(enwith\-token to be prompted for
+it, or pipe it to stdin.
 .PP
 Usage:
 .IP
 .EX
-$ openstatus [GLOBAL FLAGS] login [ARGUMENTS...]
+$ openstatus [GLOBAL FLAGS] login [COMMAND FLAGS] [ARGUMENTS...]
 .EE
+.PP
+The following flags are supported:
+.PP
+.TS
+tab(@);
+lw(8.3n) lw(38.9n) lw(3.1n) cw(7.8n) cw(11.9n).
+T{
+Name
+T}@T{
+Description
+T}@T{
+Type
+T}@T{
+Default value
+T}@T{
+Environment variables
+T}
+_
+T{
+\f[CR]\-\-no\-browser\f[R]
+T}@T{
+Print the login URL instead of opening a browser
+T}@T{
+bool
+T}@T{
+\f[CR]false\f[R]
+T}@T{
+\f[I]none\f[R]
+T}
+T{
+\f[CR]\-\-with\-token\f[R]
+T}@T{
+Save an API token from the dashboard instead of logging in with a
+browser
+T}@T{
+bool
+T}@T{
+\f[CR]false\f[R]
+T}@T{
+\f[I]none\f[R]
+T}
+.TE
 .SS \f[CR]logout\f[R] command
-Remove saved API token.
+Log out and remove saved credentials.
 .RS
 .PP
 openstatus logout

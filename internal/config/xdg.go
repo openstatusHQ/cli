@@ -25,6 +25,17 @@ func TokenPath() (string, error) {
 	return filepath.Join(dir, "token"), nil
 }
 
+// OAuthPath is where a browser login stores its tokens. It is separate from
+// TokenPath because that file holds a bare API key, which older CLI versions
+// read verbatim.
+func OAuthPath() (string, error) {
+	dir, err := ConfigDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "oauth.json"), nil
+}
+
 func UserConfigPath() (string, error) {
 	dir, err := ConfigDir()
 	if err != nil {

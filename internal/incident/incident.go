@@ -492,7 +492,7 @@ type actionFunc func(ctx context.Context, cmd *cli.Command, client incidentv1con
 
 func withClient(fn actionFunc) cli.ActionFunc {
 	return func(ctx context.Context, cmd *cli.Command) error {
-		apiKey, err := auth.ResolveAccessToken(cmd)
+		apiKey, err := auth.ResolveAccessToken(ctx, cmd)
 		if err != nil {
 			return err
 		}

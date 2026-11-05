@@ -134,7 +134,7 @@ func FormatError(err error, resource string, id string) error {
 	if errors.As(err, &connectErr) {
 		switch connectErr.Code() {
 		case connect.CodeUnauthenticated:
-			return newError(KindUnauthenticated, "authentication failed. Check your API token via OPENSTATUS_API_TOKEN env var or --access-token flag. Verify with 'openstatus whoami'")
+			return newError(KindUnauthenticated, "authentication failed. Run 'openstatus login', or check your API token via OPENSTATUS_API_TOKEN env var or --access-token flag. Verify with 'openstatus whoami'")
 		case connect.CodePermissionDenied:
 			return newError(KindPermissionDenied, "permission denied. Check that your API token has access to this workspace")
 		case connect.CodeNotFound:

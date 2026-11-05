@@ -168,9 +168,13 @@ func resolveOAuthToken(ctx context.Context, hc *http.Client, creds *OAuthCredent
 }
 
 // tokenWithoutRefresh handles a refresh that couldn't happen. A failure there
-// shouldn't fail commands while the current token still works.
+// shouldn't fail commands while the current token still works. An ended context
+// takes priority over err: the HTTP client can return the server's response before
+// it notices the cancellation, and that response isn't why the command stopped.
 func tokenWithoutRefresh(ctx context.Context, creds *OAuthCredentials, err error) (string, error) {
-	if ctx.Err() == nil && time.Now().Before(creds.ExpiresAt) {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		err = ctxErr
+	} else if time.Now().Before(creds.ExpiresAt) {
 		return creds.AccessToken, nil
 	}
 	return "", fmt.Errorf("could not refresh your login: %w", output.FormatError(err, "", ""))

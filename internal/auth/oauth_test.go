@@ -259,6 +259,34 @@ func TestResolveToken_CancelDuringRefreshIsReported(t *testing.T) {
 	}
 }
 
+// The HTTP client can return the server's response before it notices the context
+// ended, so the refresh error isn't always a context error.
+func TestTokenWithoutRefresh_EndedContextWinsOverRefreshError(t *testing.T) {
+	refreshErr := errors.New("unexpected response from the API (HTTP 500)")
+
+	cancelled, cancel := context.WithCancel(t.Context())
+	cancel()
+	timedOut, cancelTimeout := context.WithDeadline(t.Context(), time.Now().Add(-time.Second))
+	defer cancelTimeout()
+
+	for _, tc := range []struct {
+		name string
+		ctx  context.Context
+		want output.Kind
+	}{
+		{"cancelled", cancelled, output.KindCancelled},
+		{"timed out", timedOut, output.KindTimeout},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := tokenWithoutRefresh(tc.ctx, saved("https://example.com", time.Hour), refreshErr)
+			var cliErr *output.Error
+			if !errors.As(err, &cliErr) || cliErr.Kind != tc.want {
+				t.Fatalf("err = %v, want kind %s", err, tc.want)
+			}
+		})
+	}
+}
+
 // readOnlyConfigDir makes the directory holding the saved login read-only.
 func readOnlyConfigDir(t *testing.T) {
 	t.Helper()

@@ -60,7 +60,7 @@ func GetWhoamiCmd(ctx context.Context, httpClient *http.Client, apiKey string, s
 	whoami, err := Fetch(ctx, httpClient, apiKey)
 	output.StopSpinner(s)
 	if errors.Is(err, ErrUnauthorized) {
-		return fmt.Errorf("authentication failed. Check your API token via OPENSTATUS_API_TOKEN env var or --access-token flag")
+		return fmt.Errorf("authentication failed. Run 'openstatus login', or check your API token via OPENSTATUS_API_TOKEN env var or --access-token flag")
 	}
 	if err != nil {
 		return err
@@ -86,7 +86,7 @@ func WhoamiCmd() *cli.Command {
 		Description: `Get your current workspace information.
 Displays the workspace name, slug, and plan.`,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			apiKey, err := auth.ResolveAccessToken(cmd)
+			apiKey, err := auth.ResolveAccessToken(ctx, cmd)
 			if err != nil {
 				return err
 			}

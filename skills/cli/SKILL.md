@@ -20,12 +20,13 @@ Most commands require authentication. Verify with:
 openstatus whoami
 ```
 
-This shows your workspace name, slug, and plan. If not authenticated, run `openstatus login` and paste your API token from the OpenStatus dashboard. Run `openstatus logout` to remove the saved token.
+This shows your workspace name, slug, and plan. If not authenticated, run `openstatus login`: it opens the OpenStatus dashboard in a browser for the user to sign in and approve. Without a browser (CI, SSH, agents), set `OPENSTATUS_API_TOKEN` or pipe an API token to `openstatus login`. Run `openstatus logout` to end the session and remove saved credentials.
 
 Token resolution order:
 1. `--access-token` / `-t` flag
 2. `OPENSTATUS_API_TOKEN` environment variable
-3. Saved token at `~/.config/openstatus/token`
+3. Saved browser login at `~/.config/openstatus/oauth.json`
+4. Saved API token at `~/.config/openstatus/token`
 
 **Exception:** `openstatus check <URL>` is **unauthenticated** — it uses the public global speed checker. Reach for it when the user wants an ad-hoc multi-region check without setting up a saved monitor.
 
@@ -68,8 +69,8 @@ Token resolution order:
 | Run synthetic tests | `run` | Execute on-demand tests for specific monitors |
 | Generate Terraform config | `terraform generate` | Export workspace resources to Terraform HCL files |
 | Check workspace | `whoami` | Verify auth and workspace info |
-| Save API token | `login` | Authenticate — paste your token from the dashboard |
-| Remove saved token | `logout` | Sign out (deletes the saved token) |
+| Log in | `login` | Authenticate in the browser; `--with-token` or piped stdin saves an API token instead |
+| Log out | `logout` | Sign out (revokes the browser login and deletes saved credentials) |
 
 Command aliases: `check` = `c`, `monitors` = `m`, `incident` = `inc` / `incidents` (and `incident declare` = `create`, `incident postmortem` = `pm`), `status-report` = `sr`, `status-page` = `sp`, `notification` = `n`, `maintenance` = `mt`, `terraform` = `tf` (and `terraform generate` = `gen`), `run` = `r`, `whoami` = `w`. `login` and `logout` have no aliases.
 

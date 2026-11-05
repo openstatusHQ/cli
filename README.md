@@ -28,7 +28,7 @@ iwr https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.p
 # Run a one-shot HTTP check against a URL from 28 global regions (no auth)
 openstatus check https://openstat.us
 
-# Authenticate with your API token
+# Log in with your browser
 openstatus login
 
 # List your monitors
@@ -149,7 +149,17 @@ The CLI resolves your API token in this order:
 
 1. `--access-token` / `-t` flag
 2. `OPENSTATUS_API_TOKEN` environment variable
-3. Saved token at `~/.config/openstatus/token` (written by `openstatus login`)
+3. Saved login at `~/.config/openstatus/oauth.json` (written by `openstatus login`, refreshed automatically)
+4. Saved API token at `~/.config/openstatus/token` (written by `openstatus login --with-token`)
+
+`openstatus login` opens the dashboard in your browser, where you sign in and choose a workspace, then returns you to the CLI. Revoke a login with `openstatus logout` or from **Settings / Integrations** in the dashboard.
+
+Where a browser isn't available, such as CI or an SSH session, use an API token from the dashboard:
+
+```bash
+openstatus login --with-token          # prompts for the token
+printf "$TOKEN" | openstatus login     # reads it from stdin
+```
 
 ## Self-Hosted
 

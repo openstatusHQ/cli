@@ -2,7 +2,7 @@
 
 ## CLI interface - openstatus
 
-OpenStatus CLI lets you manage your status pages and uptime monitors from the command line. Declare and run incidents, post public status updates, define monitors as code, and run on-demand checks.  Get started:   openstatus login                Save your API token   openstatus incident declare     Declare an incident   openstatus incident list        View incidents   openstatus status-report create Post a public status update   openstatus status-report list   View status reports   openstatus maintenance create   Schedule a maintenance window   openstatus maintenance list     View maintenance windows   openstatus monitors list        List your monitors   openstatus run                  Run synthetic tests   openstatus pl list              List your private locations  https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new.
+OpenStatus CLI lets you manage your status pages and uptime monitors from the command line. Declare and run incidents, post public status updates, define monitors as code, and run on-demand checks.  Get started:   openstatus login                Log in with your browser   openstatus incident declare     Declare an incident   openstatus incident list        View incidents   openstatus status-report create Post a public status update   openstatus status-report list   View status reports   openstatus maintenance create   Schedule a maintenance window   openstatus maintenance list     View maintenance windows   openstatus monitors list        List your monitors   openstatus run                  Run synthetic tests   openstatus pl list              List your private locations  https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new.
 
 Manage status pages, monitors, and incidents from the terminal.
 
@@ -1074,21 +1074,28 @@ The following flags are supported:
 
 ### `login` command
 
-Save your API token.
+Log in with your browser, or save an API token.
 
-> openstatus login
+> openstatus login [--no-browser | --with-token]
 
-Saves your OpenStatus API token for use in subsequent commands. Get your API token from the OpenStatus dashboard.
+Opens the OpenStatus dashboard in your browser, where you sign in and choose a workspace, then returns you to the CLI. The login is saved and refreshed automatically until you run 'openstatus logout'.  Where a browser isn't available, such as CI or an SSH session, use an API token from the dashboard: pass --with-token to be prompted for it, or pipe it to stdin.
 
 Usage:
 
 ```bash
-$ openstatus [GLOBAL FLAGS] login [ARGUMENTS...]
+$ openstatus [GLOBAL FLAGS] login [COMMAND FLAGS] [ARGUMENTS...]
 ```
+
+The following flags are supported:
+
+| Name           | Description                                                               | Type | Default value | Environment variables |
+|----------------|---------------------------------------------------------------------------|------|:-------------:|:---------------------:|
+| `--no-browser` | Print the login URL instead of opening a browser                          | bool |    `false`    |        *none*         |
+| `--with-token` | Save an API token from the dashboard instead of logging in with a browser | bool |    `false`    |        *none*         |
 
 ### `logout` command
 
-Remove saved API token.
+Log out and remove saved credentials.
 
 > openstatus logout
 

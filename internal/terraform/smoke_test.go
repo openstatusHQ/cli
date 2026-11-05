@@ -132,6 +132,14 @@ func smokeFixture() *WorkspaceData {
 	icmpMon.SetActive(true)
 	icmpMon.SetRegions([]monitorv1.Region{monitorv1.Region_REGION_FLY_IAD})
 
+	heartbeatMon := &monitorv1.HeartbeatMonitor{}
+	heartbeatMon.SetId("mon-heartbeat")
+	heartbeatMon.SetName("Nightly backup")
+	heartbeatMon.SetPeriod(86400)
+	heartbeatMon.SetGrace(1800)
+	heartbeatMon.SetDescription("Dumps the production database")
+	heartbeatMon.SetActive(true)
+
 	slackNotif := newNotification("notif-slack", "Slack Alerts", []string{"mon-http"}, func(d *notificationv1.NotificationData) {
 		sd := &notificationv1.SlackData{}
 		sd.SetWebhookUrl("https://hooks.example.com/slack")
@@ -214,11 +222,12 @@ func smokeFixture() *WorkspaceData {
 	bareLocation.SetName("spare-agent")
 
 	return &WorkspaceData{
-		HTTPMonitors:  []*monitorv1.HTTPMonitor{httpMon},
-		TCPMonitors:   []*monitorv1.TCPMonitor{tcpMon},
-		DNSMonitors:   []*monitorv1.DNSMonitor{dnsMon},
-		ICMPMonitors:  []*monitorv1.ICMPMonitor{icmpMon},
-		Notifications: []*notificationv1.Notification{slackNotif, teamsNotif, webhookNotif},
+		HTTPMonitors:      []*monitorv1.HTTPMonitor{httpMon},
+		TCPMonitors:       []*monitorv1.TCPMonitor{tcpMon},
+		DNSMonitors:       []*monitorv1.DNSMonitor{dnsMon},
+		ICMPMonitors:      []*monitorv1.ICMPMonitor{icmpMon},
+		HeartbeatMonitors: []*monitorv1.HeartbeatMonitor{heartbeatMon},
+		Notifications:     []*notificationv1.Notification{slackNotif, teamsNotif, webhookNotif},
 		StatusPages: []StatusPageData{
 			{
 				Page:       page,

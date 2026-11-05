@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 	"github.com/fatih/color"
 	"github.com/olekukonko/tablewriter"
@@ -222,6 +223,8 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 		}
 		regions = monitorConfig.GetGrpc().GetRegions()
 		privateLocationIDs = monitorConfig.GetGrpc().GetPrivateLocationIds()
+	case monitorConfig.HasHeartbeat():
+		return showHeartbeatMonitorInfo(ctx, client, monitorConfig.GetHeartbeat(), timeRange, timeRangeStr)
 	default:
 		if monitorConfig.HasDns() {
 			return fmt.Errorf("DNS monitors are not yet supported in the CLI. Monitor ID: %s", monitorId)
@@ -414,6 +417,102 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 			summaryData = append(summaryData, []string{"Last Ping", summaryResp.GetLastPingAt()})
 		}
 		summaryTable.Bulk(summaryData)
+		summaryTable.Render()
+	}
+
+	return nil
+}
+
+func heartbeatPingKindToString(k monitorv1.HeartbeatPingKind) string {
+	switch k {
+	case monitorv1.HeartbeatPingKind_HEARTBEAT_PING_KIND_SUCCESS:
+		return "success"
+	case monitorv1.HeartbeatPingKind_HEARTBEAT_PING_KIND_FAIL:
+		return "fail"
+	default:
+		return ""
+	}
+}
+
+// formatSeconds renders a duration in its largest whole unit, so 86400 reads as
+// "1d" and 5400 as "90m".
+func formatSeconds(seconds int64) string {
+	for _, u := range []struct {
+		size int64
+		name string
+	}{{86400, "d"}, {3600, "h"}, {60, "m"}} {
+		if seconds >= u.size && seconds%u.size == 0 {
+			return fmt.Sprintf("%d%s", seconds/u.size, u.name)
+		}
+	}
+	return fmt.Sprintf("%ds", seconds)
+}
+
+// showHeartbeatMonitorInfo has its own view because the job pings OpenStatus: there
+// are no regions, and no latency to report (the API returns the percentiles as 0).
+// Status comes from the monitor itself, so GetMonitorStatus is not called.
+func showHeartbeatMonitorInfo(ctx context.Context, client monitorv1connect.MonitorServiceClient, m *monitorv1.HeartbeatMonitor, timeRange monitorv1.TimeRange, timeRangeStr string) error {
+	monitor, err := heartbeatMonitorToLocal(m)
+	if err != nil {
+		return err
+	}
+	status := monitorStatusToString(m.GetStatus())
+
+	summaryResp, err := client.GetMonitorSummary(ctx, &monitorv1.GetMonitorSummaryRequest{
+		Id:        m.GetId(),
+		TimeRange: timeRange,
+	})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Warning: could not fetch monitor summary:", err)
+		summaryResp = nil
+	}
+
+	if output.IsJSONOutput() {
+		infoOutput := MonitorInfoOutput{Monitor: monitor, Status: status}
+		if summaryResp != nil {
+			infoOutput.Summary = &SummaryOutput{
+				TotalSuccessful: summaryResp.GetTotalSuccessful(),
+				TotalDegraded:   summaryResp.GetTotalDegraded(),
+				TotalFailed:     summaryResp.GetTotalFailed(),
+				TimeRange:       timeRangeStr,
+				LastPingAt:      summaryResp.GetLastPingAt(),
+			}
+		}
+		return output.PrintJSON(infoOutput)
+	}
+
+	lastPing := "never"
+	if monitor.LastPingAt != "" {
+		lastPing = monitor.LastPingAt
+		if monitor.LastPingKind != "" {
+			lastPing = fmt.Sprintf("%s (%s)", lastPing, monitor.LastPingKind)
+		}
+	}
+
+	fmt.Println(output.Bold("Monitor:"))
+	table := newBlueprintTable()
+	table.Bulk([][]string{
+		{"ID", fmt.Sprintf("%d", monitor.ID)},
+		{"Status", colorizeStatus(status)},
+		{"Name", monitor.Name},
+		{"Description", monitor.Description},
+		{"Kind", monitor.JobType},
+		{"Period", formatSeconds(monitor.Period)},
+		{"Grace", formatSeconds(monitor.Grace)},
+		{"Last Ping", lastPing},
+		{"Active", fmt.Sprintf("%t", monitor.Active)},
+		{"Public", fmt.Sprintf("%t", monitor.Public)},
+	})
+	table.Render()
+
+	if summaryResp != nil {
+		fmt.Println()
+		fmt.Println(output.Bold(fmt.Sprintf("Summary (%s):", timeRangeStr)))
+		summaryTable := newBlueprintTable()
+		summaryTable.Bulk([][]string{
+			{"Successful Pings", fmt.Sprintf("%d", summaryResp.GetTotalSuccessful())},
+			{"Failed Pings", fmt.Sprintf("%d", summaryResp.GetTotalFailed())},
+		})
 		summaryTable.Render()
 	}
 

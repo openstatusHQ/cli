@@ -9,6 +9,7 @@ import (
 
 	"buf.build/gen/go/openstatus/api/connectrpc/gosimple/openstatus/monitor/v1/monitorv1connect"
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
+	"connectrpc.com/connect"
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
@@ -143,6 +144,9 @@ func ListMonitorResponseLogs(
 	}
 
 	resp, err := client.ListMonitorHTTPResponseLogs(ctx, req)
+	if err != nil {
+		err = explainHeartbeatLogsError(ctx, client, monitorId, err)
+	}
 	output.StopSpinner(s)
 	if err != nil {
 		return output.FormatError(err, "response logs", monitorId)
@@ -204,6 +208,25 @@ func ListMonitorResponseLogs(
 	}
 
 	return nil
+}
+
+// explainHeartbeatLogsError replaces the API's rejection with an actionable message
+// when the monitor is a heartbeat: the API has no endpoint that lists pings. Permission
+// denied is included because the server checks the plan before the monitor type, so
+// without this a workspace lacking response logs would be told its token is wrong.
+func explainHeartbeatLogsError(ctx context.Context, client monitorv1connect.MonitorServiceClient, monitorId string, err error) error {
+	switch connect.CodeOf(err) {
+	case connect.CodeInvalidArgument, connect.CodePermissionDenied:
+	default:
+		return err
+	}
+	resp, getErr := client.GetMonitor(ctx, &monitorv1.GetMonitorRequest{Id: monitorId})
+	if getErr != nil || !resp.GetMonitor().HasHeartbeat() {
+		return err
+	}
+	return output.NewError(output.KindInvalidArgument,
+		"monitor %s is a heartbeat monitor and has no response logs. See its pings in the dashboard's Logs tab, or run 'openstatus monitors info %s' for its last ping and totals",
+		monitorId, monitorId)
 }
 
 func ListMonitorResponseLogsWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, monitorId string, limit int32, offset int32, from string, to string) error {

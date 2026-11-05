@@ -103,6 +103,55 @@ func Test_listMonitors(t *testing.T) {
 			t.Errorf("expected ICMP uri as url in JSON output, got:\n%s", out)
 		}
 	})
+	t.Run("Includes heartbeat monitors without their ping URL", func(t *testing.T) {
+		const secret = "secret-ping-token"
+		body := `{"heartbeatMonitors":[
+			{"id":"7","name":"Nightly backup","period":"86400","grace":"1800","active":true,"pingUrl":"https://ping.example.com/` + secret + `"},
+			{"id":"8","name":"Paused job","period":"3600","grace":"60","active":false,"pingUrl":"https://ping.example.com/` + secret + `"}
+		]}`
+		newClient := func() *interceptorHTTPClient {
+			return &interceptorHTTPClient{
+				f: func(req *http.Request) (*http.Response, error) {
+					return &http.Response{
+						StatusCode: http.StatusOK,
+						Body:       io.NopCloser(strings.NewReader(body)),
+						Header:     http.Header{"Content-Type": []string{"application/json"}},
+					}, nil
+				},
+			}
+		}
+
+		table := captureTable(t, func() {
+			if err := monitors.ListMonitorsWithHTTPClient(context.Background(), newClient().GetHTTPClient(), "test-token"); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+		for _, want := range []string{"Nightly backup", "heartbeat", "—"} {
+			if !strings.Contains(table, want) {
+				t.Errorf("expected %q in table output, got:\n%s", want, table)
+			}
+		}
+		if strings.Contains(table, "Paused job") {
+			t.Errorf("inactive heartbeat monitor should be hidden by default, got:\n%s", table)
+		}
+		if strings.Contains(table, secret) {
+			t.Errorf("ping URL leaked into table output:\n%s", table)
+		}
+
+		output.SetJSONOutput(true)
+		t.Cleanup(func() { output.SetJSONOutput(false) })
+		jsonOut := captureStdout(t, func() {
+			if err := monitors.ListMonitorsWithHTTPClient(context.Background(), newClient().GetHTTPClient(), "test-token"); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+		if !strings.Contains(jsonOut, `"kind": "heartbeat"`) {
+			t.Errorf("expected a heartbeat entry in JSON output, got:\n%s", jsonOut)
+		}
+		if strings.Contains(jsonOut, secret) {
+			t.Errorf("ping URL leaked into JSON output:\n%s", jsonOut)
+		}
+	})
 }
 
 func captureStdout(t *testing.T, f func()) string {

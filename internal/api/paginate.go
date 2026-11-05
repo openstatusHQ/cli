@@ -91,6 +91,7 @@ func ListAllMonitors(ctx context.Context, client monitorv1connect.MonitorService
 		dnsMonitors  []*monitorv1.DNSMonitor
 		icmpMonitors []*monitorv1.ICMPMonitor
 		grpcMonitors []*monitorv1.GRPCMonitor
+		heartbeats   []*monitorv1.HeartbeatMonitor
 		totalSize    int32
 	)
 	// The API applies limit and offset to all monitor kinds combined, so a
@@ -108,9 +109,10 @@ func ListAllMonitors(ctx context.Context, client monitorv1connect.MonitorService
 		dnsMonitors = append(dnsMonitors, resp.GetDnsMonitors()...)
 		icmpMonitors = append(icmpMonitors, resp.GetIcmpMonitors()...)
 		grpcMonitors = append(grpcMonitors, resp.GetGrpcMonitors()...)
+		heartbeats = append(heartbeats, resp.GetHeartbeatMonitors()...)
 		totalSize = resp.GetTotalSize()
 		n := len(resp.GetHttpMonitors()) + len(resp.GetTcpMonitors()) + len(resp.GetDnsMonitors()) +
-			len(resp.GetIcmpMonitors()) + len(resp.GetGrpcMonitors())
+			len(resp.GetIcmpMonitors()) + len(resp.GetGrpcMonitors()) + len(resp.GetHeartbeatMonitors())
 		return n, nil
 	})
 	if err != nil {
@@ -123,6 +125,7 @@ func ListAllMonitors(ctx context.Context, client monitorv1connect.MonitorService
 	merged.SetDnsMonitors(dnsMonitors)
 	merged.SetIcmpMonitors(icmpMonitors)
 	merged.SetGrpcMonitors(grpcMonitors)
+	merged.SetHeartbeatMonitors(heartbeats)
 	merged.SetTotalSize(totalSize)
 	return merged, nil
 }

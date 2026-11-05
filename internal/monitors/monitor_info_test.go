@@ -13,6 +13,7 @@ import (
 
 	monitorv1 "buf.build/gen/go/openstatus/api/protocolbuffers/go/openstatus/monitor/v1"
 
+	output "github.com/openstatusHQ/cli/internal/cli"
 	"github.com/openstatusHQ/cli/internal/monitors"
 )
 
@@ -40,6 +41,97 @@ func monitorInfoInterceptor(routes []routeEntry) *interceptorHTTPClient {
 			}, nil
 		},
 	}
+}
+
+// Not parallel: subtests redirect the process-wide os.Stdout.
+func Test_getMonitorInfo_Heartbeat(t *testing.T) {
+	const secret = "secret-ping-token"
+	const pinged = `{"monitor":{"heartbeat":{"id":"7","name":"Nightly backup","description":"Dumps the database","period":"86400","grace":"1800","active":true,"status":"MONITOR_STATUS_ERROR","lastPingAt":"2026-11-05T02:00:00.000Z","lastPingKind":"HEARTBEAT_PING_KIND_FAIL","pingUrl":"https://api.openstatus.dev/heartbeat/` + secret + `"}}}`
+	const summary = `{"id":"7","lastPingAt":"2026-11-05T02:00:00.000Z","totalSuccessful":"6","totalFailed":"1","timeRange":"TIME_RANGE_7D"}`
+
+	t.Run("Shows schedule, last ping and ping totals", func(t *testing.T) {
+		interceptor := monitorInfoInterceptor([]routeEntry{
+			{"GetMonitor", pinged},
+			{"GetMonitorSummary", summary},
+		})
+
+		out := captureStdout(t, func() {
+			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_7D, "7d", nil); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+
+		for _, want := range []string{"Nightly backup", "heartbeat", "● error", "1d", "30m", "2026-11-05T02:00:00.000Z (fail)", "Summary (7d)", "Successful Pings", "Failed Pings"} {
+			if !strings.Contains(out, want) {
+				t.Errorf("expected %q in output, got:\n%s", want, out)
+			}
+		}
+		for _, unwanted := range []string{secret, "Latency", "Region Status", "Endpoint", "Frequency", "Timeout"} {
+			if strings.Contains(out, unwanted) {
+				t.Errorf("did not expect %q in output, got:\n%s", unwanted, out)
+			}
+		}
+	})
+
+	t.Run("Before the first ping", func(t *testing.T) {
+		interceptor := monitorInfoInterceptor([]routeEntry{
+			{"GetMonitor", `{"monitor":{"heartbeat":{"id":"7","name":"New job","period":"3600","grace":"90","status":"MONITOR_STATUS_ACTIVE"}}}`},
+			{"GetMonitorSummary", `{"id":"7"}`},
+		})
+
+		out := captureStdout(t, func() {
+			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_1D, "1d", nil); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+
+		for _, want := range []string{"never", "1h", "90s"} {
+			if !strings.Contains(out, want) {
+				t.Errorf("expected %q in output, got:\n%s", want, out)
+			}
+		}
+	})
+
+	t.Run("Still shows the monitor when the summary fails", func(t *testing.T) {
+		interceptor := monitorInfoInterceptor([]routeEntry{{"GetMonitor", pinged}})
+
+		out := captureStdout(t, func() {
+			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_1D, "1d", nil); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+
+		if !strings.Contains(out, "Nightly backup") {
+			t.Errorf("expected the monitor in output, got:\n%s", out)
+		}
+		if strings.Contains(out, "Summary") {
+			t.Errorf("did not expect a summary, got:\n%s", out)
+		}
+	})
+
+	t.Run("JSON output", func(t *testing.T) {
+		interceptor := monitorInfoInterceptor([]routeEntry{
+			{"GetMonitor", pinged},
+			{"GetMonitorSummary", summary},
+		})
+		output.SetJSONOutput(true)
+		t.Cleanup(func() { output.SetJSONOutput(false) })
+
+		out := captureStdout(t, func() {
+			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_7D, "7d", nil); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+
+		for _, want := range []string{`"jobType": "heartbeat"`, `"period": 86400`, `"grace": 1800`, `"last_ping_kind": "fail"`, `"status": "error"`, `"total_failed": 1`} {
+			if !strings.Contains(out, want) {
+				t.Errorf("expected %q in JSON output, got:\n%s", want, out)
+			}
+		}
+		if strings.Contains(out, secret) {
+			t.Errorf("ping URL leaked into JSON output:\n%s", out)
+		}
+	})
 }
 
 func Test_getMonitorInfo(t *testing.T) {

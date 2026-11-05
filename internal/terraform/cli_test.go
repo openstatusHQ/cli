@@ -75,7 +75,7 @@ func TestPrintSummary_IncludesInitUpgradeHint(t *testing.T) {
 	if !strings.Contains(out, "terraform init -upgrade") {
 		t.Errorf("expected init-upgrade hint, got:\n%s", out)
 	}
-	if !strings.Contains(out, "~> 0.5") {
+	if !strings.Contains(out, "~> 0.6") {
 		t.Errorf("expected version mention in hint, got:\n%s", out)
 	}
 }
@@ -110,11 +110,30 @@ func TestPrintSummary_CountsICMPMonitors(t *testing.T) {
 		}))
 	})
 
-	if !strings.Contains(out, "1 monitors (0 HTTP, 0 TCP, 0 DNS, 1 ICMP, 0 gRPC)") {
+	if !strings.Contains(out, "1 monitors (0 HTTP, 0 TCP, 0 DNS, 1 ICMP, 0 gRPC, 0 heartbeat)") {
 		t.Errorf("expected ICMP monitor count, got:\n%s", out)
 	}
 	if !strings.Contains(out, "1 import blocks") {
 		t.Errorf("expected ICMP monitor to count toward imports, got:\n%s", out)
+	}
+}
+
+func TestPrintSummary_CountsHeartbeatMonitors(t *testing.T) {
+	m := &monitorv1.HeartbeatMonitor{}
+	m.SetId("888")
+	m.SetName("Nightly backup")
+
+	out := captureStdout(t, func() {
+		printSummary("/tmp/out", NewGenerator(&WorkspaceData{
+			HeartbeatMonitors: []*monitorv1.HeartbeatMonitor{m},
+		}))
+	})
+
+	if !strings.Contains(out, "1 monitors (0 HTTP, 0 TCP, 0 DNS, 0 ICMP, 0 gRPC, 1 heartbeat)") {
+		t.Errorf("expected heartbeat monitor count, got:\n%s", out)
+	}
+	if !strings.Contains(out, "1 import blocks") {
+		t.Errorf("expected heartbeat monitor to count toward imports, got:\n%s", out)
 	}
 }
 

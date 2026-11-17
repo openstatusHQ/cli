@@ -2,9 +2,9 @@
 
 ## CLI interface - openstatus
 
-OpenStatus CLI lets you manage your status pages and uptime monitors from the command line. Declare and run incidents, post public status updates, define monitors as code, and run on-demand checks.  Get started:   openstatus login                Log in with your browser   openstatus incident declare     Declare an incident   openstatus incident list        View incidents   openstatus status-report create Post a public status update   openstatus status-report list   View status reports   openstatus maintenance create   Schedule a maintenance window   openstatus maintenance list     View maintenance windows   openstatus monitors list        List your monitors   openstatus run                  Run synthetic tests   openstatus pl list              List your private locations  https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new.
+OpenStatus CLI brings the whole incident lifecycle to your terminal:    Monitor      Check your endpoints from 28 regions and manage monitors as code   Respond      Declare incidents, run them to resolution and write the postmortem   Communicate  Keep your users informed with status reports and maintenance windows  Get started:   openstatus login                      Log in with your browser   openstatus check https://openstat.us  Check a URL from every region   openstatus monitors list              List your monitors   openstatus incident declare           Declare an incident   openstatus status-report create       Post a public status update  https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new.
 
-Manage status pages, monitors, and incidents from the terminal.
+Monitor your services, respond to incidents, and keep your users informed.
 
 Usage:
 
@@ -20,34 +20,6 @@ Global flags:
 | `--no-color`     | Disable colored output    | bool |    `false`    |        *none*         |
 | `--quiet` (`-q`) | Suppress non-error output | bool |    `false`    |        *none*         |
 | `--debug`        | Enable debug output       | bool |    `false`    |        *none*         |
-
-### `check` command (aliases: `c`)
-
-Run an HTTP check against a URL from 28 global regions.
-
-> openstatus check <URL>
->   openstatus check https://openstat.us
->   openstatus check https://openstat.us -X POST -H 'Authorization: Bearer …' -d '{"ping":true}'
->   openstatus check https://openstat.us -d @payload.json
->   openstatus check https://openstat.us --timing
->   openstatus check https://openstat.us --json | jq '.summary'
-
-Run a one-shot HTTP check against a URL from 28 global regions.  The check is executed by the public OpenStatus speed checker. No API token is required. Results stream to the terminal as they arrive from each region.  Output is sorted in the order regions report back (roughly fastest first). Pass --timing to see DNS/Connection/TLS/TTFB/Transfer phase breakdowns. Pass --json for a machine-readable single object including all phase data.  Rate limit: 3 requests per 60 seconds.
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] check [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                  | Description                                              | Type   | Default value | Environment variables |
-|-----------------------|----------------------------------------------------------|--------|:-------------:|:---------------------:|
-| `--method="…"` (`-X`) | HTTP method                                              | string |    `"GET"`    |        *none*         |
-| `--header="…"` (`-H`) | Header in "Key: Value" form (repeatable)                 | string |               |        *none*         |
-| `--body="…"` (`-d`)   | Request body. Use @filename to read a file, @- for stdin | string |               |        *none*         |
-| `--timing`            | Show DNS/Connection/TLS/TTFB/Transfer phases             | bool   |    `false`    |        *none*         |
 
 ### `monitors` command (aliases: `m`)
 
@@ -249,145 +221,138 @@ The following flags are supported:
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token     | string |               | `OPENSTATUS_API_TOKEN` |
 | `--auto-accept` (`-y`)      | Automatically accept the prompt | bool   |    `false`    |         *none*         |
 
-### `status-report` command (aliases: `sr`)
+### `check` command (aliases: `c`)
 
-Manage status reports.
+Run an HTTP check against a URL from 28 global regions.
 
-Usage:
+> openstatus check <URL>
+>   openstatus check https://openstat.us
+>   openstatus check https://openstat.us -X POST -H 'Authorization: Bearer …' -d '{"ping":true}'
+>   openstatus check https://openstat.us -d @payload.json
+>   openstatus check https://openstat.us --timing
+>   openstatus check https://openstat.us --json | jq '.summary'
 
-```bash
-$ openstatus [GLOBAL FLAGS] status-report [ARGUMENTS...]
-```
-
-### `status-report list` subcommand
-
-List all status reports.
-
-> openstatus status-report list
->   openstatus status-report list --status investigating --limit 10
+Run a one-shot HTTP check against a URL from 28 global regions.  The check is executed by the public OpenStatus speed checker. No API token is required. Results stream to the terminal as they arrive from each region.  Output is sorted in the order regions report back (roughly fastest first). Pass --timing to see DNS/Connection/TLS/TTFB/Transfer phase breakdowns. Pass --json for a machine-readable single object including all phase data.  Rate limit: 3 requests per 60 seconds.
 
 Usage:
 
 ```bash
-$ openstatus [GLOBAL FLAGS] status-report list [COMMAND FLAGS] [ARGUMENTS...]
+$ openstatus [GLOBAL FLAGS] check [COMMAND FLAGS] [ARGUMENTS...]
 ```
 
 The following flags are supported:
 
-| Name                        | Description                                                        | Type   | Default value |  Environment variables |
-|-----------------------------|--------------------------------------------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                        | string |               | `OPENSTATUS_API_TOKEN` |
-| `--status="…"`              | Filter by status (investigating, identified, monitoring, resolved) | string |               |         *none*         |
-| `--limit="…"`               | Maximum number of reports to return (1-100; all when omitted)      | int    |      `0`      |         *none*         |
+| Name                  | Description                                              | Type   | Default value | Environment variables |
+|-----------------------|----------------------------------------------------------|--------|:-------------:|:---------------------:|
+| `--method="…"` (`-X`) | HTTP method                                              | string |    `"GET"`    |        *none*         |
+| `--header="…"` (`-H`) | Header in "Key: Value" form (repeatable)                 | string |               |        *none*         |
+| `--body="…"` (`-d`)   | Request body. Use @filename to read a file, @- for stdin | string |               |        *none*         |
+| `--timing`            | Show DNS/Connection/TLS/TTFB/Transfer phases             | bool   |    `false`    |        *none*         |
 
-### `status-report info` subcommand
+### `run` command (aliases: `r`)
 
-Get status report details.
+Run your uptime tests.
 
-> openstatus status-report info <ReportID>
->   openstatus status-report info 12345
+> openstatus run
+>   openstatus run --config custom-config.yaml
 
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] status-report info [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                        | Description                 | Type   | Default value |  Environment variables |
-|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
-
-### `status-report create` subcommand
-
-Create a status report.
-
-> openstatus status-report create --title "API Degradation" --status investigating --message "Investigating increased latency" --page-id 123
+Run the uptime tests defined in the config.openstatus.yaml. The config file should be in the following format:  tests:   ids:      - monitor-id-1      - monitor-id-2.
 
 Usage:
 
 ```bash
-$ openstatus [GLOBAL FLAGS] status-report create [COMMAND FLAGS] [ARGUMENTS...]
+$ openstatus [GLOBAL FLAGS] run [COMMAND FLAGS] [ARGUMENTS...]
 ```
 
 The following flags are supported:
 
-| Name                        | Description                                                                                                                                                             | Type   | Default value |  Environment variables |
-|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                                                                                                                             | string |               | `OPENSTATUS_API_TOKEN` |
-| `--title="…"`               | Title of the status report                                                                                                                                              | string |               |         *none*         |
-| `--status="…"`              | Initial status (investigating, identified, monitoring, resolved)                                                                                                        | string |               |         *none*         |
-| `--message="…"`             | Initial message describing the incident                                                                                                                                 | string |               |         *none*         |
-| `--page-id="…"`             | Status page ID to associate with this report                                                                                                                            | string |               |         *none*         |
-| `--component-ids="…"`       | Comma-separated page component IDs (legacy; mutually exclusive with --impact)                                                                                           | string |               |         *none*         |
-| `--impact="…"`              | Per-component impact, repeatable: --impact <component_id>=<level> (level: operational, degraded, partial_outage, major_outage). Mutually exclusive with --component-ids | string |               |         *none*         |
-| `--notify`                  | Notify subscribers about this status report                                                                                                                             | bool   |    `false`    |         *none*         |
-| `--date="…"`                | Date when the event occurred (RFC 3339 format, defaults to now)                                                                                                         | string |               |         *none*         |
-| `--incident-id="…"`         | ID of an incident to link the report to                                                                                                                                 | string |               |         *none*         |
+| Name                        | Description                 | Type   |       Default value        |  Environment variables |
+|-----------------------------|-----------------------------|--------|:--------------------------:|:----------------------:|
+| `--config="…"`              | The configuration file      | string | `"config.openstatus.yaml"` |         *none*         |
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |                            | `OPENSTATUS_API_TOKEN` |
 
-### `status-report update` subcommand
+### `private-locations` command (aliases: `pl`)
 
-Update status report metadata.
+Manage private locations.
 
-> openstatus status-report update <ReportID> [--title "New title"] [--component-ids id1,id2]
+Private locations are self-hosted checker agents that run monitors from inside your own network. This command lists them, shows their details, and creates new ones.  Public regions (Fly.io, Koyeb, Railway) are not listed here; they appear in 'openstatus monitors info' and 'openstatus check'.
 
 Usage:
 
 ```bash
-$ openstatus [GLOBAL FLAGS] status-report update [COMMAND FLAGS] [ARGUMENTS...]
+$ openstatus [GLOBAL FLAGS] private-locations [ARGUMENTS...]
 ```
 
-The following flags are supported:
+### `private-locations list` subcommand
 
-| Name                        | Description                                                 | Type   | Default value |  Environment variables |
-|-----------------------------|-------------------------------------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                 | string |               | `OPENSTATUS_API_TOKEN` |
-| `--title="…"`               | New title for the report                                    | string |               |         *none*         |
-| `--component-ids="…"`       | Comma-separated page component IDs (replaces existing list) | string |               |         *none*         |
+List all private locations.
 
-### `status-report delete` subcommand
+> openstatus private-locations list
+>   openstatus pl list
+>   openstatus pl list --limit 10
 
-Delete a status report.
-
-> openstatus status-report delete <ReportID>
->   openstatus status-report delete 12345 -y
+List the private locations in your workspace, with the health of each agent and the number of monitors it runs.
 
 Usage:
 
 ```bash
-$ openstatus [GLOBAL FLAGS] status-report delete [COMMAND FLAGS] [ARGUMENTS...]
+$ openstatus [GLOBAL FLAGS] private-locations list [COMMAND FLAGS] [ARGUMENTS...]
 ```
 
 The following flags are supported:
 
-| Name                        | Description                     | Type   | Default value |  Environment variables |
-|-----------------------------|---------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token     | string |               | `OPENSTATUS_API_TOKEN` |
-| `--auto-accept` (`-y`)      | Automatically accept the prompt | bool   |    `false`    |         *none*         |
+| Name                        | Description                                                             | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                             | string |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of private locations to return (1-100; all when omitted) | int    |      `0`      |         *none*         |
 
-### `status-report add-update` subcommand
+### `private-locations info` subcommand
 
-Add an update to a status report.
+Get private location details.
 
-> openstatus status-report add-update <ReportID> --status resolved --message "Issue has been resolved"
+> openstatus private-locations info <PrivateLocationID>
+>   openstatus pl info pl_1a2b3c
+>   openstatus pl info pl_1a2b3c --show-token
+
+Fetch a private location including the monitors it runs and its agent token. The token is masked unless --show-token is passed.
 
 Usage:
 
 ```bash
-$ openstatus [GLOBAL FLAGS] status-report add-update [COMMAND FLAGS] [ARGUMENTS...]
+$ openstatus [GLOBAL FLAGS] private-locations info [COMMAND FLAGS] [ARGUMENTS...]
 ```
 
 The following flags are supported:
 
-| Name                        | Description                                                                                                                                                          | Type   | Default value |  Environment variables |
-|-----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                                                                                                                          | string |               | `OPENSTATUS_API_TOKEN` |
-| `--status="…"`              | New status (investigating, identified, monitoring, resolved)                                                                                                         | string |               |         *none*         |
-| `--message="…"`             | Message describing what changed                                                                                                                                      | string |               |         *none*         |
-| `--date="…"`                | Date for the update (RFC 3339 format, defaults to now)                                                                                                               | string |               |         *none*         |
-| `--impact="…"`              | Per-component impact, repeatable: --impact <component_id>=<level> (level: operational, degraded, partial_outage, major_outage). Can also add new affected components | string |               |         *none*         |
-| `--notify`                  | Notify subscribers about this update                                                                                                                                 | bool   |    `false`    |         *none*         |
+| Name                        | Description                                  | Type   | Default value |  Environment variables |
+|-----------------------------|----------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                  | string |               | `OPENSTATUS_API_TOKEN` |
+| `--show-token`              | Reveal the agent token instead of masking it | bool   |    `false`    |         *none*         |
+
+### `private-locations create` subcommand
+
+Create a private location.
+
+> openstatus private-locations create --name office-paris
+>   openstatus pl create --name office-paris --monitor-ids 12345,12346
+>   openstatus pl create --name office-paris --metadata env=prod --metadata team=infra
+
+Create a private location and print its agent token. The token is shown in full because you need it to configure the agent; retrieve it later with 'openstatus pl info --show-token'.  Run without --name in an interactive terminal to be prompted, including a picker for the monitors to attach.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] private-locations create [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                           | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           | string |               | `OPENSTATUS_API_TOKEN` |
+| `--name="…"`                | Name of the private location                          | string |               |         *none*         |
+| `--monitor-ids="…"`         | Monitor IDs to attach, comma-separated or repeated    | string |               |         *none*         |
+| `--metadata="…"`            | Key/value label, repeatable: --metadata <key>=<value> | string |               |         *none*         |
 
 ### `incident` command (aliases: `inc`, `incidents`)
 
@@ -786,6 +751,244 @@ The following flags are supported:
 | `--close`                   | Also close the incident         | bool   |    `false`    |         *none*         |
 | `--auto-accept` (`-y`)      | Automatically accept the prompt | bool   |    `false`    |         *none*         |
 
+### `notification` command (aliases: `n`)
+
+Manage notifications.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] notification [ARGUMENTS...]
+```
+
+### `notification list` subcommand
+
+List all notifications.
+
+> openstatus notification list
+>   openstatus notification list --limit 10
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] notification list [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                                         | Type   | Default value |  Environment variables |
+|-----------------------------|---------------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                         | string |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of notifications to return (1-100; all when omitted) | int    |      `0`      |         *none*         |
+
+### `notification info` subcommand
+
+Get notification details.
+
+> openstatus notification info <NotificationID>
+>   openstatus notification info 12345
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] notification info [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
+
+### `status-page` command (aliases: `sp`)
+
+Manage status pages.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] status-page [ARGUMENTS...]
+```
+
+### `status-page list` subcommand
+
+List all status pages.
+
+> openstatus status-page list
+>   openstatus status-page list --limit 10
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] status-page list [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                                 | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                 | string |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of pages to return (1-100; all when omitted) | int    |      `0`      |         *none*         |
+
+### `status-page info` subcommand
+
+Get status page details.
+
+> openstatus status-page info <PageID>
+>   openstatus status-page info 12345
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] status-page info [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
+
+### `status-report` command (aliases: `sr`)
+
+Manage status reports.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] status-report [ARGUMENTS...]
+```
+
+### `status-report list` subcommand
+
+List all status reports.
+
+> openstatus status-report list
+>   openstatus status-report list --status investigating --limit 10
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] status-report list [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                                        | Type   | Default value |  Environment variables |
+|-----------------------------|--------------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                        | string |               | `OPENSTATUS_API_TOKEN` |
+| `--status="…"`              | Filter by status (investigating, identified, monitoring, resolved) | string |               |         *none*         |
+| `--limit="…"`               | Maximum number of reports to return (1-100; all when omitted)      | int    |      `0`      |         *none*         |
+
+### `status-report info` subcommand
+
+Get status report details.
+
+> openstatus status-report info <ReportID>
+>   openstatus status-report info 12345
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] status-report info [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Type   | Default value |  Environment variables |
+|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
+
+### `status-report create` subcommand
+
+Create a status report.
+
+> openstatus status-report create --title "API Degradation" --status investigating --message "Investigating increased latency" --page-id 123
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] status-report create [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                                                                                                                                             | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                                                                                                                             | string |               | `OPENSTATUS_API_TOKEN` |
+| `--title="…"`               | Title of the status report                                                                                                                                              | string |               |         *none*         |
+| `--status="…"`              | Initial status (investigating, identified, monitoring, resolved)                                                                                                        | string |               |         *none*         |
+| `--message="…"`             | Initial message describing the incident                                                                                                                                 | string |               |         *none*         |
+| `--page-id="…"`             | Status page ID to associate with this report                                                                                                                            | string |               |         *none*         |
+| `--component-ids="…"`       | Comma-separated page component IDs (legacy; mutually exclusive with --impact)                                                                                           | string |               |         *none*         |
+| `--impact="…"`              | Per-component impact, repeatable: --impact <component_id>=<level> (level: operational, degraded, partial_outage, major_outage). Mutually exclusive with --component-ids | string |               |         *none*         |
+| `--notify`                  | Notify subscribers about this status report                                                                                                                             | bool   |    `false`    |         *none*         |
+| `--date="…"`                | Date when the event occurred (RFC 3339 format, defaults to now)                                                                                                         | string |               |         *none*         |
+| `--incident-id="…"`         | ID of an incident to link the report to                                                                                                                                 | string |               |         *none*         |
+
+### `status-report update` subcommand
+
+Update status report metadata.
+
+> openstatus status-report update <ReportID> [--title "New title"] [--component-ids id1,id2]
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] status-report update [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                                 | Type   | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                 | string |               | `OPENSTATUS_API_TOKEN` |
+| `--title="…"`               | New title for the report                                    | string |               |         *none*         |
+| `--component-ids="…"`       | Comma-separated page component IDs (replaces existing list) | string |               |         *none*         |
+
+### `status-report delete` subcommand
+
+Delete a status report.
+
+> openstatus status-report delete <ReportID>
+>   openstatus status-report delete 12345 -y
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] status-report delete [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                     | Type   | Default value |  Environment variables |
+|-----------------------------|---------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token     | string |               | `OPENSTATUS_API_TOKEN` |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt | bool   |    `false`    |         *none*         |
+
+### `status-report add-update` subcommand
+
+Add an update to a status report.
+
+> openstatus status-report add-update <ReportID> --status resolved --message "Issue has been resolved"
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] status-report add-update [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                                                                                                                                          | Type   | Default value |  Environment variables |
+|-----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                                                                                                                          | string |               | `OPENSTATUS_API_TOKEN` |
+| `--status="…"`              | New status (investigating, identified, monitoring, resolved)                                                                                                         | string |               |         *none*         |
+| `--message="…"`             | Message describing what changed                                                                                                                                      | string |               |         *none*         |
+| `--date="…"`                | Date for the update (RFC 3339 format, defaults to now)                                                                                                               | string |               |         *none*         |
+| `--impact="…"`              | Per-component impact, repeatable: --impact <component_id>=<level> (level: operational, degraded, partial_outage, major_outage). Can also add new affected components | string |               |         *none*         |
+| `--notify`                  | Notify subscribers about this update                                                                                                                                 | bool   |    `false`    |         *none*         |
+
 ### `maintenance` command (aliases: `mt`)
 
 Manage maintenance windows.
@@ -904,208 +1107,35 @@ The following flags are supported:
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token     | string |               | `OPENSTATUS_API_TOKEN` |
 | `--auto-accept` (`-y`)      | Automatically accept the prompt | bool   |    `false`    |         *none*         |
 
-### `status-page` command (aliases: `sp`)
+### `terraform` command (aliases: `tf`)
 
-Manage status pages.
+Generate Terraform configuration.
 
 Usage:
 
 ```bash
-$ openstatus [GLOBAL FLAGS] status-page [ARGUMENTS...]
+$ openstatus [GLOBAL FLAGS] terraform [ARGUMENTS...]
 ```
 
-### `status-page list` subcommand
+### `terraform generate` subcommand (aliases: `gen`)
 
-List all status pages.
+Generate Terraform configuration from workspace resources.
 
-> openstatus status-page list
->   openstatus status-page list --limit 10
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] status-page list [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                        | Description                                                 | Type   | Default value |  Environment variables |
-|-----------------------------|-------------------------------------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                 | string |               | `OPENSTATUS_API_TOKEN` |
-| `--limit="…"`               | Maximum number of pages to return (1-100; all when omitted) | int    |      `0`      |         *none*         |
-
-### `status-page info` subcommand
-
-Get status page details.
-
-> openstatus status-page info <PageID>
->   openstatus status-page info 12345
+> openstatus terraform generate [--output-dir ./openstatus-terraform/]
 
 Usage:
 
 ```bash
-$ openstatus [GLOBAL FLAGS] status-page info [COMMAND FLAGS] [ARGUMENTS...]
+$ openstatus [GLOBAL FLAGS] terraform generate [COMMAND FLAGS] [ARGUMENTS...]
 ```
 
 The following flags are supported:
 
-| Name                        | Description                 | Type   | Default value |  Environment variables |
-|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
-
-### `notification` command (aliases: `n`)
-
-Manage notifications.
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] notification [ARGUMENTS...]
-```
-
-### `notification list` subcommand
-
-List all notifications.
-
-> openstatus notification list
->   openstatus notification list --limit 10
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] notification list [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                        | Description                                                         | Type   | Default value |  Environment variables |
-|-----------------------------|---------------------------------------------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                         | string |               | `OPENSTATUS_API_TOKEN` |
-| `--limit="…"`               | Maximum number of notifications to return (1-100; all when omitted) | int    |      `0`      |         *none*         |
-
-### `notification info` subcommand
-
-Get notification details.
-
-> openstatus notification info <NotificationID>
->   openstatus notification info 12345
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] notification info [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                        | Description                 | Type   | Default value |  Environment variables |
-|-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
-
-### `private-locations` command (aliases: `pl`)
-
-Manage private locations.
-
-Private locations are self-hosted checker agents that run monitors from inside your own network. This command lists them, shows their details, and creates new ones.  Public regions (Fly.io, Koyeb, Railway) are not listed here; they appear in 'openstatus monitors info' and 'openstatus check'.
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] private-locations [ARGUMENTS...]
-```
-
-### `private-locations list` subcommand
-
-List all private locations.
-
-> openstatus private-locations list
->   openstatus pl list
->   openstatus pl list --limit 10
-
-List the private locations in your workspace, with the health of each agent and the number of monitors it runs.
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] private-locations list [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                        | Description                                                             | Type   | Default value |  Environment variables |
-|-----------------------------|-------------------------------------------------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                             | string |               | `OPENSTATUS_API_TOKEN` |
-| `--limit="…"`               | Maximum number of private locations to return (1-100; all when omitted) | int    |      `0`      |         *none*         |
-
-### `private-locations info` subcommand
-
-Get private location details.
-
-> openstatus private-locations info <PrivateLocationID>
->   openstatus pl info pl_1a2b3c
->   openstatus pl info pl_1a2b3c --show-token
-
-Fetch a private location including the monitors it runs and its agent token. The token is masked unless --show-token is passed.
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] private-locations info [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                        | Description                                  | Type   | Default value |  Environment variables |
-|-----------------------------|----------------------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                  | string |               | `OPENSTATUS_API_TOKEN` |
-| `--show-token`              | Reveal the agent token instead of masking it | bool   |    `false`    |         *none*         |
-
-### `private-locations create` subcommand
-
-Create a private location.
-
-> openstatus private-locations create --name office-paris
->   openstatus pl create --name office-paris --monitor-ids 12345,12346
->   openstatus pl create --name office-paris --metadata env=prod --metadata team=infra
-
-Create a private location and print its agent token. The token is shown in full because you need it to configure the agent; retrieve it later with 'openstatus pl info --show-token'.  Run without --name in an interactive terminal to be prompted, including a picker for the monitors to attach.
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] private-locations create [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                        | Description                                           | Type   | Default value |  Environment variables |
-|-----------------------------|-------------------------------------------------------|--------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           | string |               | `OPENSTATUS_API_TOKEN` |
-| `--name="…"`                | Name of the private location                          | string |               |         *none*         |
-| `--monitor-ids="…"`         | Monitor IDs to attach, comma-separated or repeated    | string |               |         *none*         |
-| `--metadata="…"`            | Key/value label, repeatable: --metadata <key>=<value> | string |               |         *none*         |
-
-### `run` command (aliases: `r`)
-
-Run your uptime tests.
-
-> openstatus run
->   openstatus run --config custom-config.yaml
-
-Run the uptime tests defined in the config.openstatus.yaml. The config file should be in the following format:  tests:   ids:      - monitor-id-1      - monitor-id-2.
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] run [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                        | Description                 | Type   |       Default value        |  Environment variables |
-|-----------------------------|-----------------------------|--------|:--------------------------:|:----------------------:|
-| `--config="…"`              | The configuration file      | string | `"config.openstatus.yaml"` |         *none*         |
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |                            | `OPENSTATUS_API_TOKEN` |
+| Name                        | Description                              | Type   |        Default value        |  Environment variables |
+|-----------------------------|------------------------------------------|--------|:---------------------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token              | string |                             | `OPENSTATUS_API_TOKEN` |
+| `--output-dir="…"` (`-o`)   | Directory to write Terraform files into  | string | `"./openstatus-terraform/"` |         *none*         |
+| `--force` (`-f`)            | Overwrite existing files in --output-dir | bool   |           `false`           |         *none*         |
 
 ### `whoami` command (aliases: `w`)
 
@@ -1159,36 +1189,6 @@ Usage:
 ```bash
 $ openstatus [GLOBAL FLAGS] logout [ARGUMENTS...]
 ```
-
-### `terraform` command (aliases: `tf`)
-
-Generate Terraform configuration.
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] terraform [ARGUMENTS...]
-```
-
-### `terraform generate` subcommand (aliases: `gen`)
-
-Generate Terraform configuration from workspace resources.
-
-> openstatus terraform generate [--output-dir ./openstatus-terraform/]
-
-Usage:
-
-```bash
-$ openstatus [GLOBAL FLAGS] terraform generate [COMMAND FLAGS] [ARGUMENTS...]
-```
-
-The following flags are supported:
-
-| Name                        | Description                              | Type   |        Default value        |  Environment variables |
-|-----------------------------|------------------------------------------|--------|:---------------------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token              | string |                             | `OPENSTATUS_API_TOKEN` |
-| `--output-dir="…"` (`-o`)   | Directory to write Terraform files into  | string | `"./openstatus-terraform/"` |         *none*         |
-| `--force` (`-f`)            | Overwrite existing files in --output-dir | bool   |           `false`           |         *none*         |
 
 ### `version` command
 

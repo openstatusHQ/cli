@@ -1,6 +1,6 @@
 # OpenStatus CLI
 
-Manage status pages, monitors, and incidents from the terminal.
+Monitor your services, respond to incidents, and keep your users informed.
 
 ## Installation
 
@@ -86,19 +86,27 @@ Rate limit: 3 requests per 60 seconds.
 
 ## Commands
 
+Commands are grouped around the three OpenStatus pillars: monitor, respond, and communicate.
+
 | Command | Alias | Description |
 |---------|-------|-------------|
-| `check` | `c` | Run an HTTP check against a URL from 28 global regions (no auth) |
-| `login` / `logout` | | Authenticate with the OpenStatus API |
-| `whoami` | `w` | Show current workspace info |
+| **Monitor** | | |
 | `monitors` | `m` | List, inspect, trigger, and import monitors |
+| `check` | `c` | Run an HTTP check against a URL from 28 global regions (no auth) |
+| `run` | `r` | Run synthetic tests across global regions |
+| `private-locations` | `pl` | Manage private locations |
+| **Respond** | | |
 | `incident` | `inc`, `incidents` | Declare and run incidents (lifecycle, notes, status report link, postmortem) |
+| `notification` | `n` | View notification channels |
+| **Communicate** | | |
+| `status-page` | `sp` | View status pages and components |
 | `status-report` | `sr` | Post and manage public status reports |
 | `maintenance` | `mt` | Schedule and manage maintenance windows |
-| `status-page` | `sp` | View status pages and components |
-| `notification` | `n` | View notification channels |
-| `run` | `r` | Run synthetic tests across global regions |
+| **Infrastructure as Code** | | |
 | `terraform generate` | `tf gen` | Export workspace resources to Terraform HCL |
+| **Account** | | |
+| `whoami` | `w` | Show current workspace info |
+| `login` / `logout` | | Authenticate with the OpenStatus API |
 
 ### Global Flags
 

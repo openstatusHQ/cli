@@ -70,7 +70,7 @@ func Test_NewApp(t *testing.T) {
 	t.Run("Has correct usage text", func(t *testing.T) {
 		app := cmd.NewApp()
 
-		expectedUsage := "Manage status pages, monitors, and incidents from the terminal"
+		expectedUsage := "Monitor your services, respond to incidents, and keep your users informed"
 		if app.Usage != expectedUsage {
 			t.Errorf("Expected usage '%s', got '%s'", expectedUsage, app.Usage)
 		}

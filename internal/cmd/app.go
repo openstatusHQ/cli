@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"slices"
 	"strings"
 	"syscall"
 
@@ -32,22 +33,19 @@ func NewApp() *cli.Command {
 		Name:                  "openstatus",
 		Suggest:               true,
 		EnableShellCompletion: true,
-		Usage:                 "Manage status pages, monitors, and incidents from the terminal",
-		Description: `OpenStatus CLI lets you manage your status pages and uptime monitors
-from the command line. Declare and run incidents, post public status updates,
-define monitors as code, and run on-demand checks.
+		Usage:                 "Monitor your services, respond to incidents, and keep your users informed",
+		Description: `OpenStatus CLI brings the whole incident lifecycle to your terminal:
+
+  Monitor      Check your endpoints from 28 regions and manage monitors as code
+  Respond      Declare incidents, run them to resolution and write the postmortem
+  Communicate  Keep your users informed with status reports and maintenance windows
 
 Get started:
-  openstatus login                Log in with your browser
-  openstatus incident declare     Declare an incident
-  openstatus incident list        View incidents
-  openstatus status-report create Post a public status update
-  openstatus status-report list   View status reports
-  openstatus maintenance create   Schedule a maintenance window
-  openstatus maintenance list     View maintenance windows
-  openstatus monitors list        List your monitors
-  openstatus run                  Run synthetic tests
-  openstatus pl list              List your private locations
+  openstatus login                      Log in with your browser
+  openstatus check https://openstat.us  Check a URL from every region
+  openstatus monitors list              List your monitors
+  openstatus incident declare           Declare an incident
+  openstatus status-report create       Post a public status update
 
 https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
 		Version:        version.Version,
@@ -78,22 +76,35 @@ https://docs.openstatus.dev  |  https://github.com/openstatusHQ/cli/issues/new`,
 			output.InitColorSettings(cmd.Bool("no-color"))
 			return ctx, nil
 		},
-		Commands: []*cli.Command{
-			check.CheckCmd(),
-			monitors.MonitorsCmd(),
-			statusreport.StatusReportCmd(),
-			incident.IncidentCmd(),
-			maintenance.MaintenanceCmd(),
-			statuspage.StatusPageCmd(),
-			notification.NotificationCmd(),
-			privatelocation.PrivateLocationsCmd(),
-			run.RunCmd(),
-			whoami.WhoamiCmd(),
-			login.LoginCmd(),
-			login.LogoutCmd(),
-			terraform.TerraformCmd(),
-			versionCmd(),
-		},
+		CustomRootCommandHelpTemplate: rootHelpTemplate,
+		Commands: slices.Concat(
+			withCategory(categoryMonitor,
+				monitors.MonitorsCmd(),
+				check.CheckCmd(),
+				run.RunCmd(),
+				privatelocation.PrivateLocationsCmd(),
+			),
+			withCategory(categoryRespond,
+				incident.IncidentCmd(),
+				notification.NotificationCmd(),
+			),
+			withCategory(categoryCommunicate,
+				statuspage.StatusPageCmd(),
+				statusreport.StatusReportCmd(),
+				maintenance.MaintenanceCmd(),
+			),
+			withCategory(categoryIaC,
+				terraform.TerraformCmd(),
+			),
+			withCategory(categoryAccount,
+				whoami.WhoamiCmd(),
+				login.LoginCmd(),
+				login.LogoutCmd(),
+			),
+			[]*cli.Command{
+				versionCmd(),
+			},
+		),
 	}
 	handleUsage([]*cli.Command{app})
 	trackInvocation(app.Commands)

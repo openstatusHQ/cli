@@ -198,6 +198,7 @@ func heartbeatMonitorToLocal(m *monitorv1.HeartbeatMonitor) (Monitor, error) {
 		Grace:        m.GetGrace(),
 		LastPingAt:   m.GetLastPingAt(),
 		LastPingKind: heartbeatPingKindToString(m.GetLastPingKind()),
+		NextDueAt:    m.GetNextDueAt(),
 	}, nil
 }
 

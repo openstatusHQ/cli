@@ -211,7 +211,7 @@ func ListMonitorResponseLogs(
 }
 
 // explainHeartbeatLogsError replaces the API's rejection with an actionable message
-// when the monitor is a heartbeat: the API has no endpoint that lists pings. Permission
+// when the monitor is a heartbeat, whose pings have their own command. Permission
 // denied is included because the server checks the plan before the monitor type, so
 // without this a workspace lacking response logs would be told its token is wrong.
 func explainHeartbeatLogsError(ctx context.Context, client monitorv1connect.MonitorServiceClient, monitorId string, err error) error {
@@ -225,8 +225,8 @@ func explainHeartbeatLogsError(ctx context.Context, client monitorv1connect.Moni
 		return err
 	}
 	return output.NewError(output.KindInvalidArgument,
-		"monitor %s is a heartbeat monitor and has no response logs. See its pings in the dashboard's Logs tab, or run 'openstatus monitors info %s' for its last ping and totals",
-		monitorId, monitorId)
+		"monitor %s is a heartbeat monitor and has no response logs. Run 'openstatus monitors pings %s' to list its pings, or 'openstatus monitors info %s' for its last ping and totals",
+		monitorId, monitorId, monitorId)
 }
 
 func ListMonitorResponseLogsWithHTTPClient(ctx context.Context, httpClient *http.Client, apiKey string, monitorId string, limit int32, offset int32, from string, to string) error {

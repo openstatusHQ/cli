@@ -39,6 +39,7 @@ Token resolution order:
 | Get monitor details + metrics | `monitors info <ID>` | Check latency, status, and config for a specific monitor |
 | List monitor response logs | `monitors logs <ID>` | See recent HTTP responses (14-day retention) to debug failures |
 | Get a single log's full detail | `monitors log-info <ID> <LogID>` | Inspect timing phases, response headers, and assertion results for one request |
+| List heartbeat pings | `monitors pings <ID>` | See when a cron job checked in and what it reported |
 | Trigger a monitor now | `monitors trigger <ID>` | Run an on-demand check across all regions |
 | Delete a monitor | `monitors delete <ID>` | Remove a monitor |
 | Declare an incident | `incident declare` | Something is broken — start the internal response first |
@@ -400,8 +401,9 @@ Both approaches run tests in parallel and show latency + status per region.
 ```bash
 openstatus monitors info <ID>
 openstatus monitors info <ID> --time-range 7d
+openstatus monitors info <ID> --show-ping-url     # heartbeat only: reveal the ping URL
 ```
-Shows config, live status per region, and summary metrics (P50/P75/P95/P99 latency). `--time-range` accepts `1d` (default), `7d`, or `14d`. For heartbeat monitors it shows the period, grace, last ping, and successful/failed ping totals instead of regions and latency. The ping URL is never printed.
+Shows config, live status per region, and summary metrics (P50/P75/P95/P99 latency). `--time-range` accepts `1d` (default), `7d`, or `14d`. For heartbeat monitors it shows the period, grace, last ping, next due time, and successful/failed ping totals instead of regions and latency. The ping URL is hidden unless `--show-ping-url` is passed. Only use that flag when the user asks for the URL: anyone with it can report pings without authentication, so don't repeat it in summaries.
 
 **List monitors (including inactive):**
 ```bash
@@ -415,13 +417,31 @@ openstatus monitors logs <ID> --limit 10                              # cap resu
 openstatus monitors logs <ID> --limit 5 --offset 5                    # paginate
 openstatus monitors logs <ID> --from 2026-05-06T00:00:00Z --to 2026-05-07T00:00:00Z   # time window
 ```
-Lists HTTP response logs from the 14-day retention window — status code, latency, region, and timestamp per request. Use this to investigate why a monitor failed. `--limit`, `--offset`, `--from`, and `--to` (RFC 3339) are all optional. Only HTTP monitors have response logs. Heartbeat pings aren't available from the CLI: use the dashboard's Logs tab, or `monitors info <ID>` for the last ping and totals.
+Lists HTTP response logs from the 14-day retention window — status code, latency, region, and timestamp per request. Use this to investigate why a monitor failed. `--limit`, `--offset`, `--from`, and `--to` (RFC 3339) are all optional. Only HTTP monitors have response logs. For heartbeat monitors use `monitors pings <ID>`.
 
 **Single log full detail:**
 ```bash
 openstatus monitors log-info <ID> <LogID>
 ```
 Fetches one HTTP response log with full detail: timing phases (DNS/Connection/TLS/TTFB/Transfer), response headers, and assertion results. Get the `<LogID>` from `monitors logs <ID>`.
+
+**Heartbeat pings (did the cron job run?):**
+```bash
+openstatus monitors pings <ID>                                        # newest first
+openstatus monitors pings <ID> --kind fail                            # only failure pings (success|fail, repeatable)
+openstatus monitors pings <ID> --limit 10                             # cap results (1-100)
+openstatus monitors pings <ID> --cursor <cursor>                      # next page, cursor printed after each page
+openstatus monitors pings <ID> --from 2026-11-01T00:00:00Z --to 2026-11-02T00:00:00Z   # time window
+openstatus monitors pings <ID> --json | jq '.pings[] | {timestamp, kind, body}'        # headers and body
+```
+Lists the pings a heartbeat monitor received: time, kind, method, IP, and user agent. Request headers and body (first 10 KB, secrets redacted) are only in `--json`. Requires a plan with response logs; on other plans use `monitors info <ID>` for the last ping and totals.
+
+**Replace a heartbeat ping URL:**
+```bash
+openstatus monitors regenerate-token <ID>         # asks for confirmation
+openstatus monitors regenerate-token <ID> -y -q   # prints only the new URL
+```
+Only run this when the user explicitly asks, e.g. after the URL leaked. The current URL stops working immediately, so the job keeps failing until it is updated with the new one. Don't pass `-y` on the user's behalf unless they said to.
 
 **Incident timeline:**
 ```bash

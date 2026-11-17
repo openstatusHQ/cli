@@ -86,6 +86,9 @@ func Test_listMonitorResponseLogs_Heartbeat(t *testing.T) {
 			if got := strings.Contains(err.Error(), "heartbeat monitor"); got != tc.wantHeartbeat {
 				t.Errorf("heartbeat explanation = %t, want %t: %v", got, tc.wantHeartbeat, err)
 			}
+			if tc.wantHeartbeat && (!strings.Contains(err.Error(), "openstatus monitors pings 7") || strings.Contains(err.Error(), "dashboard")) {
+				t.Errorf("expected the explanation to point to monitors pings: %v", err)
+			}
 			if !strings.Contains(err.Error(), tc.wantInError) {
 				t.Errorf("expected %q in error: %v", tc.wantInError, err)
 			}

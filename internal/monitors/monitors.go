@@ -540,6 +540,7 @@ type Monitor struct {
 	Grace        int64  `json:"grace,omitempty"`
 	LastPingAt   string `json:"last_ping_at,omitempty"`
 	LastPingKind string `json:"last_ping_kind,omitempty"`
+	NextDueAt    string `json:"next_due_at,omitempty"`
 }
 
 type Header struct {
@@ -621,7 +622,9 @@ func MonitorsCmd() *cli.Command {
 			GetMonitorsListCmd(),
 			GetMonitorLogsCmd(),
 			GetMonitorLogInfoCmd(),
+			GetMonitorPingsCmd(),
 			GetMonitorsTriggerCmd(),
+			GetMonitorRegenerateTokenCmd(),
 		},
 	}
 	return &monitorsCmd

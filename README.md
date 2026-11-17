@@ -40,6 +40,9 @@ openstatus monitors info 123
 # Trigger an on-demand check
 openstatus monitors trigger 123
 
+# See a heartbeat monitor's pings
+openstatus monitors pings 123
+
 # Declare an incident, then publish a linked public status report
 ID=$(openstatus incident declare --title "Checkout API returns 502" --severity major -q)
 openstatus status-report create --title "Checkout issues" --status investigating \
@@ -184,7 +187,7 @@ export DO_NOT_TRACK=1
 export OPENSTATUS_NO_TELEMETRY=1
 ```
 
-Opting out does not remove the `User-Agent`: like any HTTP client, the CLI still identifies itself with its version and platform (e.g. `openstatus-cli/v1.6.0 (darwin; arm64)`).
+Opting out does not remove the `User-Agent`: like any HTTP client, the CLI still identifies itself with its version and platform (e.g. `openstatus-cli/v1.7.0 (darwin; arm64)`).
 
 When `OPENSTATUS_API_URL` points at a self-hosted instance, the command and run ID only go to that instance; `check` does not send them to openstatus.dev.
 

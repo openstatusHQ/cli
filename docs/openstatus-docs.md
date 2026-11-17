@@ -86,8 +86,9 @@ Get a monitor information.
 > openstatus monitors info <MonitorID>
 >   openstatus monitors info 12345
 >   openstatus monitors info 12345 --time-range 7d
+>   openstatus monitors info 12345 --show-ping-url
 
-Fetch the monitor information including configuration, live status per region, and summary metrics.
+Fetch the monitor information including configuration, live status per region, and summary metrics. The ping URL of a heartbeat monitor is hidden unless --show-ping-url is passed.
 
 Usage:
 
@@ -101,6 +102,7 @@ The following flags are supported:
 |-----------------------------|----------------------------------------------|--------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token                  | string |               | `OPENSTATUS_API_TOKEN` |
 | `--time-range="…"`          | Time range for summary metrics (1d, 7d, 14d) | string |    `"1d"`     |         *none*         |
+| `--show-ping-url`           | Reveal the ping URL of a heartbeat monitor   | bool   |    `false`    |         *none*         |
 
 ### `monitors list` subcommand
 
@@ -173,6 +175,35 @@ The following flags are supported:
 |-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
+### `monitors pings` subcommand
+
+List the pings a heartbeat monitor received.
+
+> openstatus monitors pings <MonitorID>
+>   openstatus monitors pings 12345
+>   openstatus monitors pings 12345 --kind fail
+>   openstatus monitors pings 12345 --from 2026-11-01T00:00:00Z --to 2026-11-02T00:00:00Z
+>   openstatus monitors pings 12345 --json | jq '.pings[0].body'
+
+List the pings a heartbeat monitor received, newest first. Request headers and body are only included in --json output. Requires a plan with response logs.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] monitors pings [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                                | Type   | Default value |  Environment variables |
+|-----------------------------|------------------------------------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                | string |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of pings to return (1-100)                  | int    |      `0`      |         *none*         |
+| `--from="…"`                | Start of time window (RFC 3339 format)                     | string |               |         *none*         |
+| `--to="…"`                  | End of time window (RFC 3339 format)                       | string |               |         *none*         |
+| `--kind="…"`                | Only show pings of this kind: success or fail (repeatable) | string |               |         *none*         |
+| `--cursor="…"`              | Cursor from a previous page                                | string |               |         *none*         |
+
 ### `monitors trigger` subcommand
 
 Trigger a monitor execution.
@@ -193,6 +224,30 @@ The following flags are supported:
 | Name                        | Description                 | Type   | Default value |  Environment variables |
 |-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | OpenStatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
+
+### `monitors regenerate-token` subcommand
+
+Replace the ping URL of a heartbeat monitor.
+
+> openstatus monitors regenerate-token <MonitorID>
+>   openstatus monitors regenerate-token 12345
+>   openstatus monitors regenerate-token 12345 -y
+>   openstatus monitors regenerate-token 12345 -y -q | pbcopy
+
+Replace the ping URL of a heartbeat monitor, for example after it leaked. The current URL stops working immediately, so update your job with the new one.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] monitors regenerate-token [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                     | Type   | Default value |  Environment variables |
+|-----------------------------|---------------------------------|--------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token     | string |               | `OPENSTATUS_API_TOKEN` |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt | bool   |    `false`    |         *none*         |
 
 ### `status-report` command (aliases: `sr`)
 

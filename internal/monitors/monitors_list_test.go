@@ -156,21 +156,31 @@ func Test_listMonitors(t *testing.T) {
 
 func captureStdout(t *testing.T, f func()) string {
 	t.Helper()
+	return captureFile(t, &os.Stdout, f)
+}
+
+func captureStderr(t *testing.T, f func()) string {
+	t.Helper()
+	return captureFile(t, &os.Stderr, f)
+}
+
+func captureFile(t *testing.T, target **os.File, f func()) string {
+	t.Helper()
 
 	r, w, err := os.Pipe()
 	if err != nil {
 		t.Fatalf("failed to create pipe: %v", err)
 	}
-	original := os.Stdout
-	os.Stdout = w
-	t.Cleanup(func() { os.Stdout = original })
+	original := *target
+	*target = w
+	t.Cleanup(func() { *target = original })
 
 	f()
 
 	if err := w.Close(); err != nil {
 		t.Fatalf("failed to close pipe: %v", err)
 	}
-	os.Stdout = original
+	*target = original
 
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {

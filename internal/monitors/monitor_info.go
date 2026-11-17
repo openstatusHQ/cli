@@ -28,6 +28,7 @@ type MonitorInfoOutput struct {
 	Regions          []RegionStatusOutput  `json:"regions,omitempty"`
 	PrivateLocations []privatelocation.Ref `json:"private_locations,omitempty"`
 	Summary          *SummaryOutput        `json:"summary,omitempty"`
+	PingURL          string                `json:"ping_url,omitempty"`
 }
 
 type RegionStatusOutput struct {
@@ -169,7 +170,7 @@ func newBlueprintTable() *tablewriter.Table {
 	)
 }
 
-func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string, monitorId string, timeRange monitorv1.TimeRange, timeRangeStr string, s *output.Spinner) error {
+func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string, monitorId string, timeRange monitorv1.TimeRange, timeRangeStr string, showPingURL bool, s *output.Spinner) error {
 	if monitorId == "" {
 		output.StopSpinner(s)
 		fmt.Fprintln(os.Stderr, "Usage: openstatus monitors info <monitor-id>")
@@ -224,7 +225,7 @@ func GetMonitorInfo(ctx context.Context, httpClient *http.Client, apiKey string,
 		regions = monitorConfig.GetGrpc().GetRegions()
 		privateLocationIDs = monitorConfig.GetGrpc().GetPrivateLocationIds()
 	case monitorConfig.HasHeartbeat():
-		return showHeartbeatMonitorInfo(ctx, client, monitorConfig.GetHeartbeat(), timeRange, timeRangeStr)
+		return showHeartbeatMonitorInfo(ctx, client, monitorConfig.GetHeartbeat(), timeRange, timeRangeStr, showPingURL)
 	default:
 		if monitorConfig.HasDns() {
 			return fmt.Errorf("DNS monitors are not yet supported in the CLI. Monitor ID: %s", monitorId)
@@ -451,7 +452,7 @@ func formatSeconds(seconds int64) string {
 // showHeartbeatMonitorInfo has its own view because the job pings OpenStatus: there
 // are no regions, and no latency to report (the API returns the percentiles as 0).
 // Status comes from the monitor itself, so GetMonitorStatus is not called.
-func showHeartbeatMonitorInfo(ctx context.Context, client monitorv1connect.MonitorServiceClient, m *monitorv1.HeartbeatMonitor, timeRange monitorv1.TimeRange, timeRangeStr string) error {
+func showHeartbeatMonitorInfo(ctx context.Context, client monitorv1connect.MonitorServiceClient, m *monitorv1.HeartbeatMonitor, timeRange monitorv1.TimeRange, timeRangeStr string, showPingURL bool) error {
 	monitor, err := heartbeatMonitorToLocal(m)
 	if err != nil {
 		return err
@@ -469,6 +470,9 @@ func showHeartbeatMonitorInfo(ctx context.Context, client monitorv1connect.Monit
 
 	if output.IsJSONOutput() {
 		infoOutput := MonitorInfoOutput{Monitor: monitor, Status: status}
+		if showPingURL {
+			infoOutput.PingURL = m.GetPingUrl()
+		}
 		if summaryResp != nil {
 			infoOutput.Summary = &SummaryOutput{
 				TotalSuccessful: summaryResp.GetTotalSuccessful(),
@@ -489,9 +493,7 @@ func showHeartbeatMonitorInfo(ctx context.Context, client monitorv1connect.Monit
 		}
 	}
 
-	fmt.Println(output.Bold("Monitor:"))
-	table := newBlueprintTable()
-	table.Bulk([][]string{
+	data := [][]string{
 		{"ID", fmt.Sprintf("%d", monitor.ID)},
 		{"Status", colorizeStatus(status)},
 		{"Name", monitor.Name},
@@ -500,9 +502,19 @@ func showHeartbeatMonitorInfo(ctx context.Context, client monitorv1connect.Monit
 		{"Period", formatSeconds(monitor.Period)},
 		{"Grace", formatSeconds(monitor.Grace)},
 		{"Last Ping", lastPing},
-		{"Active", fmt.Sprintf("%t", monitor.Active)},
-		{"Public", fmt.Sprintf("%t", monitor.Public)},
-	})
+		{"Next Due", nextDueLabel(monitor)},
+	}
+	if showPingURL {
+		data = append(data, []string{"Ping URL", m.GetPingUrl()})
+	}
+	data = append(data,
+		[]string{"Active", fmt.Sprintf("%t", monitor.Active)},
+		[]string{"Public", fmt.Sprintf("%t", monitor.Public)},
+	)
+
+	fmt.Println(output.Bold("Monitor:"))
+	table := newBlueprintTable()
+	table.Bulk(data)
 	table.Render()
 
 	if summaryResp != nil {
@@ -516,7 +528,24 @@ func showHeartbeatMonitorInfo(ctx context.Context, client monitorv1connect.Monit
 		summaryTable.Render()
 	}
 
+	if !showPingURL && !output.IsQuiet() {
+		fmt.Println("\nRun with --show-ping-url to reveal the ping URL.")
+	}
+
 	return nil
+}
+
+// nextDueLabel explains an empty next_due_at: the API leaves it unset while the
+// monitor is paused and until the first ping arrives.
+func nextDueLabel(m Monitor) string {
+	switch {
+	case m.NextDueAt != "":
+		return m.NextDueAt
+	case !m.Active:
+		return "paused"
+	default:
+		return "after first ping"
+	}
 }
 
 func GetMonitorInfoCmd() *cli.Command {
@@ -525,8 +554,9 @@ func GetMonitorInfoCmd() *cli.Command {
 		Usage: "Get a monitor information",
 		UsageText: `openstatus monitors info <MonitorID>
   openstatus monitors info 12345
-  openstatus monitors info 12345 --time-range 7d`,
-		Description: "Fetch the monitor information including configuration, live status per region, and summary metrics.",
+  openstatus monitors info 12345 --time-range 7d
+  openstatus monitors info 12345 --show-ping-url`,
+		Description: "Fetch the monitor information including configuration, live status per region, and summary metrics. The ping URL of a heartbeat monitor is hidden unless --show-ping-url is passed.",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			apiKey, err := auth.ResolveAccessToken(ctx, cmd)
 			if err != nil {
@@ -539,7 +569,7 @@ func GetMonitorInfoCmd() *cli.Command {
 				return err
 			}
 			s := output.StartSpinner("Fetching monitor details...")
-			err = GetMonitorInfo(ctx, api.DefaultHTTPClient, apiKey, monitorId, timeRange, timeRangeStr, s)
+			err = GetMonitorInfo(ctx, api.DefaultHTTPClient, apiKey, monitorId, timeRange, timeRangeStr, cmd.Bool("show-ping-url"), s)
 			if err != nil {
 				return err
 			}
@@ -556,6 +586,10 @@ func GetMonitorInfoCmd() *cli.Command {
 				Name:  "time-range",
 				Usage: "Time range for summary metrics (1d, 7d, 14d)",
 				Value: "1d",
+			},
+			&cli.BoolFlag{
+				Name:  "show-ping-url",
+				Usage: "Reveal the ping URL of a heartbeat monitor",
 			},
 		},
 	}

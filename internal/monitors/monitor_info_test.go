@@ -46,7 +46,7 @@ func monitorInfoInterceptor(routes []routeEntry) *interceptorHTTPClient {
 // Not parallel: subtests redirect the process-wide os.Stdout.
 func Test_getMonitorInfo_Heartbeat(t *testing.T) {
 	const secret = "secret-ping-token"
-	const pinged = `{"monitor":{"heartbeat":{"id":"7","name":"Nightly backup","description":"Dumps the database","period":"86400","grace":"1800","active":true,"status":"MONITOR_STATUS_ERROR","lastPingAt":"2026-11-05T02:00:00.000Z","lastPingKind":"HEARTBEAT_PING_KIND_FAIL","pingUrl":"https://api.openstatus.dev/heartbeat/` + secret + `"}}}`
+	const pinged = `{"monitor":{"heartbeat":{"id":"7","name":"Nightly backup","description":"Dumps the database","period":"86400","grace":"1800","active":true,"status":"MONITOR_STATUS_ERROR","lastPingAt":"2026-11-05T02:00:00.000Z","lastPingKind":"HEARTBEAT_PING_KIND_FAIL","nextDueAt":"2026-11-06T02:30:00.000Z","pingUrl":"https://api.openstatus.dev/heartbeat/` + secret + `"}}}`
 	const summary = `{"id":"7","lastPingAt":"2026-11-05T02:00:00.000Z","totalSuccessful":"6","totalFailed":"1","timeRange":"TIME_RANGE_7D"}`
 
 	t.Run("Shows schedule, last ping and ping totals", func(t *testing.T) {
@@ -56,17 +56,17 @@ func Test_getMonitorInfo_Heartbeat(t *testing.T) {
 		})
 
 		out := captureStdout(t, func() {
-			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_7D, "7d", nil); err != nil {
+			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_7D, "7d", false, nil); err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 		})
 
-		for _, want := range []string{"Nightly backup", "heartbeat", "● error", "1d", "30m", "2026-11-05T02:00:00.000Z (fail)", "Summary (7d)", "Successful Pings", "Failed Pings"} {
+		for _, want := range []string{"Nightly backup", "heartbeat", "● error", "1d", "30m", "2026-11-05T02:00:00.000Z (fail)", "Next Due", "2026-11-06T02:30:00.000Z", "Summary (7d)", "Successful Pings", "Failed Pings", "Run with --show-ping-url to reveal the ping URL."} {
 			if !strings.Contains(out, want) {
 				t.Errorf("expected %q in output, got:\n%s", want, out)
 			}
 		}
-		for _, unwanted := range []string{secret, "Latency", "Region Status", "Endpoint", "Frequency", "Timeout"} {
+		for _, unwanted := range []string{secret, "Ping URL", "Latency", "Region Status", "Endpoint", "Frequency", "Timeout"} {
 			if strings.Contains(out, unwanted) {
 				t.Errorf("did not expect %q in output, got:\n%s", unwanted, out)
 			}
@@ -75,17 +75,17 @@ func Test_getMonitorInfo_Heartbeat(t *testing.T) {
 
 	t.Run("Before the first ping", func(t *testing.T) {
 		interceptor := monitorInfoInterceptor([]routeEntry{
-			{"GetMonitor", `{"monitor":{"heartbeat":{"id":"7","name":"New job","period":"3600","grace":"90","status":"MONITOR_STATUS_ACTIVE"}}}`},
+			{"GetMonitor", `{"monitor":{"heartbeat":{"id":"7","name":"New job","period":"3600","grace":"90","active":true,"status":"MONITOR_STATUS_ACTIVE"}}}`},
 			{"GetMonitorSummary", `{"id":"7"}`},
 		})
 
 		out := captureStdout(t, func() {
-			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_1D, "1d", nil); err != nil {
+			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_1D, "1d", false, nil); err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 		})
 
-		for _, want := range []string{"never", "1h", "90s"} {
+		for _, want := range []string{"never", "1h", "90s", "after first ping"} {
 			if !strings.Contains(out, want) {
 				t.Errorf("expected %q in output, got:\n%s", want, out)
 			}
@@ -96,7 +96,7 @@ func Test_getMonitorInfo_Heartbeat(t *testing.T) {
 		interceptor := monitorInfoInterceptor([]routeEntry{{"GetMonitor", pinged}})
 
 		out := captureStdout(t, func() {
-			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_1D, "1d", nil); err != nil {
+			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_1D, "1d", false, nil); err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 		})
@@ -118,18 +118,121 @@ func Test_getMonitorInfo_Heartbeat(t *testing.T) {
 		t.Cleanup(func() { output.SetJSONOutput(false) })
 
 		out := captureStdout(t, func() {
-			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_7D, "7d", nil); err != nil {
+			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_7D, "7d", false, nil); err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 		})
 
-		for _, want := range []string{`"jobType": "heartbeat"`, `"period": 86400`, `"grace": 1800`, `"last_ping_kind": "fail"`, `"status": "error"`, `"total_failed": 1`} {
+		for _, want := range []string{`"jobType": "heartbeat"`, `"period": 86400`, `"grace": 1800`, `"last_ping_kind": "fail"`, `"next_due_at": "2026-11-06T02:30:00.000Z"`, `"status": "error"`, `"total_failed": 1`} {
 			if !strings.Contains(out, want) {
 				t.Errorf("expected %q in JSON output, got:\n%s", want, out)
 			}
 		}
-		if strings.Contains(out, secret) {
+		if strings.Contains(out, secret) || strings.Contains(out, "ping_url") {
 			t.Errorf("ping URL leaked into JSON output:\n%s", out)
+		}
+		if strings.Contains(out, "Run with --show-ping-url") {
+			t.Errorf("hint printed in JSON mode:\n%s", out)
+		}
+	})
+
+	t.Run("Paused", func(t *testing.T) {
+		interceptor := monitorInfoInterceptor([]routeEntry{
+			{"GetMonitor", `{"monitor":{"heartbeat":{"id":"7","name":"Paused job","period":"3600","grace":"90","active":false,"lastPingAt":"2026-11-05T02:00:00.000Z","lastPingKind":"HEARTBEAT_PING_KIND_SUCCESS"}}}`},
+			{"GetMonitorSummary", `{"id":"7"}`},
+		})
+
+		out := captureStdout(t, func() {
+			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_1D, "1d", false, nil); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+
+		if !strings.Contains(out, "paused") {
+			t.Errorf("expected next due to read paused, got:\n%s", out)
+		}
+	})
+
+	t.Run("Shows the ping URL on request", func(t *testing.T) {
+		interceptor := monitorInfoInterceptor([]routeEntry{
+			{"GetMonitor", pinged},
+			{"GetMonitorSummary", summary},
+		})
+
+		out := captureStdout(t, func() {
+			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_7D, "7d", true, nil); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+
+		if !strings.Contains(out, "Ping URL") || !strings.Contains(out, "https://api.openstatus.dev/heartbeat/"+secret) {
+			t.Errorf("expected the ping URL in output, got:\n%s", out)
+		}
+		if strings.Contains(out, "Run with --show-ping-url") {
+			t.Errorf("did not expect the hint, got:\n%s", out)
+		}
+	})
+
+	t.Run("JSON output with the ping URL", func(t *testing.T) {
+		interceptor := monitorInfoInterceptor([]routeEntry{
+			{"GetMonitor", pinged},
+			{"GetMonitorSummary", summary},
+		})
+		output.SetJSONOutput(true)
+		t.Cleanup(func() { output.SetJSONOutput(false) })
+
+		out := captureStdout(t, func() {
+			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_7D, "7d", true, nil); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+
+		for _, want := range []string{`"ping_url": "https://api.openstatus.dev/heartbeat/` + secret + `"`, `"next_due_at": "2026-11-06T02:30:00.000Z"`} {
+			if !strings.Contains(out, want) {
+				t.Errorf("expected %q in JSON output, got:\n%s", want, out)
+			}
+		}
+	})
+
+	t.Run("Quiet hides the hint", func(t *testing.T) {
+		interceptor := monitorInfoInterceptor([]routeEntry{
+			{"GetMonitor", pinged},
+			{"GetMonitorSummary", summary},
+		})
+		output.SetQuietMode(true)
+		t.Cleanup(func() { output.SetQuietMode(false) })
+
+		out := captureStdout(t, func() {
+			if err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "7", monitorv1.TimeRange_TIME_RANGE_7D, "7d", false, nil); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+
+		if strings.Contains(out, "Run with --show-ping-url") {
+			t.Errorf("did not expect the hint in quiet mode, got:\n%s", out)
+		}
+	})
+
+	t.Run("Other monitor types ignore the flag", func(t *testing.T) {
+		routes := []routeEntry{{"GetMonitor", `{"monitor":{"http":{"id":"8","name":"API","url":"https://example.com","periodicity":"PERIODICITY_1M"}}}`}}
+		render := func(showPingURL bool) string {
+			var out string
+			captureStderr(t, func() {
+				out = captureStdout(t, func() {
+					if err := monitors.GetMonitorInfo(context.Background(), monitorInfoInterceptor(routes).GetHTTPClient(), "test", "8", monitorv1.TimeRange_TIME_RANGE_1D, "1d", showPingURL, nil); err != nil {
+						t.Fatalf("unexpected error: %v", err)
+					}
+				})
+			})
+			return out
+		}
+
+		without, with := render(false), render(true)
+		if without != with {
+			t.Errorf("expected identical output, got:\n%s\nvs\n%s", without, with)
+		}
+		if strings.Contains(with, "Ping URL") || strings.Contains(with, "--show-ping-url") {
+			t.Errorf("did not expect ping URL output for an HTTP monitor:\n%s", with)
 		}
 	})
 }
@@ -151,7 +254,7 @@ func Test_getMonitorInfo(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "", "", monitorv1.TimeRange_TIME_RANGE_1D, "1d", nil)
+		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "", "", monitorv1.TimeRange_TIME_RANGE_1D, "1d", false, nil)
 		if err == nil {
 			t.Errorf("Expected error, got nil")
 		}
@@ -169,7 +272,7 @@ func Test_getMonitorInfo(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "2260", monitorv1.TimeRange_TIME_RANGE_1D, "1d", nil)
+		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "2260", monitorv1.TimeRange_TIME_RANGE_1D, "1d", false, nil)
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
@@ -187,7 +290,7 @@ func Test_getMonitorInfo(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "2260", monitorv1.TimeRange_TIME_RANGE_1D, "1d", nil)
+		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "2260", monitorv1.TimeRange_TIME_RANGE_1D, "1d", false, nil)
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
@@ -200,7 +303,7 @@ func Test_getMonitorInfo(t *testing.T) {
 			{"GetMonitorSummary", `{"id":"4001","totalSuccessful":"10","totalDegraded":"0","totalFailed":"0","p50":"20","p75":"30","p90":"40","p95":"50","p99":"60","timeRange":"TIME_RANGE_1D"}`},
 		})
 
-		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "4001", monitorv1.TimeRange_TIME_RANGE_1D, "1d", nil)
+		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "4001", monitorv1.TimeRange_TIME_RANGE_1D, "1d", false, nil)
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
@@ -218,7 +321,7 @@ func Test_getMonitorInfo(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "3001", monitorv1.TimeRange_TIME_RANGE_1D, "1d", nil)
+		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "3001", monitorv1.TimeRange_TIME_RANGE_1D, "1d", false, nil)
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
@@ -236,7 +339,7 @@ func Test_getMonitorInfo(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "4001", monitorv1.TimeRange_TIME_RANGE_1D, "1d", nil)
+		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "4001", monitorv1.TimeRange_TIME_RANGE_1D, "1d", false, nil)
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
@@ -275,7 +378,7 @@ func Test_getMonitorInfo(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "2260", monitorv1.TimeRange_TIME_RANGE_1D, "1d", nil)
+		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "2260", monitorv1.TimeRange_TIME_RANGE_1D, "1d", false, nil)
 		if err != nil {
 			t.Errorf("Expected no error (graceful degradation), got %v", err)
 		}
@@ -314,7 +417,7 @@ func Test_getMonitorInfo(t *testing.T) {
 		t.Cleanup(func() {
 			log.SetOutput(os.Stdout)
 		})
-		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "2260", monitorv1.TimeRange_TIME_RANGE_1D, "1d", nil)
+		err := monitors.GetMonitorInfo(context.Background(), interceptor.GetHTTPClient(), "test", "2260", monitorv1.TimeRange_TIME_RANGE_1D, "1d", false, nil)
 		if err != nil {
 			t.Errorf("Expected no error (graceful degradation), got %v", err)
 		}
